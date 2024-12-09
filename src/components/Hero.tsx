@@ -7,7 +7,8 @@ const Hero = () => {
     <div className="relative min-h-screen flex items-center">
       <div className="absolute inset-0">
         <img
-          src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80"
+          src="https://images.unsplash.com/photo-1733748330558-0d56cdd25dce?q=80&w=2187&auto=format&fit=crop&q=80"
+          
           alt="Hero Background"
           className="w-full h-full object-cover"
         />
