@@ -8,6 +8,7 @@ import { BlogPostPage } from "@/pages/BlogPostPage";
 import { ShopPage } from "@/pages/ShopPage";
 import { ProductPage } from "@/pages/ProductPage";
 import { Loader } from "@/components/Loader";
+import { Analytics } from "@vercel/analytics/react";
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
           <Route path="/shop/:slug" element={<ProductPage />} />
         </Routes>
         <Toaster />
+        <Analytics />
       </Router>
     </ThemeProvider>
   );
