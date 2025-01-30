@@ -39,7 +39,7 @@ export function About() {
             <h2 className="text-3xl md:text-5xl font-bold mb-6">About Me</h2>
             <p className="text-lg text-muted-foreground mb-6">
               With over a decade of experience in visual storytelling, I've had the privilege of working 
-              with brands and individuals to bring their stories to life through the lens of my camera.
+              with brandes and individuals to bring their stories to life through the lens of my camera.
             </p>
             <div className="flex space-x-4">
               <Button 
