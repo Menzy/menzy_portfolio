@@ -27,7 +27,7 @@ export function Hero() {
     >
       <div className="absolute inset-0 w-full h-full">
         <iframe
-          className="w-[300%] h-[300%] absolute -left-[100%] -top-[100%] md:w-[200%] md:h-[200%] md:-left-[50%] md:-top-[50%] lg:w-[120%] lg:h-[120%] lg:-left-[10%] lg:-top-[10%]"
+          className="w-[320%] h-[300%] absolute -left-[100%] -top-[100%] md:w-[200%] md:h-[200%] md:-left-[50%] md:-top-[50%] lg:w-[120%] lg:h-[120%] lg:-left-[10%] lg:-top-[10%]"
           src="https://www.youtube.com/embed/rzjF6_uxkJw?autoplay=1&loop=1&playlist=rzjF6_uxkJw&controls=0&mute=1&showinfo=0&rel=0&playsinline=1&vq=hd1080&hd=1&modestbranding=1"
           title="Background Video"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -44,14 +44,14 @@ export function Hero() {
       <div className="relative z-10 container mx-auto px-6">
         <div className="max-w-4xl">
           <h1
-            className="text-[4rem] md:text-[5rem] font-bold text-white leading-none mb-8 animate-slide-up"
+            className="text-[3rem] md:text-[5rem] font-bold text-white leading-none mb-8 animate-slide-up"
             style={{ animationDelay: "0.2s" }}
           >
             <div>Capturing</div>
             <div>Stories</div>
-            <div>
+            <div className="flex flex-wrap items-center">
               People{" "}
-              <span className="text-primary inline-block">
+              <span className="text-primary inline-block ml-2">
                 <Typewriter
                   options={{
                     strings: ["Want", "Share", "Love"],
