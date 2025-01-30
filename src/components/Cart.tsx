@@ -9,7 +9,6 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { useCartStore } from '@/lib/store';
-import { cn } from '@/lib/utils';
 
 declare const PaystackPop: any;
 
