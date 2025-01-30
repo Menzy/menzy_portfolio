@@ -160,11 +160,11 @@ export function Contact() {
   };
 
   return (
-    <section ref={sectionRef} id="contact" className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-muted">
-      <div className="container max-w-2xl mx-auto px-4 py-20">
+    <section ref={sectionRef} id="contact" className="min-h-screen flex items-center justify-center bg-orange-400 m-4 rounded-2xl text-white">
+      <div className="container max-w-2xl mx-auto m-10">
         <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold mb-4">Let's Work Together</h2>
-          <p className="text-lg text-muted-foreground">
+          <h2 className="text-4xl font-bold mb-4 text-white">Let's Work Together</h2>
+          <p className="text-lg text-white/80">
             Tell us about your project and we'll get back to you shortly
           </p>
         </div>
