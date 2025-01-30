@@ -27,7 +27,7 @@ export function Hero() {
     >
       <div className="absolute inset-0 w-full h-full">
         <iframe
-          className="w-[320%] h-[300%] absolute -left-[100%] -top-[100%] md:w-[200%] md:h-[200%] md:-left-[50%] md:-top-[50%] lg:w-[120%] lg:h-[120%] lg:-left-[10%] lg:-top-[10%]"
+          className="w-[380%] h-[300%] absolute -left-[100%] -top-[100%] md:w-[200%] md:h-[200%] md:-left-[50%] md:-top-[50%] lg:w-[120%] lg:h-[120%] lg:-left-[10%] lg:-top-[10%]"
           src="https://www.youtube.com/embed/rzjF6_uxkJw?autoplay=1&loop=1&playlist=rzjF6_uxkJw&controls=0&mute=1&showinfo=0&rel=0&playsinline=1&vq=hd1080&hd=1&modestbranding=1"
           title="Background Video"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
