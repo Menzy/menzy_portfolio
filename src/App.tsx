@@ -1,27 +1,16 @@
-import { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { ThemeProvider } from 'next-themes';
+import { useState, useEffect } from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/toaster";
-import { SocialSidebar } from '@/components/SocialSidebar';
-import { HomePage } from '@/pages/HomePage';
-import { BlogPage } from '@/pages/BlogPage';
-import { BlogPostPage } from '@/pages/BlogPostPage';
-import { ShopPage } from '@/pages/ShopPage';
-import { ProductPage } from '@/pages/ProductPage';
-import { Loader } from '@/components/Loader';
+import { SocialSidebar } from "@/components/SocialSidebar";
+import { HomePage } from "@/pages/HomePage";
+import { BlogPage } from "@/pages/BlogPage";
+import { BlogPostPage } from "@/pages/BlogPostPage";
+import { ShopPage } from "@/pages/ShopPage";
+import { ProductPage } from "@/pages/ProductPage";
+import { Loader } from "@/components/Loader";
 
 function App() {
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    // Simulate loading time and wait for resources
-    const loadingTimeout = setTimeout(() => {
-      setIsLoading(false);
-    }, 2000);
-
-    return () => clearTimeout(loadingTimeout);
-  }, []);
-
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <Loader />
@@ -40,4 +29,4 @@ function App() {
   );
 }
 
-export default App
+export default App;
