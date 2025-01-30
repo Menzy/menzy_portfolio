@@ -1,20 +1,22 @@
-import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
+import { useState } from "react";
+import { Link, useLocation } from "react-router-dom";
+import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ThemeToggle } from '@/components/theme-toggle';
-import { Cart } from '@/components/Cart';
+import { ThemeToggle } from "@/components/theme-toggle";
+import { Cart } from "@/components/Cart";
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
-  const isHomePage = location.pathname === '/';
+  const isHomePage = location.pathname === "/";
+  const isShopPage = location.pathname === "/shop";
+  const isItemDetailsPage = location.pathname.startsWith("/shop/");
 
   const scrollToSection = (sectionId: string) => {
     if (isHomePage) {
       const element = document.getElementById(sectionId);
       if (element) {
-        element.scrollIntoView({ behavior: 'smooth' });
+        element.scrollIntoView({ behavior: "smooth" });
         setIsMenuOpen(false);
       }
     }
@@ -22,82 +24,91 @@ export function Navbar() {
 
   return (
     <div className="fixed w-full z-50 p-4">
-      <nav className={`max-w-6xl mx-auto bg-background/80 backdrop-blur-md shadow-lg border overflow-hidden ${isMenuOpen ? 'rounded-2xl' : 'rounded-2xl md:rounded-full'}`}>
+      <nav
+        className={`max-w-6xl mx-auto bg-background/80 backdrop-blur-md shadow-lg border overflow-hidden ${
+          isMenuOpen ? "rounded-2xl" : "rounded-2xl md:rounded-full"
+        }`}
+      >
         <div className="px-6 py-4 flex justify-between items-center">
-          <Link to="/" className="text-2xl font-bold hover:text-primary transition-colors">
+          <Link
+            to="/"
+            className="text-2xl font-bold hover:text-primary transition-colors"
+          >
             Wan Menzy
           </Link>
-          
+
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center space-x-8">
             {isHomePage ? (
-              <button onClick={() => scrollToSection('work')} className="relative group">
-                <span className="text-foreground/80 hover:text-primary transition-colors">Work</span>
-                <span className="absolute inset-x-0 -bottom-1 h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform"></span>
-              </button>
+              <Button
+                onClick={() => scrollToSection("contact")}
+                variant="default"
+                className="rounded-full"
+              >
+                Let's Work
+              </Button>
             ) : null}
             <Link to="/blog" className="relative group">
-              <span className="text-foreground/80 hover:text-primary transition-colors">Blog</span>
+              <span className="text-foreground/80 hover:text-primary transition-colors">
+                Blog
+              </span>
               <span className="absolute inset-x-0 -bottom-1 h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform"></span>
             </Link>
             <Link to="/shop" className="relative group">
-              <span className="text-foreground/80 hover:text-primary transition-colors">Shop</span>
+              <span className="text-foreground/80 hover:text-primary transition-colors">
+                Shop
+              </span>
               <span className="absolute inset-x-0 -bottom-1 h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform"></span>
             </Link>
-            {isHomePage ? (
-              <button onClick={() => scrollToSection('contact')} className="relative group">
-                <span className="text-foreground/80 hover:text-primary transition-colors">Contact</span>
-                <span className="absolute inset-x-0 -bottom-1 h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform"></span>
-              </button>
-            ) : null}
-            <Cart />
+            {(isShopPage || isItemDetailsPage) && <Cart />}
             <ThemeToggle />
           </div>
 
           {/* Mobile Menu Button */}
           <div className="md:hidden">
-            <Button variant="ghost" size="icon" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-              {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+            >
+              {isMenuOpen ? (
+                <X className="h-5 w-5" />
+              ) : (
+                <Menu className="h-5 w-5" />
+              )}
             </Button>
           </div>
         </div>
-        
+
         {/* Mobile Menu */}
         {isMenuOpen && (
           <div className="md:hidden border-t bg-background/80 backdrop-blur-md">
             <div className="px-6 py-8 flex flex-col space-y-6">
               {isHomePage ? (
-                <button 
-                  onClick={() => scrollToSection('work')} 
-                  className="flex items-center text-lg font-medium text-foreground/80 hover:text-primary transition-colors"
+                <Button
+                  onClick={() => scrollToSection("contact")}
+                  variant="default"
+                  className="rounded-full w-full py-6"
                 >
-                  Work
-                </button>
+                  Let's Work
+                </Button>
               ) : null}
-              <Link 
-                to="/blog" 
+              <Link
+                to="/blog"
                 onClick={() => setIsMenuOpen(false)}
                 className="flex items-center text-lg font-medium text-foreground/80 hover:text-primary transition-colors"
               >
                 Blog
               </Link>
-              <Link 
-                to="/shop" 
+              <Link
+                to="/shop"
                 onClick={() => setIsMenuOpen(false)}
                 className="flex items-center text-lg font-medium text-foreground/80 hover:text-primary transition-colors"
               >
                 Shop
               </Link>
-              {isHomePage ? (
-                <button 
-                  onClick={() => scrollToSection('contact')} 
-                  className="flex items-center text-lg font-medium text-foreground/80 hover:text-primary transition-colors"
-                >
-                  Contact
-                </button>
-              ) : null}
               <div className="flex items-center space-x-4">
-                <Cart />
+                {(isShopPage || isItemDetailsPage) && <Cart />}
                 <ThemeToggle />
               </div>
             </div>
