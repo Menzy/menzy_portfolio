@@ -24,6 +24,9 @@ export default {
     extend: {
       animation: {
         'spin-slow': 'spin 2s linear infinite',
+        'accordion-down': 'accordion-down 0.2s ease-out',
+        'accordion-up': 'accordion-up 0.2s ease-out',
+        scroll: 'scroll 30s linear infinite',
       },
       borderRadius: {
         lg: 'var(--radius)',
@@ -74,10 +77,10 @@ export default {
           from: { height: 'var(--radix-accordion-content-height)' },
           to: { height: '0' },
         },
-      },
-      animation: {
-        'accordion-down': 'accordion-down 0.2s ease-out',
-        'accordion-up': 'accordion-up 0.2s ease-out',
+        scroll: {
+          '0%': { transform: 'translateX(0)' },
+          '100%': { transform: 'translateX(calc(-50% - 3rem))' },
+        },
       },
     },
   },
