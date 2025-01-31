@@ -11,32 +11,32 @@ const logos = [
   {
     name: "SANDMARC",
     url: sandmarcLogo,
-    hasBackground: true
+    hasBackground: true,
   },
   {
     name: "Zhiyun",
     url: zhiyunLogo,
-    hasBackground: true
+    hasBackground: true,
   },
   {
     name: "Xiaomi",
     url: xiaomiLogo,
-    hasBackground: false
+    hasBackground: false,
   },
   {
     name: "Moment",
     url: momentLogo,
-    hasBackground: false
+    hasBackground: false,
   },
   {
     name: "Hohem",
     url: hohemLogo,
-    hasBackground: false
+    hasBackground: false,
   },
   {
     name: "Moza",
     url: mozaLogo,
-    hasBackground: false
+    hasBackground: false,
   },
 ];
 
@@ -71,7 +71,7 @@ export function LogoTicker() {
     <section className="py-16 dark:bg-black bg-white">
       <div className="container">
         <h3 className="text-center text-lg text-muted-foreground mb-12 animate-fade-in">
-          Trusted by leading brands worldwide
+          Brands I've worked with
         </h3>
         <div className="flex overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
           <motion.div
@@ -82,28 +82,35 @@ export function LogoTicker() {
               ease: "linear",
               repeat: Infinity,
               repeatType: "loop",
-              delay: 0.5
+              delay: 0.5,
             }}
             className="flex gap-12 items-center"
           >
-            {Array.from({ length: 6 }).map((_, i) => ( // Increased copies to 6
-              <div key={i} className="flex gap-12">
-                {logos.map((logo) => (
-                  <div
-                    key={`${logo.name}-${i}`}
-                    className="flex items-center justify-center min-w-[150px] h-16 grayscale hover:grayscale-0 transition-all duration-300"
-                  >
-                    <img
-                      src={logo.url}
-                      alt={logo.name}
-                      className={`max-h-full max-w-full object-contain ${
-                        logo.hasBackground ? 'dark:opacity-90' : 'dark:brightness-0 dark:invert'
-                      }`}
-                    />
-                  </div>
-                ))}
-              </div>
-            ))}
+            {Array.from({ length: 6 }).map(
+              (
+                _,
+                i // Increased copies to 6
+              ) => (
+                <div key={i} className="flex gap-12">
+                  {logos.map((logo) => (
+                    <div
+                      key={`${logo.name}-${i}`}
+                      className="flex items-center justify-center min-w-[150px] h-16 grayscale hover:grayscale-0 transition-all duration-300"
+                    >
+                      <img
+                        src={logo.url}
+                        alt={logo.name}
+                        className={`max-h-full max-w-full object-contain ${
+                          logo.hasBackground
+                            ? "dark:opacity-90"
+                            : "dark:brightness-0 dark:invert"
+                        }`}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )
+            )}
           </motion.div>
         </div>
       </div>
