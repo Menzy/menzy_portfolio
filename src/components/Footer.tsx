@@ -4,8 +4,6 @@ import { Button } from "@/components/ui/button";
 export function Footer() {
   const navigation = [
     { name: 'Work', href: '#work' },
-    { name: 'Behind the Scenes', href: '#behind-scenes' },
-    { name: 'About', href: '#about' },
     { name: 'Blog', href: '#blog' },
     { name: 'Shop', href: '#shop' },
     { name: 'Contact', href: '#contact' },
@@ -49,16 +47,16 @@ export function Footer() {
                   href="mailto:hello@jameslens.com"
                   className="text-muted-foreground hover:text-primary transition-colors"
                 >
-                  hello@jameslens.com
+                  wanmenzy@gmail.com
                 </a>
               </li>
-              <li className="text-muted-foreground">Los Angeles, CA</li>
+              <li className="text-muted-foreground">Adenta - Accra, GH</li>
             </ul>
           </div>
 
           {/* Social */}
           <div className="space-y-4">
-            <h4 className="font-semibold">Follow</h4>
+            <h4 className="font-semibold">Let&apos;s get Social</h4>
             <div className="flex space-x-2">
               <Button 
                 variant="outline" 
