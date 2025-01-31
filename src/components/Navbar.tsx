@@ -4,6 +4,7 @@ import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Cart } from "@/components/Cart";
+import logo from "/assets/logos/1.png";
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -32,8 +33,9 @@ export function Navbar() {
         <div className="px-3 py-3 flex justify-between items-center">
           <Link
             to="/"
-            className="text-2xl font-bold hover:text-primary transition-colors px-4"
+            className="text-2xl font-bold hover:text-primary transition-colors px-4 flex items-center gap-2"
           >
+            {/* <img src={logo} alt="Logo" className="w-8 h-8" /> */}
             Wan Menzy
           </Link>
 
