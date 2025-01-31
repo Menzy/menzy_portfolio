@@ -4,7 +4,6 @@ import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Cart } from "@/components/Cart";
-import logo from "/assets/logos/1.png";
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
