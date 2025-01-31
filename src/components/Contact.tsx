@@ -160,11 +160,15 @@ export function Contact() {
   };
 
   return (
-    <section ref={sectionRef} id="contact" className="min-h-screen flex items-center justify-center bg-orange-400 m-4 rounded-2xl text-white">
+    <section 
+      ref={sectionRef} 
+      id="contact" 
+      className="min-h-screen flex items-center justify-center m-4 rounded-2xl border-4 border-primary/20 dark:border-primary/10"
+    >
       <div className="container max-w-2xl mx-auto m-10">
         <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold mb-4 text-white">Let's Work Together</h2>
-          <p className="text-lg text-white/80">
+          <h2 className="text-4xl font-bold mb-4">Let's Work Together</h2>
+          <p className="text-lg text-muted-foreground">
             Tell us about your project and we'll get back to you shortly
           </p>
         </div>
