@@ -16,12 +16,7 @@ const projects = [
       "A cinematic journey through the Rockies, capturing the raw beauty of nature and the spirit of adventure. Our team of 12 professionals ventured deep into the wilderness, battling extreme conditions to document the untold stories of these majestic peaks. Using state-of-the-art equipment and innovative techniques, we've created a visual narrative that showcases both the grandeur of the mountains and the intimate details of their delicate ecosystem.",
     websiteUrl: "www.newbalance.com",
     videoId: "-nf57pBJDTk",
-    stats: {
-      duration: "3 weeks",
-      location: "Rocky Mountains",
-      team: "12 people",
-      footage: "120 Hours",
-    },
+    bgColor: "bg-blue-500/10",
   },
   {
     number: "01",
@@ -30,12 +25,7 @@ const projects = [
       "Exploring the vibrant pulse of city life through a cinematic lens. Our crew captured the essence of urban culture, from street artists to night markets. This documentary-style piece weaves together stories of community, creativity, and the relentless energy that defines modern metropolitan life.",
     websiteUrl: "www.nike.com",
     videoId: "dQw4w9WgXcQ",
-    stats: {
-      duration: "2 weeks",
-      location: "Tokyo",
-      team: "8 people",
-      footage: "80 Hours",
-    },
+    bgColor: "bg-lime-500/10",
   },
   {
     number: "02",
@@ -44,12 +34,7 @@ const projects = [
       "Diving into the mysterious world beneath the waves. This groundbreaking underwater campaign required innovative camera techniques and custom-built equipment. Working with marine biologists, we documented rare species and captured the delicate balance of marine ecosystems.",
     websiteUrl: "www.patagonia.com",
     videoId: "ScMzIvxBSi4",
-    stats: {
-      duration: "4 weeks",
-      location: "Great Barrier Reef",
-      team: "15 people",
-      footage: "200 Hours",
-    },
+    bgColor: "bg-emerald-500",
   },
   {
     number: "03",
@@ -58,12 +43,7 @@ const projects = [
       "A mesmerizing journey through the world's most dramatic desert landscapes. Our team braved extreme temperatures and challenging conditions to capture the stark beauty of these ancient landscapes. Using drone technology and time-lapse photography, we revealed patterns and colors that tell the story of time itself.",
     websiteUrl: "www.natgeo.com",
     videoId: "u9Dg-g7t2l4",
-    stats: {
-      duration: "3 weeks",
-      location: "Sahara Desert",
-      team: "10 people",
-      footage: "150 Hours",
-    },
+    bgColor: "bg-orange-500",
   },
 ];
 
@@ -158,32 +138,24 @@ export function BehindScenes() {
           {/* Content Section */}
           <div className="order-2 lg:order-1 lg:col-span-5 flex flex-col gap-4 md:gap-6">
             {/* Number, Title, and URL Section */}
-            <div className="h-[40%] relative overflow-hidden rounded-3xl bg-blue-500/20 backdrop-blur p-6 md:p-8 flex flex-col">
-              <div className="flex-1">
-                <div className="text-4xl font-bold mb-2">
+            <div className={`h-[40%] relative overflow-hidden rounded-3xl ${currentProject.bgColor} hover:bg-opacity-20 transition-all duration-300 backdrop-blur p-8 flex flex-col justify-between border border-white/5`}>
+              <div className="space-y-6">
+                <div className="text-4xl font-bold opacity-50">
                   {currentProject.number}
                 </div>
-                <h2 className="text-3xl font-bold mb-6">
+                <h2 className="text-4xl font-bold">
                   {currentProject.title}
                 </h2>
-                <a
-                  href={`https://${currentProject.websiteUrl}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-lg text-muted-foreground hover:text-primary flex items-center gap-2 transition-colors group"
-                >
-                  {currentProject.websiteUrl}
-                  <ArrowUpRight className="h-5 w-5 transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
-                </a>
               </div>
-              <div className="flex flex-wrap gap-3">
-                {Object.entries(currentProject.stats).map(([key, value]) => (
-                  <div key={key} className="text-sm text-muted-foreground">
-                    <span className="font-medium text-foreground">{value}</span>{" "}
-                    {key}
-                  </div>
-                ))}
-              </div>
+              <a
+                href={`https://${currentProject.websiteUrl}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-lg text-muted-foreground hover:text-primary flex items-center gap-2 transition-colors group w-fit"
+              >
+                {currentProject.websiteUrl}
+                <ArrowUpRight className="h-5 w-5 transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
+              </a>
             </div>
 
             {/* Description Section */}
