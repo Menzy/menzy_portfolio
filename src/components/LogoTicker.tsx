@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { motion } from "framer-motion";
 import sandmarcLogo from "/assets/logos/SANDMARC.png";
 import momentLogo from "/assets/logos/moment.svg";
 import zhiyunLogo from "/assets/logos/Zhiyun.svg";
@@ -35,29 +36,35 @@ const logos = [
   {
     name: "Moza",
     url: mozaLogo,
-    hasBackground: true
+    hasBackground: false
   },
 ];
 
 export function LogoTicker() {
-  const [isHovered, setIsHovered] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [animationDistance, setAnimationDistance] = useState(0);
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("animate-fade-in");
-          }
-        });
-      },
-      { threshold: 0.1 }
-    );
+    const calculateDistance = () => {
+      if (containerRef.current) {
+        const firstSet = containerRef.current.children[0];
+        if (firstSet) {
+          const width = firstSet.getBoundingClientRect().width;
+          // Only animate the distance of one set instead of the full width
+          setAnimationDistance(-(width + 48)); // Adding gap (12 * 4)
+        }
+      }
+    };
 
-    const elements = document.querySelectorAll(".logo-ticker");
-    elements.forEach((el) => observer.observe(el));
+    // Initial calculation after a small delay to ensure proper rendering
+    setTimeout(calculateDistance, 100);
 
-    return () => observer.disconnect();
+    const resizeObserver = new ResizeObserver(calculateDistance);
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
+
+    return () => resizeObserver.disconnect();
   }, []);
 
   return (
@@ -66,40 +73,38 @@ export function LogoTicker() {
         <h3 className="text-center text-lg text-muted-foreground mb-12 animate-fade-in">
           Trusted by leading brands worldwide
         </h3>
-        <div className="relative">
-          {/* Left gradient mask */}
-          <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-white dark:from-black to-transparent z-10" />
-
-          {/* Right gradient mask */}
-          <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-white dark:from-black to-transparent z-10" />
-
-          <div
-            className="logo-ticker relative overflow-hidden opacity-0"
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
+        <div className="flex overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
+          <motion.div
+            ref={containerRef}
+            animate={{ x: animationDistance }}
+            transition={{
+              duration: 20, // Shorter duration for one set
+              ease: "linear",
+              repeat: Infinity,
+              repeatType: "loop",
+              delay: 0.5
+            }}
+            className="flex gap-12 items-center"
           >
-            <div
-              className={`flex space-x-12 animate-scroll ${
-                isHovered ? "pause-animation" : ""
-              }`}
-              style={{ animationDuration: "30s", animationIterationCount: "infinite" }}
-            >
-              {[...logos, ...logos, ...logos].map((logo, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-center min-w-[150px] h-16 grayscale hover:grayscale-0 transition-all duration-300"
-                >
-                  <img
-                    src={logo.url}
-                    alt={logo.name}
-                    className={`max-h-full max-w-full object-contain ${
-                      logo.hasBackground ? 'dark:opacity-90' : 'dark:brightness-0 dark:invert'
-                    }`}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
+            {Array.from({ length: 6 }).map((_, i) => ( // Increased copies to 6
+              <div key={i} className="flex gap-12">
+                {logos.map((logo) => (
+                  <div
+                    key={`${logo.name}-${i}`}
+                    className="flex items-center justify-center min-w-[150px] h-16 grayscale hover:grayscale-0 transition-all duration-300"
+                  >
+                    <img
+                      src={logo.url}
+                      alt={logo.name}
+                      className={`max-h-full max-w-full object-contain ${
+                        logo.hasBackground ? 'dark:opacity-90' : 'dark:brightness-0 dark:invert'
+                      }`}
+                    />
+                  </div>
+                ))}
+              </div>
+            ))}
+          </motion.div>
         </div>
       </div>
     </section>
