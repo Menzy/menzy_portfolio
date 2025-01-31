@@ -29,25 +29,16 @@ export function Navbar() {
           isMenuOpen ? "rounded-2xl" : "rounded-2xl md:rounded-full"
         }`}
       >
-        <div className="px-6 py-4 flex justify-between items-center">
+        <div className="px-3 py-3 flex justify-between items-center">
           <Link
             to="/"
-            className="text-2xl font-bold hover:text-primary transition-colors"
+            className="text-2xl font-bold hover:text-primary transition-colors px-4"
           >
             Wan Menzy
           </Link>
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center space-x-8">
-            {isHomePage ? (
-              <Button
-                onClick={() => scrollToSection("contact")}
-                variant="default"
-                className="rounded-full"
-              >
-                Let's Work
-              </Button>
-            ) : null}
             <Link to="/blog" className="relative group">
               <span className="text-foreground/80 hover:text-primary transition-colors">
                 Blog
@@ -62,6 +53,15 @@ export function Navbar() {
             </Link>
             {(isShopPage || isItemDetailsPage) && <Cart />}
             <ThemeToggle />
+            {isHomePage ? (
+              <Button
+                onClick={() => scrollToSection("contact")}
+                variant="default"
+                className="rounded-full h-12 px-8 text-base font-medium ml-4"
+              >
+                Let's Work
+              </Button>
+            ) : null}
           </div>
 
           {/* Mobile Menu Button */}
@@ -83,12 +83,12 @@ export function Navbar() {
         {/* Mobile Menu */}
         {isMenuOpen && (
           <div className="md:hidden border-t bg-background/80 backdrop-blur-md">
-            <div className="px-6 py-8 flex flex-col space-y-6">
+            <div className="px-6 py-4 flex flex-col space-y-4">
               {isHomePage ? (
                 <Button
                   onClick={() => scrollToSection("contact")}
                   variant="default"
-                  className="rounded-full w-full py-6"
+                  className="rounded-full h-12 w-full px-8 text-base font-medium"
                 >
                   Let's Work
                 </Button>
