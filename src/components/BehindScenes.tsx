@@ -24,7 +24,7 @@ const projects = [
     description:
       "Exploring the vibrant pulse of city life through a cinematic lens. Our crew captured the essence of urban culture, from street artists to night markets. This documentary-style piece weaves together stories of community, creativity, and the relentless energy that defines modern metropolitan life.",
     websiteUrl: "www.nike.com",
-    videoId: "dQw4w9WgXcQ",
+    videoId: "fv9cDBOhkEA",
     bgColor: "bg-lime-500/10",
   },
   {
@@ -33,7 +33,7 @@ const projects = [
     description:
       "Diving into the mysterious world beneath the waves. This groundbreaking underwater campaign required innovative camera techniques and custom-built equipment. Working with marine biologists, we documented rare species and captured the delicate balance of marine ecosystems.",
     websiteUrl: "www.patagonia.com",
-    videoId: "ScMzIvxBSi4",
+    videoId: "7UVE1wTmZhA",
     bgColor: "bg-emerald-500",
   },
   {
@@ -42,7 +42,7 @@ const projects = [
     description:
       "A mesmerizing journey through the world's most dramatic desert landscapes. Our team braved extreme temperatures and challenging conditions to capture the stark beauty of these ancient landscapes. Using drone technology and time-lapse photography, we revealed patterns and colors that tell the story of time itself.",
     websiteUrl: "www.natgeo.com",
-    videoId: "u9Dg-g7t2l4",
+    videoId: "u9Dg-83aPs5jSBoA",
     bgColor: "bg-orange-500",
   },
 ];
@@ -138,14 +138,14 @@ export function BehindScenes() {
           {/* Content Section */}
           <div className="order-2 lg:order-1 lg:col-span-5 flex flex-col gap-4 md:gap-6">
             {/* Number, Title, and URL Section */}
-            <div className={`h-[40%] relative overflow-hidden rounded-3xl ${currentProject.bgColor} hover:bg-opacity-20 transition-all duration-300 backdrop-blur p-8 flex flex-col justify-between border border-white/5`}>
+            <div
+              className={`h-[40%] relative overflow-hidden rounded-3xl ${currentProject.bgColor} hover:bg-opacity-20 transition-all duration-300 backdrop-blur p-8 flex flex-col justify-between border border-white/5`}
+            >
               <div className="space-y-6">
                 <div className="text-4xl font-bold opacity-50">
                   {currentProject.number}
                 </div>
-                <h2 className="text-4xl font-bold">
-                  {currentProject.title}
-                </h2>
+                <h2 className="text-4xl font-bold">{currentProject.title}</h2>
               </div>
               <a
                 href={`https://${currentProject.websiteUrl}`}
