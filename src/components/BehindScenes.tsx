@@ -20,7 +20,7 @@ const projects = [
   },
   {
     number: "01",
-    title: "Urban Stories",
+    title: "Samaria",
     description:
       "Exploring the vibrant pulse of city life through a cinematic lens. Our crew captured the essence of urban culture, from street artists to night markets. This documentary-style piece weaves together stories of community, creativity, and the relentless energy that defines modern metropolitan life.",
     websiteUrl: "www.nike.com",
@@ -29,7 +29,7 @@ const projects = [
   },
   {
     number: "02",
-    title: "Ocean Depths",
+    title: "Loaves & Fishes",
     description:
       "Diving into the mysterious world beneath the waves. This groundbreaking underwater campaign required innovative camera techniques and custom-built equipment. Working with marine biologists, we documented rare species and captured the delicate balance of marine ecosystems.",
     websiteUrl: "www.patagonia.com",
@@ -38,7 +38,7 @@ const projects = [
   },
   {
     number: "03",
-    title: "Desert Dreams",
+    title: "Times & Sands",
     description:
       "A mesmerizing journey through the world's most dramatic desert landscapes. Our team braved extreme temperatures and challenging conditions to capture the stark beauty of these ancient landscapes. Using drone technology and time-lapse photography, we revealed patterns and colors that tell the story of time itself.",
     websiteUrl: "www.natgeo.com",
