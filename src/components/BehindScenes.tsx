@@ -11,10 +11,10 @@ import {
 const projects = [
   {
     number: "00",
-    title: "Global Commercial",
+    title: "Even Though",
     description:
       "A cinematic journey through the Rockies, capturing the raw beauty of nature and the spirit of adventure. Our team of 12 professionals ventured deep into the wilderness, battling extreme conditions to document the untold stories of these majestic peaks. Using state-of-the-art equipment and innovative techniques, we've created a visual narrative that showcases both the grandeur of the mountains and the intimate details of their delicate ecosystem.",
-    websiteUrl: "www.newbalance.com",
+    websiteUrl: "www.therealmaraji.com",
     videoId: "-nf57pBJDTk",
     bgColor: "bg-blue-500/10",
   },
