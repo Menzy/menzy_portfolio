@@ -1,10 +1,10 @@
-import { Instagram, Mail, Timer as Vimeo, ArrowUp } from 'lucide-react';
+import { FaInstagram, FaYoutube, FaTiktok, FaArrowUp } from "react-icons/fa";
 import { Button } from "@/components/ui/button";
 import logo from "/assets/logos/1.png";
 
 export function Footer() {
   const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
@@ -23,26 +23,26 @@ export function Footer() {
 
         {/* Social Links */}
         <div className="flex space-x-4 md:order-2">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             size="icon"
             className="rounded-full hover:scale-110 transition-transform"
           >
-            <Instagram className="h-5 w-5" />
+            <FaInstagram className="h-5 w-5" />
           </Button>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             size="icon"
             className="rounded-full hover:scale-110 transition-transform"
           >
-            <Vimeo className="h-5 w-5" />
+            <FaYoutube className="h-5 w-5" />
           </Button>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             size="icon"
             className="rounded-full hover:scale-110 transition-transform"
           >
-            <Mail className="h-5 w-5" />
+            <FaTiktok className="h-5 w-5" />
           </Button>
         </div>
 
@@ -53,7 +53,7 @@ export function Footer() {
           onClick={scrollToTop}
           className="rounded-full hover:scale-110 transition-transform md:order-3"
         >
-          <ArrowUp className="h-5 w-5" />
+          <FaArrowUp className="h-5 w-5" />
         </Button>
       </div>
 
