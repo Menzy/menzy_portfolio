@@ -1,4 +1,4 @@
-import { Instagram, Twitter, Youtube } from "lucide-react";
+import { FaInstagram, FaTwitter, FaYoutube } from "react-icons/fa";
 import { Button } from "@/components/ui/button";
 
 export function SocialSidebar() {
@@ -14,7 +14,7 @@ export function SocialSidebar() {
           size="icon"
           className="bg-background/80 backdrop-blur-sm hover:bg-background/90 hover:scale-110 transition-all duration-300"
         >
-          <Instagram className="h-5 w-5" />
+          <FaInstagram className="h-5 w-5" />
         </Button>
       </a>
       <a
@@ -27,7 +27,7 @@ export function SocialSidebar() {
           size="icon"
           className="bg-background/80 backdrop-blur-sm hover:bg-background/90 hover:scale-110 transition-all duration-300"
         >
-          <Twitter className="h-5 w-5" />
+          <FaTwitter className="h-5 w-5" />
         </Button>
       </a>
       <a
@@ -40,7 +40,7 @@ export function SocialSidebar() {
           size="icon"
           className="bg-background/80 backdrop-blur-sm hover:bg-background/90 hover:scale-110 transition-all duration-300"
         >
-          <Youtube className="h-5 w-5" />
+          <FaYoutube className="h-5 w-5" />
         </Button>
       </a>
     </div>
