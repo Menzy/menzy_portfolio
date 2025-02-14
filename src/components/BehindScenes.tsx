@@ -81,7 +81,7 @@ export function BehindScenes() {
   }, []);
 
   return (
-    <section id="behind-scenes" className="min-h-screen py-32">
+    <section id="behind-scenes" className="min-h-screen py-32 dark:bg-black bg-white">
       <div className="container mx-auto px-4">
         {/* Project Navigation */}
         <div className="relative flex items-center mb-8">

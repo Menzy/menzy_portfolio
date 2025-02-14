@@ -72,7 +72,7 @@ export function Work() {
   }, []);
 
   return (
-    <section id="work" className="pt-32 pb-20">
+    <section id="work" className="pt-32 pb-20  dark:bg-black bg-white">
       <div className="container">
         <h2 className="text-3xl md:text-5xl font-bold mb-12 text-center animate-slide-up">
           Featured Projects

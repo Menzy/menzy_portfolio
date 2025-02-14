@@ -14,14 +14,14 @@ const logos = [
     hasBackground: true,
   },
   {
+    name: "Hohem",
+    url: hohemLogo,
+    hasBackground: false,
+  },
+  {
     name: "Zhiyun",
     url: zhiyunLogo,
     hasBackground: true,
-  },
-  {
-    name: "Xiaomi",
-    url: xiaomiLogo,
-    hasBackground: false,
   },
   {
     name: "Moment",
@@ -29,8 +29,8 @@ const logos = [
     hasBackground: false,
   },
   {
-    name: "Hohem",
-    url: hohemLogo,
+    name: "Xiaomi",
+    url: xiaomiLogo,
     hasBackground: false,
   },
   {
@@ -69,7 +69,7 @@ export function LogoTicker() {
 
   return (
     <section className="py-16 dark:bg-black bg-white">
-      <div className="container">
+      <div className="px-20">
         <h3 className="text-center text-lg text-muted-foreground mb-12 animate-fade-in">
           Brands I've worked with
         </h3>

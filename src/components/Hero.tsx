@@ -33,7 +33,7 @@ export function Hero() {
   }, []);
 
   return (
-    <section className="relative min-h-[200vh]">
+    <section className="relative min-h-[200vh]  dark:bg-black bg-white">
       {/* Video Container */}
       <div
         ref={videoRef}
