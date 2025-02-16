@@ -68,6 +68,9 @@ export default {
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
       },
+      fontFamily: {
+        sans: ['DM Sans', 'sans-serif'],
+      },
       keyframes: {
         'accordion-down': {
           from: { height: '0' },

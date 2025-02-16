@@ -7,6 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { motion, AnimatePresence } from "framer-motion";
 
 const projects = [
   {
@@ -81,7 +82,10 @@ export function BehindScenes() {
   }, []);
 
   return (
-    <section id="behind-scenes" className="min-h-screen py-32 dark:bg-black bg-white">
+    <section
+      id="behind-scenes"
+      className="min-h-screen py-32 dark:bg-black bg-white"
+    >
       <div className="container mx-auto px-4">
         {/* Project Navigation */}
         <div className="relative flex items-center mb-8">
@@ -103,22 +107,26 @@ export function BehindScenes() {
                 onClick={() => setCurrentIndex(index)}
                 className="group flex flex-col items-center gap-2"
               >
-                <div
+                <motion.div
                   className={`h-[2px] w-12 transition-all duration-300 ${
                     index === currentIndex
                       ? "bg-primary w-16"
                       : "bg-muted-foreground/30 group-hover:bg-muted-foreground/50"
                   }`}
+                  animate={{ width: index === currentIndex ? 64 : 48 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
                 />
-                <span
+                <motion.span
                   className={`text-xs transition-colors ${
                     index === currentIndex
                       ? "text-primary"
                       : "text-muted-foreground group-hover:text-muted-foreground/80"
                   }`}
+                  animate={{ scale: index === currentIndex ? 1.1 : 1 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
                 >
                   {project.number}
-                </span>
+                </motion.span>
               </button>
             ))}
           </div>
@@ -138,65 +146,106 @@ export function BehindScenes() {
           {/* Content Section */}
           <div className="order-2 lg:order-1 lg:col-span-5 flex flex-col gap-4 md:gap-6">
             {/* Number, Title, and URL Section */}
-            <div
-              className={`h-[40%] relative overflow-hidden rounded-3xl ${currentProject.bgColor} hover:bg-opacity-20 transition-all duration-300 backdrop-blur p-8 flex flex-col justify-between border border-white/5`}
-            >
-              <div className="space-y-6">
-                <div className="text-4xl font-bold opacity-50">
-                  {currentProject.number}
-                </div>
-                <h2 className="text-4xl font-bold">{currentProject.title}</h2>
-              </div>
-              <a
-                href={`https://${currentProject.websiteUrl}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-lg text-muted-foreground hover:text-primary flex items-center gap-2 transition-colors group w-fit"
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentProject.number}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                className={`h-[40%] relative overflow-hidden rounded-3xl ${currentProject.bgColor} hover:bg-opacity-20 transition-all duration-300 backdrop-blur p-8 flex flex-col justify-between border border-white/5`}
               >
-                {currentProject.websiteUrl}
-                <ArrowUpRight className="h-5 w-5 transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
-              </a>
-            </div>
+                <div className="space-y-6">
+                  <motion.div
+                    className="text-4xl font-bold opacity-50"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 0.5, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                  >
+                    {currentProject.number}
+                  </motion.div>
+                  <motion.h2
+                    className="text-4xl font-bold"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                  >
+                    {currentProject.title}
+                  </motion.h2>
+                </div>
+                <motion.a
+                  href={`https://${currentProject.websiteUrl}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-lg text-muted-foreground hover:text-primary flex items-center gap-2 transition-colors group w-fit"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                >
+                  {currentProject.websiteUrl}
+                  <ArrowUpRight className="h-5 w-5 transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
+                </motion.a>
+              </motion.div>
+            </AnimatePresence>
 
             {/* Description Section */}
-            <div className="lg:h-[60%] rounded-3xl bg-muted p-6 md:p-8 flex flex-col overflow-hidden">
-              <div className="prose dark:prose-invert max-w-none">
-                <p className="text-base md:text-lg leading-relaxed">
-                  {currentProject.description}
-                </p>
-              </div>
-            </div>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentProject.number}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{
+                  type: "spring",
+                  stiffness: 300,
+                  damping: 30,
+                  delay: 0.2,
+                }}
+                className="lg:h-[60%] rounded-3xl bg-muted p-6 md:p-8 flex flex-col overflow-hidden"
+              >
+                <div className="prose dark:prose-invert max-w-none">
+                  <p className="text-base md:text-lg leading-relaxed">
+                    {currentProject.description}
+                  </p>
+                </div>
+              </motion.div>
+            </AnimatePresence>
           </div>
 
           {/* Video Section */}
-          <div className="order-1 lg:order-2 lg:col-span-7 relative overflow-hidden rounded-3xl group aspect-video lg:aspect-auto">
-            {/* Background Video */}
-            <div className="relative w-full h-full overflow-hidden">
-              <iframe
-                className="absolute inset-0 w-full h-full object-cover 
-               lg:scale-[2]   
-               scale-100 translate-x-0 translate-y-0"
-                src={`https://www.youtube.com/embed/${currentProject.videoId}?autoplay=1&loop=1&playlist=${currentProject.videoId}&controls=0&mute=1&showinfo=0&rel=0`}
-                title="Behind the Scenes"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              ></iframe>
-            </div>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentProject.number}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.05 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="order-1 lg:order-2 lg:col-span-7 relative overflow-hidden rounded-3xl group aspect-video lg:aspect-auto"
+            >
+              {/* Rest of the video section content remains the same */}
+              <div className="relative w-full h-full overflow-hidden">
+                <iframe
+                  className="absolute inset-0 w-full h-full object-cover lg:scale-[2.2] scale-100 translate-x-0 translate-y-0"
+                  src={`https://www.youtube.com/embed/${currentProject.videoId}?autoplay=1&loop=1&playlist=${currentProject.videoId}&controls=0&mute=1&showinfo=0&rel=0`}
+                  title="Behind the Scenes"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                ></iframe>
+              </div>
 
-            {/* Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
 
-            {/* Play Button */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <Button
-                variant="outline"
-                size="icon"
-                className="w-16 h-16 rounded-full bg-black/50 hover:bg-black/70 border-white/50 hover:border-white transition-all duration-300 group-hover:scale-110"
-                onClick={() => setShowVideo(true)}
-              >
-                <Play className="h-8 w-8 text-white" />
-              </Button>
-            </div>
-          </div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="w-16 h-16 rounded-full bg-black/50 hover:bg-black/70 border-white/50 hover:border-white transition-all duration-300 group-hover:scale-110"
+                  onClick={() => setShowVideo(true)}
+                >
+                  <Play className="h-8 w-8 text-white" />
+                </Button>
+              </div>
+            </motion.div>
+          </AnimatePresence>
         </div>
       </div>
 
