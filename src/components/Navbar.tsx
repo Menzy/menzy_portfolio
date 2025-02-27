@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,10 +7,41 @@ import { Cart } from "@/components/Cart";
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
   const location = useLocation();
   const isHomePage = location.pathname === "/";
   const isShopPage = location.pathname === "/shop";
   const isItemDetailsPage = location.pathname.startsWith("/shop/");
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      const heroSection = document.querySelector("#hero"); // Add id="hero" to your hero section
+
+      if (!heroSection) return;
+
+      const heroHeight = heroSection.getBoundingClientRect().height;
+
+      // Show navbar at the very top
+      if (currentScrollY < 100) {
+        setIsVisible(true);
+      }
+      // Hide navbar during hero section
+      else if (currentScrollY < heroHeight) {
+        setIsVisible(false);
+      }
+      // Show navbar after hero section is completely scrolled past
+      else if (currentScrollY > heroHeight) {
+        setIsVisible(true);
+      }
+
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [lastScrollY]);
 
   const scrollToSection = (sectionId: string) => {
     if (isHomePage) {
@@ -23,7 +54,11 @@ export function Navbar() {
   };
 
   return (
-    <div className="fixed w-full z-50 p-4">
+    <div
+      className={`fixed w-full z-50 p-4 transition-transform duration-300 ${
+        isVisible ? "translate-y-0" : "-translate-y-full"
+      }`}
+    >
       <nav
         className={`max-w-6xl mx-auto bg-background/80 backdrop-blur-md shadow-lg border overflow-hidden ${
           isMenuOpen ? "rounded-2xl" : "rounded-2xl md:rounded-full"
