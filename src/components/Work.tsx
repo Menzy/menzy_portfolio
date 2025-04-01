@@ -89,7 +89,7 @@ export function Work() {
                 <img
                   src={project.thumbnail}
                   alt={project.title}
-                  className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-110"
+                  className="object-cover w-full h-full transform transition-[transform] duration-500 will-change-transform group-hover:scale-110"
                 />
                 <Dialog>
                   <DialogTrigger asChild>

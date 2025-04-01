@@ -55,21 +55,20 @@ export function Navbar() {
 
   return (
     <div
-      className={`fixed w-full z-50 p-4 transition-transform duration-300 ${
+      className={`fixed w-full z-50 p-2 transition-transform duration-300 ${
         isVisible ? "translate-y-0" : "-translate-y-full"
       }`}
     >
       <nav
         className={`max-w-6xl mx-auto bg-background/80 backdrop-blur-md shadow-lg border overflow-hidden ${
-          isMenuOpen ? "rounded-2xl" : "rounded-2xl md:rounded-full"
+          isMenuOpen ? "rounded-xl" : "rounded-xl md:rounded-full"
         }`}
       >
-        <div className="px-3 py-3 flex justify-between items-center">
+        <div className="px-2 py-2 flex justify-between items-center">
           <Link
             to="/"
-            className="text-2xl font-bold hover:text-primary transition-colors px-4 flex items-center gap-2"
+            className="text-xl font-bold hover:text-primary transition-colors px-3 flex items-center gap-2"
           >
-            {/* <img src={logo} alt="Logo" className="w-8 h-8" /> */}
             Wan Menzy
           </Link>
 
@@ -87,13 +86,19 @@ export function Navbar() {
               </span>
               <span className="absolute inset-x-0 -bottom-1 h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform"></span>
             </Link>
+            <Link to="/timelapse" className="relative group">
+              <span className="text-foreground/80 hover:text-primary transition-colors">
+                Timelapse
+              </span>
+              <span className="absolute inset-x-0 -bottom-1 h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform"></span>
+            </Link>
             {(isShopPage || isItemDetailsPage) && <Cart />}
             <ThemeToggle />
             {isHomePage ? (
               <Button
                 onClick={() => scrollToSection("contact")}
                 variant="default"
-                className="rounded-full h-12 px-8 text-base font-medium ml-4"
+                className="rounded-full h-9 px-6 text-sm font-medium ml-4"
               >
                 Let's Work
               </Button>
@@ -142,6 +147,13 @@ export function Navbar() {
                 className="flex items-center text-lg font-medium text-foreground/80 hover:text-primary transition-colors"
               >
                 Shop
+              </Link>
+              <Link
+                to="/timelapse"
+                onClick={() => setIsMenuOpen(false)}
+                className="flex items-center text-lg font-medium text-foreground/80 hover:text-primary transition-colors"
+              >
+                Timelapse
               </Link>
               <div className="flex items-center space-x-4">
                 {(isShopPage || isItemDetailsPage) && <Cart />}

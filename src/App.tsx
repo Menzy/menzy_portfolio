@@ -7,6 +7,9 @@ import { BlogPage } from "@/pages/BlogPage";
 import { BlogPostPage } from "@/pages/BlogPostPage";
 import { ShopPage } from "@/pages/ShopPage";
 import { ProductPage } from "@/pages/ProductPage";
+import { TimelapseAppPage } from "@/pages/TimelapseAppPage";
+import { PrivacyPolicyPage } from "@/pages/PrivacyPolicyPage";
+import { TermsOfServicePage } from "@/pages/TermsOfServicePage";
 import { Loader } from "@/components/Loader";
 import { Analytics } from "@vercel/analytics/react";
 
@@ -22,6 +25,9 @@ function App() {
           <Route path="/blog/:slug" element={<BlogPostPage />} />
           <Route path="/shop" element={<ShopPage />} />
           <Route path="/shop/:slug" element={<ProductPage />} />
+          <Route path="/timelapse" element={<TimelapseAppPage />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+          <Route path="/terms" element={<TermsOfServicePage />} />
         </Routes>
         <Toaster />
         <Analytics />
