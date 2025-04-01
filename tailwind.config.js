@@ -27,6 +27,8 @@ export default {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         scroll: 'scroll 30s linear infinite',
+        'blob': 'blob 10s infinite alternate',
+        'pulse': 'pulse 8s cubic-bezier(0.4, 0, 0.6, 1) infinite',
       },
       borderRadius: {
         lg: 'var(--radius)',
@@ -83,6 +85,16 @@ export default {
         scroll: {
           '0%': { transform: 'translateX(0)' },
           '100%': { transform: 'translateX(calc(-50% - 3rem))' },
+        },
+        blob: {
+          '0%': { transform: 'translate(0, 0) scale(1)' },
+          '33%': { transform: 'translate(30px, -30px) scale(1.1)' },
+          '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+          '100%': { transform: 'translate(0, 0) scale(1)' },
+        },
+        pulse: {
+          '0%, 100%': { opacity: 1 },
+          '50%': { opacity: 0.7 },
         },
       },
     },

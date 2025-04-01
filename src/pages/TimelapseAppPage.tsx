@@ -52,56 +52,64 @@ export function TimelapseAppPage() {
       <TimelapseNavbar />
       
       {/* Hero Section */}
-      <section className="container mx-auto px-4 pt-4 pb-12 md:pt-6 md:pb-24 scroll-mt-16" id="hero">
-        <div className="flex flex-col items-center text-center">
-          <ThemeLogo width={80} height={80} className="mb-6" roundedSize="rounded-xl" />
-          <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">TimeLapse</h1>
-          <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mb-8">
-            Visual Time Tracking & Goal Achievement
-          </p>
-          <p className="text-lg text-muted-foreground max-w-3xl mb-8">
-            An elegant and intuitive time tracking application that helps you visualize the passage of time and track your goals in a meaningful way.
-          </p>
-          <Button size="lg" className="mb-12">
-            <AppleLogo className="mr-2" /> Download on App Store
-          </Button>
+      <section className="relative min-h-screen w-full flex items-center justify-center overflow-hidden" id="hero">
+        {/* Animated Blob */}
+        <div className="absolute w-[800px] h-[800px] opacity-30 animate-blob filter blur-3xl">
+          <div className="absolute top-0 left-0 w-full h-full rounded-full bg-gradient-to-r from-primary via-primary/60 to-primary/40 animate-pulse" 
+               style={{ animationDuration: '8s' }}></div>
+          <div className="absolute top-[10%] left-[10%] w-[80%] h-[80%] rounded-full bg-gradient-to-l from-primary/80 via-primary/60 to-primary/40 animate-pulse" 
+               style={{ animationDuration: '10s', animationDelay: '1s' }}></div>
         </div>
         
-        {/* App Screenshots */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
-          <img 
-            src="/assets/appdemo/optimized/Frame1.jpg" 
-            alt="TimeLapse App Screenshot 1" 
-            className="rounded-2xl shadow-xl w-full h-auto"
-            loading="lazy"
-            width={380}
-            height={720}
-          />
-          <img 
-            src="/assets/appdemo/optimized/Frame2.jpg" 
-            alt="TimeLapse App Screenshot 2" 
-            className="rounded-2xl shadow-xl w-full h-auto"
-            loading="lazy"
-            width={380}
-            height={720}
-          />
-          <img 
-            src="/assets/appdemo/optimized/Frame3.jpg" 
-            alt="TimeLapse App Screenshot 3" 
-            className="rounded-2xl shadow-xl w-full h-auto"
-            loading="lazy"
-            width={380}
-            height={720}
-          />
+        <div className="container mx-auto px-4 z-10 text-center relative">
+          <ThemeLogo width={80} height={80} className="mb-6 mx-auto animate-fade-in" roundedSize="rounded-xl" />
+          <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6 animate-slide-up" style={{ animationDelay: '0.2s' }}>TimeLapse</h1>
+          <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto mb-8 animate-slide-up" style={{ animationDelay: '0.4s' }}>
+            Visual Time Tracking & Goal Achievement
+          </p>
+          <p className="text-lg text-muted-foreground max-w-3xl mx-auto mb-8 animate-slide-up" style={{ animationDelay: '0.6s' }}>
+            An elegant and intuitive time tracking application that helps you visualize the passage of time and track your goals in a meaningful way.
+          </p>
+          <Button size="lg" className="mb-12 animate-fade-in" style={{ animationDelay: '0.8s' }}>
+            <AppleLogo className="mr-2" /> Download on App Store
+          </Button>
+          
+          {/* App Screenshots */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8 animate-fade-in" style={{ animationDelay: '1s' }}>
+            <img 
+              src="/assets/appdemo/optimized/Frame1.jpg" 
+              alt="TimeLapse App Screenshot 1" 
+              className="rounded-2xl shadow-xl w-full h-auto"
+              loading="lazy"
+              width={380}
+              height={720}
+            />
+            <img 
+              src="/assets/appdemo/optimized/Frame2.jpg" 
+              alt="TimeLapse App Screenshot 2" 
+              className="rounded-2xl shadow-xl w-full h-auto"
+              loading="lazy"
+              width={380}
+              height={720}
+            />
+            <img 
+              src="/assets/appdemo/optimized/Frame3.jpg" 
+              alt="TimeLapse App Screenshot 3" 
+              className="rounded-2xl shadow-xl w-full h-auto"
+              loading="lazy"
+              width={380}
+              height={720}
+            />
+          </div>
         </div>
       </section>
       
       {/* Features Section */}
-      <section className="bg-muted py-16 scroll-mt-16" id="features">
+      <section className="py-16 scroll-mt-16 border-t" id="features">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Key Features</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div className="bg-card p-6 rounded-lg shadow-md">
+            <div className="bg-card/50 border p-6 rounded-lg shadow-sm">
               <div className="flex items-center mb-4">
                 <Calendar className="h-6 w-6 text-primary mr-3" />
                 <h3 className="text-xl font-semibold">Year Tracker</h3>
@@ -114,7 +122,7 @@ export function TimelapseAppPage() {
               </ul>
             </div>
             
-            <div className="bg-card p-6 rounded-lg shadow-md">
+            <div className="bg-card/50 border p-6 rounded-lg shadow-sm">
               <div className="flex items-center mb-4">
                 <Target className="h-6 w-6 text-primary mr-3" />
                 <h3 className="text-xl font-semibold">Event Tracking</h3>
@@ -127,7 +135,7 @@ export function TimelapseAppPage() {
               </ul>
             </div>
             
-            <div className="bg-card p-6 rounded-lg shadow-md">
+            <div className="bg-card/50 border p-6 rounded-lg shadow-sm">
               <div className="flex items-center mb-4">
                 <Paintbrush className="h-6 w-6 text-primary mr-3" />
                 <h3 className="text-xl font-semibold">Display Styles</h3>
@@ -140,7 +148,7 @@ export function TimelapseAppPage() {
               </ul>
             </div>
             
-            <div className="bg-card p-6 rounded-lg shadow-md">
+            <div className="bg-card/50 border p-6 rounded-lg shadow-sm">
               <div className="flex items-center mb-4">
                 <Clock className="h-6 w-6 text-primary mr-3" />
                 <h3 className="text-xl font-semibold">Smart Features</h3>
@@ -157,11 +165,11 @@ export function TimelapseAppPage() {
       </section>
       
       {/* Benefits Section */}
-      <section className="container mx-auto px-4 py-16 scroll-mt-16" id="benefits">
+      <section className="container mx-auto px-4 py-16 scroll-mt-16 border-t" id="benefits">
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Benefits</h2>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-          <div className="text-center p-6">
+          <div className="bg-card/50 border rounded-lg text-center p-6">
             <div className="flex justify-center mb-4">
               <div className="rounded-full bg-primary/10 p-4">
                 <Clock className="h-10 w-10 text-primary" />
@@ -174,7 +182,7 @@ export function TimelapseAppPage() {
             </p>
           </div>
           
-          <div className="text-center p-6">
+          <div className="bg-card/50 border rounded-lg text-center p-6">
             <div className="flex justify-center mb-4">
               <div className="rounded-full bg-primary/10 p-4">
                 <Target className="h-10 w-10 text-primary" />
@@ -187,7 +195,7 @@ export function TimelapseAppPage() {
             </p>
           </div>
           
-          <div className="text-center p-6">
+          <div className="bg-card/50 border rounded-lg text-center p-6">
             <div className="flex justify-center mb-4">
               <div className="rounded-full bg-primary/10 p-4">
                 <Calendar className="h-10 w-10 text-primary" />
@@ -210,7 +218,7 @@ export function TimelapseAppPage() {
             width={480}
             height={330}
           />
-          <div className="order-1 md:order-2">
+          <div className="order-1 md:order-2 bg-card/50 border rounded-lg p-6">
             <h2 className="text-3xl md:text-4xl font-bold mb-6">Customization Options</h2>
             <ul className="text-lg text-muted-foreground space-y-4 mb-6">
               <li className="flex items-start">
@@ -246,7 +254,7 @@ export function TimelapseAppPage() {
       </section>
       
       {/* Getting Started Section */}
-      <section className="bg-muted py-16 scroll-mt-16" id="getting-started">
+      <section className="py-16 scroll-mt-16 border-t" id="getting-started">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-8">Getting Started</h2>
           <p className="text-lg text-muted-foreground text-center max-w-3xl mx-auto mb-10">
@@ -254,7 +262,7 @@ export function TimelapseAppPage() {
           </p>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-card rounded-lg p-6 relative">
+            <div className="bg-card/50 border rounded-lg p-6 relative">
               <div className="absolute -top-5 left-5 w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold">1</div>
               <h3 className="text-xl font-semibold mb-3 mt-4">Year Tracking</h3>
               <p className="text-muted-foreground">
@@ -262,7 +270,7 @@ export function TimelapseAppPage() {
               </p>
             </div>
             
-            <div className="bg-card rounded-lg p-6 relative">
+            <div className="bg-card/50 border rounded-lg p-6 relative">
               <div className="absolute -top-5 left-5 w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold">2</div>
               <h3 className="text-xl font-semibold mb-3 mt-4">Adding Events</h3>
               <p className="text-muted-foreground">
@@ -270,7 +278,7 @@ export function TimelapseAppPage() {
               </p>
             </div>
             
-            <div className="bg-card rounded-lg p-6 relative">
+            <div className="bg-card/50 border rounded-lg p-6 relative">
               <div className="absolute -top-5 left-5 w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold">3</div>
               <h3 className="text-xl font-semibold mb-3 mt-4">Customization</h3>
               <p className="text-muted-foreground">
@@ -278,7 +286,7 @@ export function TimelapseAppPage() {
               </p>
             </div>
             
-            <div className="bg-card rounded-lg p-6 relative">
+            <div className="bg-card/50 border rounded-lg p-6 relative">
               <div className="absolute -top-5 left-5 w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold">4</div>
               <h3 className="text-xl font-semibold mb-3 mt-4">Regular Check-ins</h3>
               <p className="text-muted-foreground">
@@ -290,17 +298,17 @@ export function TimelapseAppPage() {
       </section>
       
       {/* CTA Section */}
-      <section className="bg-primary text-primary-foreground py-16 scroll-mt-16" id="download">
+      <section className="py-16 scroll-mt-16 border-t" id="download">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-6">Ready to visualize your time?</h2>
           <p className="text-xl max-w-2xl mx-auto mb-8">
             Download TimeLapse now and start tracking your goals with beautiful visual representations.
           </p>
-          <Button size="lg" variant="secondary" className="mb-4">
+          <Button size="lg" className="mb-4">
             <AppleLogo className="mr-2" /> Download on App Store
           </Button>
           <div className="mt-8">
-            <a href="/privacy-policy" className="flex items-center justify-center text-primary-foreground/80 hover:text-primary-foreground">
+            <a href="/privacy-policy" className="flex items-center justify-center text-muted-foreground hover:text-foreground">
               <Shield className="mr-2 h-4 w-4" /> Privacy Policy
             </a>
           </div>
