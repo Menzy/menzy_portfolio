@@ -158,7 +158,7 @@ export function PrivacyPolicyPage() {
               If you have any questions or suggestions about our Privacy Policy, please contact us at:
             </p>
             <p className="mt-2">
-              <strong>Email:</strong> wanamenzy@gmail.com
+              <strong>Email:</strong> wanmenzy@gmail.com
             </p>
           </section>
         </div>

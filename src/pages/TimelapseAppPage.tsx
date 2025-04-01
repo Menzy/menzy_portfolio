@@ -70,19 +70,28 @@ export function TimelapseAppPage() {
         {/* App Screenshots */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
           <img 
-            src="/assets/appdemo/Frame1.jpg" 
+            src="/assets/appdemo/optimized/Frame1.jpg" 
             alt="TimeLapse App Screenshot 1" 
             className="rounded-2xl shadow-xl w-full h-auto"
+            loading="lazy"
+            width={380}
+            height={720}
           />
           <img 
-            src="/assets/appdemo/Frame2.jpg" 
+            src="/assets/appdemo/optimized/Frame2.jpg" 
             alt="TimeLapse App Screenshot 2" 
             className="rounded-2xl shadow-xl w-full h-auto"
+            loading="lazy"
+            width={380}
+            height={720}
           />
           <img 
-            src="/assets/appdemo/Frame3.jpg" 
+            src="/assets/appdemo/optimized/Frame3.jpg" 
             alt="TimeLapse App Screenshot 3" 
             className="rounded-2xl shadow-xl w-full h-auto"
+            loading="lazy"
+            width={380}
+            height={720}
           />
         </div>
       </section>
@@ -194,9 +203,12 @@ export function TimelapseAppPage() {
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
           <img 
-            src="/assets/appdemo/Frame4.png" 
+            src="/assets/appdemo/optimized/Frame4.png" 
             alt="TimeLapse App Advanced Controls" 
-            className="rounded-2xl w-full h-auto order-2 md:order-1"
+            className="rounded-2xl w-full h-auto max-w-md mx-auto order-2 md:order-1"
+            loading="lazy"
+            width={480}
+            height={330}
           />
           <div className="order-1 md:order-2">
             <h2 className="text-3xl md:text-4xl font-bold mb-6">Customization Options</h2>
