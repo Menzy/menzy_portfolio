@@ -61,7 +61,7 @@ export function TimelapseAppPage() {
                style={{ animationDuration: '10s', animationDelay: '1s' }}></div>
         </div>
         
-        <div className="container mx-auto px-4 z-10 text-center relative">
+        <div className="container mx-auto px-4 z-10 text-center relative pt-24 md:pt-32">
           <ThemeLogo width={80} height={80} className="mb-6 mx-auto animate-fade-in" roundedSize="rounded-xl" />
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6 animate-slide-up" style={{ animationDelay: '0.2s' }}>TimeLapse</h1>
           <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto mb-8 animate-slide-up" style={{ animationDelay: '0.4s' }}>
@@ -105,7 +105,7 @@ export function TimelapseAppPage() {
       </section>
       
       {/* Features Section */}
-      <section className="py-16 scroll-mt-16 border-t" id="features">
+      <section className="py-16 scroll-mt-16" id="features">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Key Features</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -165,7 +165,7 @@ export function TimelapseAppPage() {
       </section>
       
       {/* Benefits Section */}
-      <section className="container mx-auto px-4 py-16 scroll-mt-16 border-t" id="benefits">
+      <section className="container mx-auto px-4 py-16 scroll-mt-16" id="benefits">
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Benefits</h2>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
@@ -254,7 +254,7 @@ export function TimelapseAppPage() {
       </section>
       
       {/* Getting Started Section */}
-      <section className="py-16 scroll-mt-16 border-t" id="getting-started">
+      <section className="py-16 scroll-mt-16" id="getting-started">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-8">Getting Started</h2>
           <p className="text-lg text-muted-foreground text-center max-w-3xl mx-auto mb-10">
@@ -298,7 +298,7 @@ export function TimelapseAppPage() {
       </section>
       
       {/* CTA Section */}
-      <section className="py-16 scroll-mt-16 border-t" id="download">
+      <section className="py-16 scroll-mt-16" id="download">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-6">Ready to visualize your time?</h2>
           <p className="text-xl max-w-2xl mx-auto mb-8">
@@ -307,11 +307,7 @@ export function TimelapseAppPage() {
           <Button size="lg" className="mb-4">
             <AppleLogo className="mr-2" /> Download on App Store
           </Button>
-          <div className="mt-8">
-            <a href="/privacy-policy" className="flex items-center justify-center text-muted-foreground hover:text-foreground">
-              <Shield className="mr-2 h-4 w-4" /> Privacy Policy
-            </a>
-          </div>
+          
         </div>
       </section>
       
