@@ -113,13 +113,13 @@ export function TimelapseFooter() {
             <h3 className="font-semibold mb-4">Legal</h3>
             <ul className="space-y-2">
               <li>
-                <Link to="/privacy-policy" className="text-muted-foreground hover:text-foreground transition-colors flex items-center">
-                  <Shield className="h-4 w-4 mr-2" /> Privacy Policy
+                <Link to="/timelapse/support" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Support
                 </Link>
               </li>
               <li>
-                <Link to="/terms" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Terms of Service
+                <Link to="/privacy-policy" className="text-muted-foreground hover:text-foreground transition-colors flex items-center">
+                  <Shield className="h-4 w-4 mr-2" /> Privacy Policy
                 </Link>
               </li>
             </ul>

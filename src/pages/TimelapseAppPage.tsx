@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Shield, Clock, Target, Calendar, Paintbrush } from 'lucide-react';
+import { ArrowRight, Shield, Clock, Target, Calendar, Paintbrush, MessageCircle } from 'lucide-react';
 import { TimelapseNavbar } from '@/components/TimelapseNavbar';
 import { TimelapseFooter } from '@/components/TimelapseFooter';
 import { ThemeLogo } from '@/components/ThemeLogo';
@@ -70,9 +70,14 @@ export function TimelapseAppPage() {
           <p className="text-lg text-muted-foreground max-w-3xl mx-auto mb-8 animate-slide-up" style={{ animationDelay: '0.6s' }}>
             An elegant and intuitive time tracking application that helps you visualize the passage of time and track your goals in a meaningful way.
           </p>
-          <Button size="lg" className="mb-12 animate-fade-in" style={{ animationDelay: '0.8s' }}>
-            <AppleLogo className="mr-2" /> Download on App Store
-          </Button>
+          <div className="flex flex-col items-center gap-3 animate-fade-in" style={{ animationDelay: '0.8s' }}>
+            <Button size="lg" className="mb-2">
+              <AppleLogo className="mr-2" /> Download on App Store
+            </Button>
+            <span className="text-sm text-muted-foreground">
+              Need help? <a href="/timelapse/support" className="text-primary hover:underline">Visit our support page</a>
+            </span>
+          </div>
           
           {/* App Screenshots */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8 animate-fade-in" style={{ animationDelay: '1s' }}>
@@ -308,6 +313,14 @@ export function TimelapseAppPage() {
             <AppleLogo className="mr-2" /> Download on App Store
           </Button>
           
+          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8">
+            <a href="/timelapse/support" className="flex items-center text-muted-foreground hover:text-foreground">
+              <MessageCircle className="mr-2 h-4 w-4" /> Support
+            </a>
+            <a href="/privacy-policy" className="flex items-center text-muted-foreground hover:text-foreground">
+              <Shield className="mr-2 h-4 w-4" /> Privacy Policy
+            </a>
+          </div>
         </div>
       </section>
       

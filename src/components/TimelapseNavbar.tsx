@@ -115,6 +115,13 @@ export function TimelapseNavbar() {
             )}
             
             <Link 
+              to="/timelapse/support" 
+              className="text-foreground/80 hover:text-primary transition-colors"
+            >
+              Support
+            </Link>
+            
+            <Link 
               to="/privacy-policy" 
               className="text-foreground/80 hover:text-primary transition-colors"
             >
@@ -208,6 +215,14 @@ export function TimelapseNavbar() {
                   Getting Started
                 </Link>
               )}
+              
+              <Link 
+                to="/timelapse/support" 
+                className="text-foreground/80 hover:text-primary transition-colors text-lg font-medium"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Support
+              </Link>
               
               <Link 
                 to="/privacy-policy" 

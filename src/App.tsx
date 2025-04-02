@@ -8,6 +8,7 @@ import { BlogPostPage } from "@/pages/BlogPostPage";
 import { ShopPage } from "@/pages/ShopPage";
 import { ProductPage } from "@/pages/ProductPage";
 import { TimelapseAppPage } from "@/pages/TimelapseAppPage";
+import { TimelapseSupportPage } from "@/pages/TimelapseSupportPage";
 import { PrivacyPolicyPage } from "@/pages/PrivacyPolicyPage";
 import { TermsOfServicePage } from "@/pages/TermsOfServicePage";
 import { Loader } from "@/components/Loader";
@@ -26,6 +27,7 @@ function App() {
           <Route path="/shop" element={<ShopPage />} />
           <Route path="/shop/:slug" element={<ProductPage />} />
           <Route path="/timelapse" element={<TimelapseAppPage />} />
+          <Route path="/timelapse/support" element={<TimelapseSupportPage />} />
           <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
           <Route path="/terms" element={<TermsOfServicePage />} />
         </Routes>
