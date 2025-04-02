@@ -1,4 +1,3 @@
-import { Button } from '@/components/ui/button';
 import { Mail, Shield } from 'lucide-react';
 import { TimelapseNavbar } from '@/components/TimelapseNavbar';
 import { TimelapseFooter } from '@/components/TimelapseFooter';
