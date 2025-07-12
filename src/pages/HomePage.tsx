@@ -2,8 +2,7 @@ import { Navbar } from '@/components/Navbar';
 import { Hero } from '@/components/Hero';
 import { LogoTicker } from '@/components/LogoTicker';
 import { Work } from '@/components/Work';
-import { BehindScenes } from '@/components/BehindScenes';
-import { About } from '@/components/About';
+import { Projects } from '@/components/Projects';
 import { Contact } from '@/components/Contact';
 import { Footer } from '@/components/Footer';
 
@@ -14,8 +13,7 @@ export function HomePage() {
       <Hero />
       <LogoTicker />
       <Work />
-      <BehindScenes />
-      <About />
+      <Projects />
       <Contact />
       <Footer />
     </div>
