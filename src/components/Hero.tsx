@@ -6,8 +6,20 @@ export function Hero() {
   const videoRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [hasUserInteracted, setHasUserInteracted] = useState(false);
 
   useEffect(() => {
+    // Detect mobile device
+    const checkMobile = () => {
+      const userAgent = navigator.userAgent.toLowerCase();
+      const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/.test(userAgent);
+      const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+      setIsMobile(isMobileDevice || isTouchDevice);
+    };
+
+    checkMobile();
+
     const handleScroll = () => {
       if (!videoRef.current || !contentRef.current) return;
 
@@ -28,9 +40,23 @@ export function Hero() {
       }
     };
 
+    // Handle user interaction for mobile autoplay
+    const handleUserInteraction = () => {
+      if (isMobile && !hasUserInteracted) {
+        setHasUserInteracted(true);
+      }
+    };
+
     window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+    window.addEventListener("touchstart", handleUserInteraction, { once: true });
+    window.addEventListener("click", handleUserInteraction, { once: true });
+    
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("touchstart", handleUserInteraction);
+      window.removeEventListener("click", handleUserInteraction);
+    };
+  }, [isMobile, hasUserInteracted]);
 
   return (
     <section
@@ -49,7 +75,7 @@ export function Hero() {
         <div className="relative w-full h-full">
           <iframe
             className="absolute w-[177.78vh] h-[100vw] min-w-full min-h-full left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 md:w-[200%] md:h-[200%] md:-left-[50%] md:-top-[50%] md:translate-x-0 md:translate-y-0 lg:w-[120%] lg:h-[120%] lg:-left-[10%] lg:-top-[10%]"
-            src="https://www.youtube.com/embed/rzjF6_uxkJw?autoplay=1&loop=1&playlist=rzjF6_uxkJw&controls=0&mute=1&showinfo=0&rel=0&playsinline=1&vq=hd1080&hd=1&modestbranding=1"
+            src={`https://www.youtube.com/embed/rzjF6_uxkJw?${isMobile ? (hasUserInteracted ? 'autoplay=1' : 'autoplay=0') : 'autoplay=1'}&loop=1&playlist=rzjF6_uxkJw&controls=0&mute=1&showinfo=0&rel=0&playsinline=1&vq=hd1080&hd=1&modestbranding=1`}
             title="Background Video"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             style={{ pointerEvents: "none" }}
@@ -60,6 +86,20 @@ export function Hero() {
           {!isVideoLoaded && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/50">
               <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          )}
+
+          {/* Mobile play prompt */}
+          {isMobile && !hasUserInteracted && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/30 z-20">
+              <div className="text-center text-white">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm">
+                  <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z"/>
+                  </svg>
+                </div>
+                <p className="text-sm opacity-80">Tap to play video</p>
+              </div>
             </div>
           )}
         </div>
