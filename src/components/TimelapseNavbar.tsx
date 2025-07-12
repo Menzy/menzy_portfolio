@@ -84,22 +84,6 @@ export function TimelapseNavbar() {
             
             {isMainPage ? (
               <button 
-                onClick={() => handleNavigation('benefits')} 
-                className="text-foreground/80 hover:text-primary transition-colors cursor-pointer appearance-none bg-transparent border-none p-0 font-inherit"
-              >
-                Benefits
-              </button>
-            ) : (
-              <Link 
-                to="/timelapse#benefits" 
-                className="text-foreground/80 hover:text-primary transition-colors"
-              >
-                Benefits
-              </Link>
-            )}
-            
-            {isMainPage ? (
-              <button 
                 onClick={() => handleNavigation('getting-started')} 
                 className="text-foreground/80 hover:text-primary transition-colors cursor-pointer appearance-none bg-transparent border-none p-0 font-inherit"
               >
@@ -128,24 +112,6 @@ export function TimelapseNavbar() {
               Privacy
             </Link>
             <ThemeToggle />
-            
-            {isMainPage ? (
-              <Button 
-                size="sm" 
-                onClick={() => handleNavigation('download')}
-              >
-                <AppleLogo className="mr-2" /> Download
-              </Button>
-            ) : (
-              <Button 
-                size="sm" 
-                asChild
-              >
-                <Link to="/timelapse#download">
-                  <AppleLogo className="mr-2" /> Download
-                </Link>
-              </Button>
-            )}
           </div>
           
           <div className="md:hidden flex items-center space-x-2">
@@ -184,23 +150,6 @@ export function TimelapseNavbar() {
               
               {isMainPage ? (
                 <button 
-                  onClick={() => handleNavigation('benefits')} 
-                  className="text-foreground/80 hover:text-primary transition-colors cursor-pointer appearance-none bg-transparent border-none p-0 text-lg font-medium text-left"
-                >
-                  Benefits
-                </button>
-              ) : (
-                <Link 
-                  to="/timelapse#benefits" 
-                  className="text-foreground/80 hover:text-primary transition-colors text-lg font-medium"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Benefits
-                </Link>
-              )}
-              
-              {isMainPage ? (
-                <button 
                   onClick={() => handleNavigation('getting-started')} 
                   className="text-foreground/80 hover:text-primary transition-colors cursor-pointer appearance-none bg-transparent border-none p-0 text-lg font-medium text-left"
                 >
@@ -231,28 +180,10 @@ export function TimelapseNavbar() {
               >
                 Privacy
               </Link>
-              
-              {isMainPage ? (
-                <Button 
-                  onClick={() => handleNavigation('download')} 
-                  className="w-full justify-center mt-2"
-                >
-                  <AppleLogo className="mr-2" /> Download App
-                </Button>
-              ) : (
-                <Button className="w-full justify-center mt-2" asChild>
-                  <Link 
-                    to="/timelapse#download"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <AppleLogo className="mr-2" /> Download App
-                  </Link>
-                </Button>
-              )}
             </nav>
           </div>
         )}
       </div>
     </div>
   );
-} 
+}

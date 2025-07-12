@@ -58,23 +58,6 @@ export function TimelapseFooter() {
               <li>
                 {isMainPage ? (
                   <button 
-                    onClick={() => scrollToSection('benefits')}
-                    className="text-muted-foreground hover:text-foreground transition-colors text-left w-full cursor-pointer appearance-none bg-transparent border-none p-0 font-inherit"
-                  >
-                    Benefits
-                  </button>
-                ) : (
-                  <Link 
-                    to="/timelapse#benefits"
-                    className="text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    Benefits
-                  </Link>
-                )}
-              </li>
-              <li>
-                {isMainPage ? (
-                  <button 
                     onClick={() => scrollToSection('getting-started')}
                     className="text-muted-foreground hover:text-foreground transition-colors text-left w-full cursor-pointer appearance-none bg-transparent border-none p-0 font-inherit"
                   >
@@ -137,7 +120,7 @@ export function TimelapseFooter() {
                 <Twitter className="h-5 w-5" />
               </a>
               <a 
-                href="https://github.com/wanamenzy" 
+                href="https://github.com/Menzy" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-muted-foreground hover:text-foreground transition-colors"
@@ -168,4 +151,4 @@ export function TimelapseFooter() {
       </div>
     </footer>
   );
-} 
+}

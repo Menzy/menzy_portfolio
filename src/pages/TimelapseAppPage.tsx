@@ -3,24 +3,9 @@ import { ArrowRight, Shield, Clock, Target, Calendar, Paintbrush, MessageCircle 
 import { TimelapseNavbar } from '@/components/TimelapseNavbar';
 import { TimelapseFooter } from '@/components/TimelapseFooter';
 import { ThemeLogo } from '@/components/ThemeLogo';
+import { AppStoreButton } from '@/components/AppStoreButton';
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-
-// Apple logo SVG component
-function AppleLogo({ className }: { className?: string }) {
-  return (
-    <svg 
-      xmlns="http://www.w3.org/2000/svg" 
-      viewBox="0 0 384 512" 
-      fill="currentColor" 
-      className={className} 
-      width="16" 
-      height="16"
-    >
-      <path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/>
-    </svg>
-  );
-}
 
 export function TimelapseAppPage() {
   const location = useLocation();
@@ -71,9 +56,7 @@ export function TimelapseAppPage() {
             An elegant and intuitive time tracking application that helps you visualize the passage of time and track your goals in a meaningful way.
           </p>
           <div className="flex flex-col items-center gap-3 animate-fade-in" style={{ animationDelay: '0.8s' }}>
-            <Button size="lg" className="mb-2">
-              <AppleLogo className="mr-2" /> Download on App Store
-            </Button>
+            <AppStoreButton className="mb-2" />
             <span className="text-sm text-muted-foreground">
               Need help? <a href="/timelapse/support" className="text-primary hover:underline">Visit our support page</a>
             </span>
@@ -169,91 +152,50 @@ export function TimelapseAppPage() {
         </div>
       </section>
       
-      {/* Benefits Section */}
-      <section className="container mx-auto px-4 py-16 scroll-mt-16" id="benefits">
-        <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Benefits</h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-          <div className="bg-card/50 border rounded-lg text-center p-6">
-            <div className="flex justify-center mb-4">
-              <div className="rounded-full bg-primary/10 p-4">
-                <Clock className="h-10 w-10 text-primary" />
-              </div>
+      {/* Customization Section */}
+      <section className="py-16 scroll-mt-16" id="customization">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+            <img 
+              src="/assets/appdemo/optimized/Frame4.png" 
+              alt="TimeLapse App Advanced Controls" 
+              className="rounded-2xl w-full h-auto max-w-md mx-auto order-2 md:order-1"
+              loading="lazy"
+              width={480}
+              height={330}
+            />
+            <div className="order-1 md:order-2 bg-card/50 border rounded-lg p-6">
+              <h2 className="text-3xl md:text-4xl font-bold mb-6">Customization Options</h2>
+              <ul className="text-lg text-muted-foreground space-y-4 mb-6">
+                <li className="flex items-start">
+                  <div className="rounded-full bg-primary/10 p-1 mr-3 mt-1">
+                    <div className="rounded-full bg-primary w-2 h-2"></div>
+                  </div>
+                  <span>Multiple background themes (Light, Dark, Dream)</span>
+                </li>
+                <li className="flex items-start">
+                  <div className="rounded-full bg-primary/10 p-1 mr-3 mt-1">
+                    <div className="rounded-full bg-primary w-2 h-2"></div>
+                  </div>
+                  <span>Customizable display colors for each event</span>
+                </li>
+                <li className="flex items-start">
+                  <div className="rounded-full bg-primary/10 p-1 mr-3 mt-1">
+                    <div className="rounded-full bg-primary w-2 h-2"></div>
+                  </div>
+                  <span>Toggle percentage display for progress tracking</span>
+                </li>
+                <li className="flex items-start">
+                  <div className="rounded-full bg-primary/10 p-1 mr-3 mt-1">
+                    <div className="rounded-full bg-primary w-2 h-2"></div>
+                  </div>
+                  <span>Flexible layout options for optimal viewing</span>
+                </li>
+              </ul>
+              <Button variant="outline" className="mb-4">
+                <ArrowRight className="mr-2 h-4 w-4" /> Learn More
+              </Button>
             </div>
-            <h3 className="text-xl font-semibold mb-3">Better Time Awareness</h3>
-            <p className="text-muted-foreground">
-              Visualize time passing in a meaningful way. Stay mindful of your yearly progress and 
-              track multiple goals simultaneously without losing sight of important dates.
-            </p>
-          </div>
-          
-          <div className="bg-card/50 border rounded-lg text-center p-6">
-            <div className="flex justify-center mb-4">
-              <div className="rounded-full bg-primary/10 p-4">
-                <Target className="h-10 w-10 text-primary" />
-              </div>
-            </div>
-            <h3 className="text-xl font-semibold mb-3">Goal Achievement</h3>
-            <p className="text-muted-foreground">
-              Monitor progress towards multiple goals with visual feedback that keeps you motivated.
-              Customize tracking to your preferences and celebrate milestones along the way.
-            </p>
-          </div>
-          
-          <div className="bg-card/50 border rounded-lg text-center p-6">
-            <div className="flex justify-center mb-4">
-              <div className="rounded-full bg-primary/10 p-4">
-                <Calendar className="h-10 w-10 text-primary" />
-              </div>
-            </div>
-            <h3 className="text-xl font-semibold mb-3">Life Organization</h3>
-            <p className="text-muted-foreground">
-              Keep all important dates in one place and track both short and long-term goals.
-              Maintain focus on what matters and easily share progress with others.
-            </p>
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-          <img 
-            src="/assets/appdemo/optimized/Frame4.png" 
-            alt="TimeLapse App Advanced Controls" 
-            className="rounded-2xl w-full h-auto max-w-md mx-auto order-2 md:order-1"
-            loading="lazy"
-            width={480}
-            height={330}
-          />
-          <div className="order-1 md:order-2 bg-card/50 border rounded-lg p-6">
-            <h2 className="text-3xl md:text-4xl font-bold mb-6">Customization Options</h2>
-            <ul className="text-lg text-muted-foreground space-y-4 mb-6">
-              <li className="flex items-start">
-                <div className="rounded-full bg-primary/10 p-1 mr-3 mt-1">
-                  <div className="rounded-full bg-primary w-2 h-2"></div>
-                </div>
-                <span>Multiple background themes (Light, Dark, Dream)</span>
-              </li>
-              <li className="flex items-start">
-                <div className="rounded-full bg-primary/10 p-1 mr-3 mt-1">
-                  <div className="rounded-full bg-primary w-2 h-2"></div>
-                </div>
-                <span>Customizable display colors for each event</span>
-              </li>
-              <li className="flex items-start">
-                <div className="rounded-full bg-primary/10 p-1 mr-3 mt-1">
-                  <div className="rounded-full bg-primary w-2 h-2"></div>
-                </div>
-                <span>Toggle percentage display for progress tracking</span>
-              </li>
-              <li className="flex items-start">
-                <div className="rounded-full bg-primary/10 p-1 mr-3 mt-1">
-                  <div className="rounded-full bg-primary w-2 h-2"></div>
-                </div>
-                <span>Flexible layout options for optimal viewing</span>
-              </li>
-            </ul>
-            <Button variant="outline" className="mb-4">
-              <ArrowRight className="mr-2 h-4 w-4" /> Learn More
-            </Button>
           </div>
         </div>
       </section>
@@ -309,9 +251,9 @@ export function TimelapseAppPage() {
           <p className="text-xl max-w-2xl mx-auto mb-8">
             Download TimeLapse now and start tracking your goals with beautiful visual representations.
           </p>
-          <Button size="lg" className="mb-4">
-            <AppleLogo className="mr-2" /> Download on App Store
-          </Button>
+          <div className="flex justify-center">
+            <AppStoreButton className="mb-4" />
+          </div>
           
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8">
             <a href="/timelapse/support" className="flex items-center text-muted-foreground hover:text-foreground">
@@ -327,4 +269,4 @@ export function TimelapseAppPage() {
       <TimelapseFooter />
     </div>
   );
-} 
+}
