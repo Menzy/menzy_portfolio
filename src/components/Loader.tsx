@@ -173,10 +173,10 @@ export function Loader() {
 
   return (
     <div className={cn(
-      "fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background transition-opacity duration-500",
+      "fixed inset-0 z-[100] flex items-center justify-center bg-background transition-opacity duration-500 h-screen w-screen",
       progress === 100 ? "opacity-0" : "opacity-100"
     )}>
-      <div className="flex flex-col items-center gap-12">
+      <div className="flex flex-col items-center justify-center gap-12">
         <div className="w-48 h-48 relative">
           <Lottie
             animationData={loadingAnimation}
