@@ -26,6 +26,9 @@
     --input: 240 5.9% 90%;
     --ring: 24 95% 50%; /* Orange ring for focus states */
     --radius: 0.75rem;
+    
+    /* Prevent scroll bounce/elastic scrolling */
+    overscroll-behavior: none;
   }
 
   .dark {
@@ -57,9 +60,11 @@
   }
   body {
     @apply bg-background text-foreground;
+    overscroll-behavior: none;
   }
   html {
     @apply scroll-smooth;
+    overscroll-behavior: none;
   }
 }
 
