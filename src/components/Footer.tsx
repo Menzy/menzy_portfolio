@@ -1,4 +1,4 @@
-import { FaInstagram, FaYoutube, FaTiktok, FaArrowUp } from "react-icons/fa";
+import { FaInstagram, FaYoutube, FaTwitter, FaArrowUp } from "react-icons/fa";
 import { Button } from "@/components/ui/button";
 import logo from "/assets/logos/1.png";
 
@@ -23,27 +23,45 @@ export function Footer() {
 
         {/* Social Links */}
         <div className="flex space-x-4 md:order-2">
-          <Button
-            variant="outline"
-            size="icon"
-            className="rounded-full hover:scale-110 transition-transform"
+          <a
+            href="https://instagram.com/1menzy"
+            target="_blank"
+            rel="noopener noreferrer"
           >
-            <FaInstagram className="h-5 w-5" />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            className="rounded-full hover:scale-110 transition-transform"
+            <Button
+              variant="outline"
+              size="icon"
+              className="rounded-full hover:scale-110 transition-transform"
+            >
+              <FaInstagram className="h-5 w-5" />
+            </Button>
+          </a>
+          <a
+            href="https://twitter.com/1menzy"
+            target="_blank"
+            rel="noopener noreferrer"
           >
-            <FaYoutube className="h-5 w-5" />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            className="rounded-full hover:scale-110 transition-transform"
+            <Button
+              variant="outline"
+              size="icon"
+              className="rounded-full hover:scale-110 transition-transform"
+            >
+              <FaTwitter className="h-5 w-5" />
+            </Button>
+          </a>
+          <a
+            href="https://youtube.com/c/wanmenzy"
+            target="_blank"
+            rel="noopener noreferrer"
           >
-            <FaTiktok className="h-5 w-5" />
-          </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="rounded-full hover:scale-110 transition-transform"
+            >
+              <FaYoutube className="h-5 w-5" />
+            </Button>
+          </a>
         </div>
 
         {/* Scroll to top button */}
