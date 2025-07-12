@@ -5,7 +5,6 @@ This is a personal portfolio website for showcasing projects, blogs, and a shop.
 ## Features
 
 - Home page with an introduction and featured projects
-- Blog section with individual blog posts
 - Shop section with product listings and individual product pages
 - Social media sidebar for easy access to social profiles
 - Themed UI with light and dark mode support

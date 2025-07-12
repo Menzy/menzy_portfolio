@@ -74,12 +74,6 @@ export function Navbar() {
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center space-x-8">
-            <Link to="/blog" className="relative group">
-              <span className="text-foreground/80 hover:text-primary transition-colors">
-                Blog
-              </span>
-              <span className="absolute inset-x-0 -bottom-1 h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform"></span>
-            </Link>
             <Link to="/shop" className="relative group">
               <span className="text-foreground/80 hover:text-primary transition-colors">
                 Shop
@@ -134,13 +128,6 @@ export function Navbar() {
                   Let's Work
                 </Button>
               ) : null}
-              <Link
-                to="/blog"
-                onClick={() => setIsMenuOpen(false)}
-                className="flex items-center text-lg font-medium text-foreground/80 hover:text-primary transition-colors"
-              >
-                Blog
-              </Link>
               <Link
                 to="/shop"
                 onClick={() => setIsMenuOpen(false)}
