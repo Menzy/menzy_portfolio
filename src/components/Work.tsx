@@ -110,7 +110,7 @@ export function Work() {
               className={`w-full max-w-6xl mx-4 overflow-hidden border-0 shadow-none`}
               style={{ 
                 backgroundColor: isDarkMode ? project.darkColor : project.lightColor,
-                borderRadius: '96px 24px 24px 24px'
+                borderRadius: '96px 24px 96px 24px'
               }}
             >
               <div className="flex flex-col md:flex-row h-full min-h-[400px]">
@@ -126,7 +126,7 @@ export function Work() {
                     <DialogTrigger asChild>
                       <Button
                         size="lg"
-                        className="w-fit rounded-full px-8 py-3 font-semibold transition-all duration-300 hover:scale-105 shadow-lg"
+                        className="w-fit rounded-full px-6 py-3 font-semibold transition-all duration-300 hover:scale-105 shadow-lg"
                         style={{
                           backgroundColor: isDarkMode ? '#ffffff' : '#ffffff',
                           color: isDarkMode ? '#353535' : '#353535',
