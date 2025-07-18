@@ -70,8 +70,8 @@ export function LogoTicker() {
   return (
     <section className="py-16 dark:bg-black bg-white">
       <div className="px-20">
-        <h3 className="text-center text-lg text-muted-foreground mb-12 animate-fade-in">
-          Brands I've worked with
+        <h3 className="text-center text-md text-muted-foreground mb-12 animate-fade-in">
+          TRUSTED BY BRANDS AT
         </h3>
         <div className="flex overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
           <motion.div
