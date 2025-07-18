@@ -97,7 +97,7 @@ export function Hero() {
                 className="text-2xl text-white/80 mb-8 animate-slide-up"
                 style={{ animationDelay: "0.4s" }}
               >
-                Award-winning filmmaker and photographer
+                Mobile Content Creator and Filmmaker
               </p>
               <Button
                 size="lg"

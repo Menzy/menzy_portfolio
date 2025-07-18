@@ -60,9 +60,16 @@ export function Navbar() {
       }`}
     >
       <nav
-        className={`max-w-6xl mx-auto bg-background/80 backdrop-blur-md shadow-lg border overflow-hidden ${
+        className={`max-w-6xl mx-auto relative overflow-hidden ${
           isMenuOpen ? "rounded-xl" : "rounded-xl md:rounded-full"
         }`}
+        style={{
+          background: 'var(--glass-bg)',
+          backdropFilter: 'blur(20px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+          border: '1px solid var(--glass-border)',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 var(--glass-border)'
+        }}
       >
         <div className="px-2 py-2 flex justify-between items-center">
           <Link
@@ -117,7 +124,15 @@ export function Navbar() {
 
         {/* Mobile Menu */}
         {isMenuOpen && (
-          <div className="md:hidden border-t bg-background/80 backdrop-blur-md">
+          <div 
+            className="md:hidden border-t"
+            style={{
+              background: 'var(--glass-bg-mobile)',
+              backdropFilter: 'blur(20px) saturate(180%)',
+              WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+              borderTop: '1px solid var(--glass-border-mobile)'
+            }}
+          >
             <div className="px-6 py-4 flex flex-col space-y-4">
               {isHomePage ? (
                 <Button
