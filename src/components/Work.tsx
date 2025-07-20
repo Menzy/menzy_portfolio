@@ -69,15 +69,12 @@ export function Work() {
     const checkDarkMode = () => {
       setIsDarkMode(document.documentElement.classList.contains('dark'));
     };
-    
     checkDarkMode();
-    
     const observer = new MutationObserver(checkDarkMode);
     observer.observe(document.documentElement, {
       attributes: true,
       attributeFilter: ['class']
     });
-    
     return () => observer.disconnect();
   }, []);
 
@@ -90,27 +87,31 @@ export function Work() {
       id="work" 
       className="relative dark:bg-black bg-white pt-20"
     >
-      {/* Header */}
-      <div className="pb-8">
+      {/* Header - Sticky */}
+      <div className="sticky top-[72px] z-10 pt-6 pb-0 mb-12">
         <div className="container">
           <h2 className="text-4xl md:text-6xl font-bold text-center">
             Featured Projects
           </h2>
         </div>
       </div>
-
-      {/* Projects Stack */}
-      <div className="space-y-8">
+      {/* Projects Stack - Sticky Stacking */}
+      <div className="relative">
         {projects.map((project, index) => (
           <div
             key={index}
-            className="flex items-start justify-center"
+            className={`flex items-start justify-center${index !== 0 ? ' mt-8' : ''}`}
+            style={{
+              position: 'sticky',
+              top: 192, // 72px navbar + 120px header+gap (pt-6+mb-12+header)
+              zIndex: 20 + index,
+            }}
           >
             <Card
               className={`w-full max-w-6xl mx-4 overflow-hidden border-0 shadow-none`}
               style={{ 
                 backgroundColor: isDarkMode ? project.darkColor : project.lightColor,
-                borderRadius: '96px 24px 96px 24px'
+                borderRadius: '96px 24px 96px 24px',
               }}
             >
               <div className="flex flex-col md:flex-row h-full min-h-[400px]">
@@ -192,8 +193,6 @@ export function Work() {
           </div>
         ))}
       </div>
-
-
     </section>
   );
 }
