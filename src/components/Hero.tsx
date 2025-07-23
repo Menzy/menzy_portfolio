@@ -35,7 +35,7 @@ export function Hero() {
   return (
     <section
       id="hero"
-      className="relative min-h-[200vh]  dark:bg-black bg-white"
+      className="relative min-h-[200vh] dark:bg-black bg-white"
     >
       {/* Video Container */}
       <div
@@ -48,20 +48,13 @@ export function Hero() {
       >
         <div className="relative w-full h-full">
           <iframe
-            className="absolute w-[177.78vh] h-[100vw] min-w-full min-h-full left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 md:w-[200%] md:h-[200%] md:-left-[50%] md:-top-[50%] md:translate-x-0 md:translate-y-0 lg:w-[120%] lg:h-[120%] lg:-left-[10%] lg:-top-[10%]"
+            className="absolute w-[177.78vh] h-[100vw] min-w-full min-h-full left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 md:w-[200%] md:h-[200%] md:-left-[50%] md:-top-[50%] md:translate-x-0 md:translate-y-0 lg:w-[160%] lg:h-[160%] lg:-left-[30%] lg:-top-[30%]"
             src="https://www.youtube.com/embed/rzjF6_uxkJw?autoplay=1&loop=1&playlist=rzjF6_uxkJw&controls=0&mute=1&showinfo=0&rel=0&playsinline=1&vq=hd1080&hd=1&modestbranding=1"
             title="Background Video"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             style={{ pointerEvents: "none" }}
             onLoad={() => setIsVideoLoaded(true)}
           />
-
-          {/* Loading state */}
-          {!isVideoLoaded && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-              <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-            </div>
-          )}
         </div>
 
         {/* Content */}
