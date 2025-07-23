@@ -93,6 +93,12 @@ export function Navbar() {
               </span>
               <span className="absolute inset-x-0 -bottom-1 h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform"></span>
             </Link>
+            <Link to="/echo" className="relative group">
+              <span className="text-foreground/80 hover:text-primary transition-colors">
+                Echo
+              </span>
+              <span className="absolute inset-x-0 -bottom-1 h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform"></span>
+            </Link>
             {(isShopPage || isItemDetailsPage) && <Cart />}
             <ThemeToggle />
             {isHomePage ? (
@@ -156,6 +162,13 @@ export function Navbar() {
                 className="flex items-center text-lg font-medium text-foreground/80 hover:text-primary transition-colors"
               >
                 Timelapse
+              </Link>
+              <Link
+                to="/echo"
+                onClick={() => setIsMenuOpen(false)}
+                className="flex items-center text-lg font-medium text-foreground/80 hover:text-primary transition-colors"
+              >
+                Echo
               </Link>
               <div className="flex items-center space-x-4">
                 {(isShopPage || isItemDetailsPage) && <Cart />}

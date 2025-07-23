@@ -9,6 +9,7 @@ import { TimelapseAppPage } from "@/pages/TimelapseAppPage";
 import { TimelapseSupportPage } from "@/pages/TimelapseSupportPage";
 import { PrivacyPolicyPage } from "@/pages/PrivacyPolicyPage";
 import { TermsOfServicePage } from "@/pages/TermsOfServicePage";
+import { EchoPage } from "@/pages/EchoPage";
 import { Loader } from "@/components/Loader";
 import { Analytics } from "@vercel/analytics/react";
 
@@ -24,6 +25,7 @@ function App() {
           <Route path="/shop/:slug" element={<ProductPage />} />
           <Route path="/timelapse" element={<TimelapseAppPage />} />
           <Route path="/timelapse/support" element={<TimelapseSupportPage />} />
+          <Route path="/echo" element={<EchoPage />} />
           <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
           <Route path="/terms" element={<TermsOfServicePage />} />
         </Routes>
