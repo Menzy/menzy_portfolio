@@ -13,19 +13,19 @@ function FloatingPaths({ position }: { position: number }) {
     } ${343 - i * 6}C${616 - i * 5 * position} ${470 - i * 6} ${
       684 - i * 5 * position
     } ${875 - i * 6} ${684 - i * 5 * position} ${875 - i * 6}`,
-    color: `rgba(15,23,42,${0.1 + i * 0.03})`,
+    color: i % 2 === 0 ? '#00FFA6' : '#012728',
     width: 0.5 + i * 0.03,
   }));
 
   return (
     <div className="absolute inset-0 pointer-events-none">
-      <svg className="w-full h-full text-slate-950 dark:text-white" viewBox="0 0 696 316" fill="none">
+      <svg className="w-full h-full" viewBox="0 0 696 316" fill="none">
         <title>Background Paths</title>
         {paths.map((path) => (
           <motion.path
             key={path.id}
             d={path.d}
-            stroke="currentColor"
+            stroke={path.color}
             strokeWidth={path.width}
             strokeOpacity={0.1 + path.id * 0.03}
             initial={{ pathLength: 0.3, opacity: 0.6 }}
@@ -185,7 +185,7 @@ function EchoNoteComponent() {
     <div className="relative z-20 w-full max-w-md mx-auto">
       {/* Tab Navigation - Fixed Position */}
       <div className="flex justify-center mb-6">
-        <div className="relative bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-full p-1 shadow-lg">
+        <div className="relative bg-white/80 dark:bg-black/80 backdrop-blur-sm rounded-full p-1 shadow-lg">
           {/* Animated Background Pill */}
           <motion.div
             className="absolute top-1 bottom-1 bg-black dark:bg-white rounded-full"
@@ -227,7 +227,7 @@ function EchoNoteComponent() {
       {/* Animated Card Container - Expands downward only */}
       <motion.div 
         layout="position"
-        className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-gray-200 dark:border-gray-700 origin-top"
+        className="bg-white dark:bg-black/80 dark:bg-black/80 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-gray-200 dark:border-gray-700 origin-top"
         transition={{ duration: 0.3, ease: "easeInOut" }}
         style={{ transformOrigin: 'top center' }}
       >
