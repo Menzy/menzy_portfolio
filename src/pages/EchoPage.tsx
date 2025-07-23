@@ -88,10 +88,9 @@ function EchoNoteComponent() {
           {/* Logo and Title */}
           <div className="text-center mb-6">
             <div className="flex items-center justify-center mb-4">
-              <div className="w-8 h-8 flex items-center justify-center mr-3">
-                <img src="/assets/logos/echo.svg" alt="EchoNote" className="w-8 h-8" style={{filter: 'brightness(0) saturate(100%) invert(8%) sepia(18%) saturate(2618%) hue-rotate(154deg) brightness(95%) contrast(95%)'}} />
+              <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{backgroundColor: '#012728'}}>
+                <img src="/assets/logos/echo.svg" alt="EchoNote" className="w-5 h-5" style={{filter: 'brightness(0) saturate(100%) invert(60%) sepia(100%) saturate(500%) hue-rotate(90deg) brightness(120%) contrast(100%)'}} />
               </div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">EchoNote</h1>
             </div>
             
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
@@ -130,18 +129,23 @@ function EchoNoteComponent() {
           {/* Logo and Title */}
           <div className="text-center mb-6">
             <div className="flex items-center justify-center mb-4">
-              <div className="w-8 h-8 flex items-center justify-center mr-3">
-                <img src="/assets/logos/echo.svg" alt="EchoNote" className="w-8 h-8" style={{filter: 'brightness(0) saturate(100%) invert(8%) sepia(18%) saturate(2618%) hue-rotate(154deg) brightness(95%) contrast(95%)'}} />
+              <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{backgroundColor: '#012728'}}>
+                <img src="/assets/logos/echo.svg" alt="EchoNote" className="w-5 h-5" style={{filter: 'brightness(0) saturate(100%) invert(60%) sepia(100%) saturate(500%) hue-rotate(90deg) brightness(120%) contrast(100%)'}} />
               </div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">EchoNote</h1>
             </div>
             
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
-              The Future of Voice-to-Text
+              Thought to text at the speed of speech
             </h2>
             
-            <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
-              We envision a world where your thoughts flow seamlessly from speech to text. EchoNote empowers creators, professionals, and thinkers to capture ideas at the speed of thought with unparalleled accuracy and intelligence.
+            <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed text-left">
+              At EchoNote, we believe your ideas deserve to flow freely and privately. We've engineered a macOS solution that empowers you to transcend the keyboard with unprecedented speed.
+            </p>
+            <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed text-left mt-4">
+              With a single hotkey "Fn" EchoNote instantly transforms your spoken words into clean, accurate text. The process is remarkably swift, and your audio is used for immediate transcription only, never lingering beyond its purpose. The result is automatically copied and seamlessly pasted where you need it, in any application.
+            </p>
+            <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed text-left mt-4">
+              EchoNote empowers those who demand excellence and intelligent data management from their tools. Join the waitlist. Experience unchained productivity.
             </p>
           </div>
         </div>
