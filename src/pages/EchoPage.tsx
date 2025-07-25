@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 import { Navbar } from "@/components/Navbar";
 import { useState } from "react";
 import { joinWaitlist } from "@/api/waitlist";

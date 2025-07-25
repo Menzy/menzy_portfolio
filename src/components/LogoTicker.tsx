@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import sandmarcLogo from "/assets/logos/SANDMARC.png";
 import momentLogo from "/assets/logos/moment.svg";
 import zhiyunLogo from "/assets/logos/Zhiyun.svg";
