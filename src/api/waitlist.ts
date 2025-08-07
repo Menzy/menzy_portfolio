@@ -1,6 +1,11 @@
 export async function joinWaitlist(email: string) {
   try {
-    const response = await fetch('http://localhost:3001/api/waitlist', {
+    // Use different URLs for development vs production
+    const apiUrl = import.meta.env.DEV 
+      ? 'http://localhost:3001/api/waitlist'  // Dev: use your Express server
+      : '/api/waitlist';  // Production: use Vercel function
+      
+    const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

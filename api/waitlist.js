@@ -1,19 +1,12 @@
-import express from 'express';
-import cors from 'cors';
 import { Resend } from 'resend';
-import dotenv from 'dotenv';
-
-dotenv.config();
-
-const app = express();
-const port = 3001;
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-app.use(cors());
-app.use(express.json());
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ success: false, error: 'Method not allowed' });
+  }
 
-app.post('/api/waitlist', async (req, res) => {
   const { email } = req.body;
 
   if (!email || !email.includes('@')) {
@@ -47,21 +40,14 @@ app.post('/api/waitlist', async (req, res) => {
           </div>
         </div>
       `,
-      text: `Welcome to EchoNote!\n\nThank you for joining our waitlist. You're now on the exclusive waitlist for EchoNote - the revolutionary voice-to-text app that transforms your speech into perfect text at the speed of thought.\n\nWe'll notify you as soon as EchoNote is ready for early access. Get ready to experience unchained productivity!\n\nStay tuned for updates!`
     });
 
     if (error) {
-      console.error('Error sending email:', error);
       return res.status(500).json({ success: false, error: error.message });
     }
 
     res.json({ success: true, data });
   } catch (error) {
-    console.error('Error in waitlist endpoint:', error);
     res.status(500).json({ success: false, error: 'Failed to send email' });
   }
-});
-
-app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`);
-});
+}
