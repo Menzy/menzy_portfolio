@@ -279,79 +279,7 @@ function CTASection() {
   );
 }
 
-// Standalone Waitlist Form Component
-function WaitlistForm() {
-  const [email, setEmail] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [message, setMessage] = useState('');
-  const [isSuccess, setIsSuccess] = useState(false);
 
-  const handleJoinWaitlist = async () => {
-    if (!email || !email.includes('@')) {
-      setMessage('Please enter a valid email address');
-      setIsSuccess(false);
-      return;
-    }
-
-    setIsLoading(true);
-    setMessage('');
-    
-    try {
-      const result = await joinWaitlist(email);
-      
-      if (result.success) {
-        setMessage('Successfully joined the waitlist! Check your email for confirmation.');
-        setIsSuccess(true);
-        setEmail('');
-      } else {
-        setMessage(result.error || 'Failed to join waitlist. Please try again.');
-        setIsSuccess(false);
-      }
-    } catch (error) {
-      setMessage('Failed to join waitlist. Please try again.');
-      setIsSuccess(false);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  return (
-    <div className="mb-6">
-      <div className="relative">
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="Your work email"
-          disabled={isLoading}
-          className="w-full px-4 py-3 pr-32 bg-white dark:bg-neutral-800 border border-gray-300 dark:border-gray-600 rounded-full text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white dark:focus:ring-neutral-400 disabled:opacity-50"
-          onKeyPress={(e) => e.key === 'Enter' && handleJoinWaitlist()}
-        />
-        <button
-          onClick={handleJoinWaitlist}
-          disabled={isLoading}
-          className="absolute right-1 top-1 bottom-1 bg-black dark:bg-white text-white dark:text-black px-6 font-medium hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isLoading ? 'Joining...' : 'Join waitlist'}
-        </button>
-      </div>
-      
-      {message && (
-        <motion.p
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className={`mt-3 text-sm text-center ${
-            isSuccess 
-              ? 'text-green-400' 
-              : 'text-red-400'
-          }`}
-        >
-          {message}
-        </motion.p>
-      )}
-    </div>
-  );
-}
 
 function FloatingPaths({ position }: { position: number }) {
   const paths = Array.from({ length: 36 }, (_, i) => ({
