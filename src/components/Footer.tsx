@@ -8,7 +8,7 @@ export function Footer() {
   };
 
   return (
-    <footer className="min-h-screen border-t bg-muted/30 flex flex-col items-center justify-center gap-8">
+    <footer className="min-h-screen border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-black flex flex-col items-center justify-center gap-8">
       {/* Logo */}
       <div className="flex items-center gap-2">
         <img src={logo} alt="Logo" className="w-12 h-12" />
@@ -18,7 +18,7 @@ export function Footer() {
       <div className="flex flex-col md:flex-row items-center gap-8 md:gap-16">
         {/* Copyright */}
         <div className="text-center md:order-1">
-          <p className="text-sm text-muted-foreground">© Copyright 2025</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">© Copyright 2025</p>
         </div>
 
         {/* Social Links */}
@@ -77,7 +77,7 @@ export function Footer() {
 
       {/* Built by credit - separate from other elements */}
       <div className="text-center mt-4">
-        <p className="text-sm text-muted-foreground">Built by Wan Menzy</p>
+        <p className="text-sm text-gray-600 dark:text-gray-400">Built by Wan Menzy</p>
       </div>
     </footer>
   );

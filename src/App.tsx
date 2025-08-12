@@ -12,6 +12,7 @@ import { TimelapseSupportPage } from "@/pages/TimelapseSupportPage";
 import { PrivacyPolicyPage } from "@/pages/PrivacyPolicyPage";
 import { TermsOfServicePage } from "@/pages/TermsOfServicePage";
 import { EchoPage } from "@/pages/EchoPage";
+import { EchoAuthCallbackPage } from "@/pages/EchoAuthCallbackPage";
 import { Analytics } from "@vercel/analytics/react";
 
 function App() {
@@ -35,6 +36,7 @@ function App() {
             <Route path="/timelapse" element={<TimelapseAppPage />} />
             <Route path="/timelapse/support" element={<TimelapseSupportPage />} />
             <Route path="/echo" element={<EchoPage />} />
+            <Route path="/echo/auth/callback" element={<EchoAuthCallbackPage />} />
             <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
             <Route path="/terms" element={<TermsOfServicePage />} />
           </Routes>
