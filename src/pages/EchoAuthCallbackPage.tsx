@@ -12,37 +12,29 @@ export function EchoAuthCallbackPage() {
   // Extract OAuth parameters from URL
   const code = searchParams.get('code');
   const error = searchParams.get('error');
-  const errorDescription = searchParams.get('error_description');
-  const state = searchParams.get('state');
 
   const handleReturnToApp = async () => {
     setIsReturning(true);
     
     try {
-      // Prepare the data to send back to the local app
-      const callbackData = {
-        success: code && !error,
-        code: code,
-        error: error,
-        errorDescription: errorDescription,
-        state: state,
-        timestamp: new Date().toISOString()
-      };
+      // Reconstruct the OAuth callback URL that Supabase expects
+      const callbackUrl = `http://localhost:3000/auth/callback?${searchParams.toString()}`;
 
-      // Call the local EchoNote app
-      await fetch('http://localhost:3000/return', {
+      // Send the full callback URL to your local app
+      await fetch('http://localhost:3000/auth/callback', {
         method: 'POST',
         mode: 'no-cors',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(callbackData)
+        body: JSON.stringify({
+          callbackUrl: callbackUrl,
+          success: code && !error,
+          timestamp: new Date().toISOString()
+        })
       });
 
-      // Close the window after successful communication
-      setTimeout(() => {
-        window.close();
-      }, 1000);
+      setTimeout(() => window.close(), 1000);
     } catch (err) {
       console.error('Failed to communicate with EchoNote app:', err);
     } finally {
