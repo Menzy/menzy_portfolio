@@ -39,12 +39,7 @@ export function Contact() {
             
             {/* Contact Person */}
             <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-300">
-                <img 
-                  src="/api/placeholder/48/48" 
-                  alt="Lauren Thompson"
-                  className="w-full h-full object-cover"
-                />
+              <div className="w-12 h-12 rounded-full bg-black">
               </div>
               <div>
                 <p className="font-medium text-black dark:text-white text-lg">Lauren Thompson</p>
