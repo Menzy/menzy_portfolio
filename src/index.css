@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -6,16 +6,16 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-  --foreground: 0 0% 20.8%; /* #353535 converted to HSL */
+    --background: 0 0% 96.1%;
+  --foreground: 0 0% 3.9%; /* #0a0a0a converted to HSL */
   --glass-bg: rgba(255, 255, 255, 0.25);
    --glass-bg-mobile: rgba(255, 255, 255, 0.15);
   --glass-border: rgba(255, 255, 255, 0.2);
   --glass-border-mobile: rgba(255, 255, 255, 0.1);
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 20.8%; /* #353535 converted to HSL */
+    --card-foreground: 0 0% 3.9%; /* #0a0a0a converted to HSL */
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 20.8%; /* #353535 converted to HSL */
+    --popover-foreground: 0 0% 3.9%; /* #0a0a0a converted to HSL */
     --primary: 24 95% 50%; /* Vibrant Orange */
     --primary-foreground: 0 0% 98%;
     --secondary: 24 20% 95%; /* Light Orange tint */

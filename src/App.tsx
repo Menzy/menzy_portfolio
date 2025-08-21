@@ -3,6 +3,7 @@ import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/sonner";
 import { Analytics } from "@vercel/analytics/react";
 import { SocialSidebar } from "@/components/SocialSidebar";
+import { PageTransition } from "@/components/PageTransition";
 import { HomePage } from "@/pages/HomePage";
 import { ShopPage } from "@/pages/ShopPage";
 import { ProductPage } from "@/pages/ProductPage";
@@ -19,15 +20,15 @@ function App() {
       <Router>
         <SocialSidebar />
         <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/shop" element={<ShopPage />} />
-          <Route path="/shop/:slug" element={<ProductPage />} />
-          <Route path="/timelapse" element={<TimelapseAppPage />} />
-          <Route path="/timelapse/support" element={<TimelapseSupportPage />} />
-          <Route path="/echo" element={<EchoPage />} />
-          <Route path="/echo/auth/callback" element={<EchoAuthCallbackPage />} />
-          <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
-          <Route path="/terms" element={<TermsOfServicePage />} />
+          <Route path="/" element={<PageTransition><HomePage /></PageTransition>} />
+          <Route path="/shop" element={<PageTransition><ShopPage /></PageTransition>} />
+          <Route path="/shop/:slug" element={<PageTransition><ProductPage /></PageTransition>} />
+          <Route path="/timelapse" element={<PageTransition><TimelapseAppPage /></PageTransition>} />
+          <Route path="/timelapse/support" element={<PageTransition><TimelapseSupportPage /></PageTransition>} />
+          <Route path="/echo" element={<PageTransition><EchoPage /></PageTransition>} />
+          <Route path="/echo/auth/callback" element={<PageTransition><EchoAuthCallbackPage /></PageTransition>} />
+          <Route path="/privacy-policy" element={<PageTransition><PrivacyPolicyPage /></PageTransition>} />
+          <Route path="/terms" element={<PageTransition><TermsOfServicePage /></PageTransition>} />
         </Routes>
         <Toaster />
         <Analytics />

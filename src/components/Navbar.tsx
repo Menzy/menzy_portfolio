@@ -1,47 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Cart } from "@/components/Cart";
+import { motion, AnimatePresence } from "motion/react";
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isVisible, setIsVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
   const location = useLocation();
   const isHomePage = location.pathname === "/";
   const isShopPage = location.pathname === "/shop";
   const isItemDetailsPage = location.pathname.startsWith("/shop/");
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      const heroSection = document.querySelector("#hero"); // Add id="hero" to your hero section
-
-      if (!heroSection) return;
-
-      const heroHeight = heroSection.getBoundingClientRect().height;
-
-      // Show navbar at the very top
-      if (currentScrollY < 100) {
-        setIsVisible(true);
-      }
-      // Hide navbar during hero section
-      else if (currentScrollY < heroHeight) {
-        setIsVisible(false);
-      }
-      // Show navbar after hero section is completely scrolled past
-      else if (currentScrollY > heroHeight) {
-        setIsVisible(true);
-      }
-
-      setLastScrollY(currentScrollY);
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [lastScrollY]);
 
   const scrollToSection = (sectionId: string) => {
     if (isHomePage) {
@@ -54,130 +23,299 @@ export function Navbar() {
   };
 
   return (
-    <div
-      className={`fixed w-full z-50 p-2 transition-transform duration-300 ${
-        isVisible ? "translate-y-0" : "-translate-y-full"
-      }`}
-    >
-      <nav
-        className={`max-w-6xl mx-auto relative overflow-hidden ${
-          isMenuOpen ? "rounded-xl" : "rounded-xl md:rounded-full"
-        }`}
-        style={{
-          background: 'var(--glass-bg)',
-          backdropFilter: 'blur(20px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-          border: '1px solid var(--glass-border)',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 var(--glass-border)'
-        }}
-      >
-        <div className="px-2 py-2 flex justify-between items-center">
-          <Link
-            to="/"
-            className="text-xl font-bold hover:text-primary transition-colors px-3 flex items-center gap-2"
-          >
-            Wan Menzy
-          </Link>
-
-          {/* Desktop Menu */}
-          <div className="hidden md:flex items-center space-x-8">
-            <Link to="/shop" className="relative group">
-              <span className="text-foreground/80 hover:text-primary transition-colors">
-                Shop
-              </span>
-              <span className="absolute inset-x-0 -bottom-1 h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform"></span>
-            </Link>
-            <Link to="/timelapse" className="relative group">
-              <span className="text-foreground/80 hover:text-primary transition-colors">
-                Timelapse
-              </span>
-              <span className="absolute inset-x-0 -bottom-1 h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform"></span>
-            </Link>
-            <Link to="/echo" className="relative group">
-              <span className="text-foreground/80 hover:text-primary transition-colors">
-                Echo
-              </span>
-              <span className="absolute inset-x-0 -bottom-1 h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform"></span>
-            </Link>
-            {(isShopPage || isItemDetailsPage) && <Cart />}
-            <ThemeToggle />
-            {isHomePage ? (
-              <Button
+    <>
+      <nav className="fixed top-0 w-full h-[60px] z-50 bg-background/95 backdrop-blur-sm">
+        <div className="h-full px-6 flex justify-between items-center">
+          {/* Homepage Layout - 5 items evenly spaced */}
+          {isHomePage && !isMenuOpen && (
+            <>
+              <Link
+                to="/"
+                className="text-xl font-bold hover:text-primary transition-colors flex items-center gap-2"
+              >
+                Wan Menzy
+              </Link>
+              <button
+                onClick={() => scrollToSection("work")}
+                className="hidden md:block text-foreground/80 hover:text-primary transition-colors"
+                style={{ fontSize: '16px', fontWeight: 600 }}
+              >
+                Work
+              </button>
+              <button
+                onClick={() => scrollToSection("projects")}
+                className="hidden md:block text-foreground/80 hover:text-primary transition-colors"
+                style={{ fontSize: '16px', fontWeight: 600 }}
+              >
+                Projects
+              </button>
+              <button
                 onClick={() => scrollToSection("contact")}
-                variant="default"
-                className="rounded-full h-9 px-6 text-sm font-medium ml-4"
+                className="hidden md:block text-foreground/80 hover:text-primary transition-colors"
+                style={{ fontSize: '16px', fontWeight: 600 }}
               >
-                Let's Work
+                Contact
+              </button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="hover:bg-transparent"
+              >
+                <div className="flex flex-col justify-center items-center w-6 h-6">
+                  <motion.div
+                    className="w-5 h-0.5 bg-current mb-1"
+                    animate={{
+                      rotate: isMenuOpen ? 45 : 0,
+                      y: isMenuOpen ? 3 : 0,
+                    }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                  />
+                  <motion.div
+                    className="w-5 h-0.5 bg-current"
+                    animate={{
+                      rotate: isMenuOpen ? -45 : 0,
+                      y: isMenuOpen ? -3 : 0,
+                    }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                  />
+                </div>
               </Button>
-            ) : null}
-          </div>
+            </>
+          )}
 
-          {/* Mobile Menu Button */}
-          <div className="md:hidden">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-            >
-              {isMenuOpen ? (
-                <X className="h-5 w-5" />
-              ) : (
-                <Menu className="h-5 w-5" />
-              )}
-            </Button>
-          </div>
-        </div>
+          {/* Homepage with menu open - only logo and hamburger */}
+          {isHomePage && isMenuOpen && (
+            <>
+              <Link
+                to="/"
+                className="text-xl font-bold hover:text-primary transition-colors flex items-center gap-2"
+              >
+                Wan Menzy
+              </Link>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="hover:bg-transparent"
+              >
+                <div className="flex flex-col justify-center items-center w-6 h-6">
+                  <motion.div
+                    className="w-5 h-0.5 bg-current mb-1"
+                    animate={{
+                      rotate: isMenuOpen ? 45 : 0,
+                      y: isMenuOpen ? 3 : 0,
+                    }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                  />
+                  <motion.div
+                    className="w-5 h-0.5 bg-current"
+                    animate={{
+                      rotate: isMenuOpen ? -45 : 0,
+                      y: isMenuOpen ? -3 : 0,
+                    }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                  />
+                </div>
+              </Button>
+            </>
+          )}
 
-        {/* Mobile Menu */}
-        {isMenuOpen && (
-          <div 
-            className="md:hidden border-t"
-            style={{
-              background: 'var(--glass-bg-mobile)',
-              backdropFilter: 'blur(20px) saturate(180%)',
-              WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-              borderTop: '1px solid var(--glass-border-mobile)'
-            }}
-          >
-            <div className="px-6 py-4 flex flex-col space-y-4">
-              {isHomePage ? (
-                <Button
-                  onClick={() => scrollToSection("contact")}
-                  variant="default"
-                  className="rounded-full h-12 w-full px-8 text-base font-medium"
+          {/* Other pages navigation - hide when menu is open */}
+          {!isHomePage && !isMenuOpen && (
+            <>
+              <Link
+                to="/"
+                className="text-xl font-bold hover:text-primary transition-colors flex items-center gap-2"
+              >
+                Wan Menzy
+              </Link>
+              <div className="hidden md:flex items-center space-x-8">
+                <Link 
+                  to="/shop" 
+                  className="text-foreground/80 hover:text-primary transition-colors"
+                  style={{ fontSize: '16px', fontWeight: 600 }}
                 >
-                  Let's Work
-                </Button>
-              ) : null}
-              <Link
-                to="/shop"
-                onClick={() => setIsMenuOpen(false)}
-                className="flex items-center text-lg font-medium text-foreground/80 hover:text-primary transition-colors"
-              >
-                Shop
-              </Link>
-              <Link
-                to="/timelapse"
-                onClick={() => setIsMenuOpen(false)}
-                className="flex items-center text-lg font-medium text-foreground/80 hover:text-primary transition-colors"
-              >
-                Timelapse
-              </Link>
-              <Link
-                to="/echo"
-                onClick={() => setIsMenuOpen(false)}
-                className="flex items-center text-lg font-medium text-foreground/80 hover:text-primary transition-colors"
-              >
-                Echo
-              </Link>
-              <div className="flex items-center space-x-4">
+                  Shop
+                </Link>
+                <Link 
+                  to="/timelapse" 
+                  className="text-foreground/80 hover:text-primary transition-colors"
+                  style={{ fontSize: '16px', fontWeight: 600 }}
+                >
+                  Timelapse
+                </Link>
+                <Link 
+                  to="/echo" 
+                  className="text-foreground/80 hover:text-primary transition-colors"
+                  style={{ fontSize: '16px', fontWeight: 600 }}
+                >
+                  Echo
+                </Link>
                 {(isShopPage || isItemDetailsPage) && <Cart />}
                 <ThemeToggle />
               </div>
-            </div>
-          </div>
-        )}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="hover:bg-transparent"
+              >
+                <div className="flex flex-col justify-center items-center w-6 h-6">
+                  <motion.div
+                    className="w-5 h-0.5 bg-current mb-1"
+                    animate={{
+                      rotate: isMenuOpen ? 45 : 0,
+                      y: isMenuOpen ? 3 : 0,
+                    }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                  />
+                  <motion.div
+                    className="w-5 h-0.5 bg-current"
+                    animate={{
+                      rotate: isMenuOpen ? -45 : 0,
+                      y: isMenuOpen ? -3 : 0,
+                    }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                  />
+                </div>
+              </Button>
+            </>
+          )}
+
+          {/* Other pages with menu open - only logo and hamburger */}
+          {!isHomePage && isMenuOpen && (
+            <>
+              <Link
+                to="/"
+                className="text-xl font-bold hover:text-primary transition-colors flex items-center gap-2"
+              >
+                Wan Menzy
+              </Link>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="hover:bg-transparent"
+              >
+                <div className="flex flex-col justify-center items-center w-6 h-6">
+                  <motion.div
+                    className="w-5 h-0.5 bg-current mb-1"
+                    animate={{
+                      rotate: isMenuOpen ? 45 : 0,
+                      y: isMenuOpen ? 3 : 0,
+                    }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                  />
+                  <motion.div
+                    className="w-5 h-0.5 bg-current"
+                    animate={{
+                      rotate: isMenuOpen ? -45 : 0,
+                      y: isMenuOpen ? -3 : 0,
+                    }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                  />
+                </div>
+              </Button>
+            </>
+          )}
+        </div>
       </nav>
-    </div>
+
+      {/* Menu Overlay */}
+      <AnimatePresence>
+        {isMenuOpen && (
+          <motion.div
+            initial={{ y: "-60vh" }}
+            animate={{ y: 0 }}
+            exit={{ y: "-60vh" }}
+            transition={{ duration: 0.4, ease: "easeInOut" }}
+            className="fixed top-[60px] left-0 right-0 h-[60vh] z-40 bg-background backdrop-blur-sm"
+          >
+            <div className="h-full flex flex-col justify-center items-center space-y-1">
+              {/* Section Navigation */}
+              {isHomePage && (
+                <>
+                  <motion.button
+                    initial={{ y: 30 }}
+                    animate={{ y: 0 }}
+                    transition={{ delay: 0.1, duration: 0.3 }}
+                    onClick={() => scrollToSection("work")}
+                    className="text-foreground/80 hover:text-primary transition-colors"
+                    style={{ 
+                      fontSize: '60px', 
+                      fontWeight: 600, 
+                      lineHeight: '120%' 
+                    }}
+                  >
+                    Work
+                  </motion.button>
+                  <motion.button
+                    initial={{ y: 30 }}
+                    animate={{ y: 0 }}
+                    transition={{ delay: 0.15, duration: 0.3 }}
+                    onClick={() => scrollToSection("projects")}
+                    className="text-foreground/80 hover:text-primary transition-colors"
+                    style={{ 
+                      fontSize: '60px', 
+                      fontWeight: 600, 
+                      lineHeight: '120%' 
+                    }}
+                  >
+                    Projects
+                  </motion.button>
+                  <motion.button
+                    initial={{ y: 30 }}
+                    animate={{ y: 0 }}
+                    transition={{ delay: 0.2, duration: 0.3 }}
+                    onClick={() => scrollToSection("contact")}
+                    className="text-foreground/80 hover:text-primary transition-colors"
+                    style={{ 
+                      fontSize: '60px', 
+                      fontWeight: 600, 
+                      lineHeight: '120%' 
+                    }}
+                  >
+                    Contact
+                  </motion.button>
+                </>
+              )}
+              
+              {/* Bottom Actions */}
+              <motion.div 
+                initial={{ y: 30 }}
+                animate={{ y: 0 }}
+                transition={{ delay: isHomePage ? 0.3 : 0.1, duration: 0.3 }}
+                className="absolute bottom-12 left-0 right-0 flex items-center justify-evenly px-12"
+              >
+                <Link
+                  to="/shop"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="text-sm font-normal text-foreground/70 hover:text-primary transition-colors"
+                >
+                  Shop
+                </Link>
+                <Link
+                  to="/timelapse"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="text-sm font-normal text-foreground/70 hover:text-primary transition-colors"
+                >
+                  Timelapse
+                </Link>
+                <Link
+                  to="/echo"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="text-sm font-normal text-foreground/70 hover:text-primary transition-colors"
+                >
+                  Echo
+                </Link>
+                {(isShopPage || isItemDetailsPage) && <Cart />}
+                <ThemeToggle />
+              </motion.div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }

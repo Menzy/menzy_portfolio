@@ -1,30 +1,23 @@
 import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import Typewriter from "typewriter-effect";
 
 export function Hero() {
   const videoRef = useRef<HTMLDivElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleScroll = () => {
-      if (!videoRef.current || !contentRef.current) return;
+      if (!videoRef.current) return;
 
       const scrollY = window.scrollY;
-      const viewportHeight = window.innerHeight;
-      const progress = Math.min(scrollY / viewportHeight, 1);
+      const videoHeight = videoRef.current.offsetHeight;
+      // Progress completes when bottom of video reaches top of viewport
+      const progress = Math.min(scrollY / videoHeight, 1);
 
-      // Scale and round corners of video container
-      const scale = 1 - progress * 0.1;
-      const borderRadius = Math.min(32 * progress, 32);
-      videoRef.current.style.transform = `scale(${scale})`;
-      videoRef.current.style.borderRadius = `${borderRadius}px`;
-
-      // Fade out content
-      const opacity = 1 - progress * 1.5;
-      if (contentRef.current) {
-        contentRef.current.style.opacity = Math.max(opacity, 0).toString();
-      }
+      // Scale down and move up simultaneously - both finish together
+      const scale = 1 - progress * 0.05; // Very subtle 5% scale down (1.0 to 0.95)
+      const translateY = -progress * videoHeight; // Move up by video height
+      
+      videoRef.current.style.transform = `scale(${scale}) translateY(${translateY}px)`;
     };
 
     window.addEventListener("scroll", handleScroll);
@@ -39,10 +32,17 @@ export function Hero() {
       {/* Video Container */}
       <div
         ref={videoRef}
-        className="sticky top-0 w-full h-screen overflow-hidden bg-black will-change-transform"
+        className="sticky overflow-hidden bg-black will-change-transform"
         style={{
+          top: "60px", // Space for new navbar height
+          left: "6px",
+          right: "6px",
+          bottom: "6px", 
+          width: "calc(100% - 12px)", // Full width minus left + right padding
+          height: "calc(100vh - 66px)", // Full height minus navbar space and bottom padding
+          borderRadius: "24px", // Increased rounded corners
           transformOrigin: "center center",
-          transition: "transform 0.2s ease-out, border-radius 0.2s ease-out",
+          transition: "transform 0.2s ease-out",
         }}
       >
         <div className="relative w-full h-full">
@@ -55,51 +55,20 @@ export function Hero() {
           />
         </div>
 
-        {/* Content */}
-        <div
-          ref={contentRef}
-          className="absolute inset-0 flex items-center z-10"
-          style={{ transition: "opacity 0.2s ease-out" }}
+        {/* Let's Work Button - anchored to bottom right of video */}
+        <Button
+          onClick={() => {
+            const element = document.getElementById("contact");
+            if (element) {
+              element.scrollIntoView({ behavior: "smooth" });
+            }
+          }}
+          variant="default"
+          className="absolute bottom-6 right-6 rounded-full h-12 px-6 text-sm font-medium z-10"
         >
-          <div className="container mx-auto px-6">
-            <div className="max-w-4xl">
-              <h1
-                className="text-[3rem] md:text-[5rem] font-bold text-white leading-none mb-8 animate-slide-up"
-                style={{ animationDelay: "0.2s" }}
-              >
-                <div>Capturing</div>
-                <div>Stories</div>
-                <div className="flex flex-wrap items-center">
-                  People{" "}
-                  <span className="text-primary inline-block ml-2">
-                    <Typewriter
-                      options={{
-                        strings: ["Want", "Share", "Love"],
-                        autoStart: true,
-                        loop: true,
-                        deleteSpeed: 50,
-                        delay: 80,
-                      }}
-                    />
-                  </span>
-                </div>
-              </h1>
-              <p
-                className="text-2xl text-white/80 mb-8 animate-slide-up"
-                style={{ animationDelay: "0.4s" }}
-              >
-                Mobile Content Creator and Filmmaker
-              </p>
-              <Button
-                size="lg"
-                className="rounded-full animate-slide-up hover:scale-105 transition-transform text-lg px-8 py-6"
-                style={{ animationDelay: "0.6s" }}
-              >
-                View My Work
-              </Button>
-            </div>
-          </div>
-        </div>
+          Let's Work
+        </Button>
+
       </div>
     </section>
   );
