@@ -13,11 +13,10 @@ export function Hero() {
       // Progress completes when bottom of video reaches top of viewport
       const progress = Math.min(scrollY / videoHeight, 1);
 
-      // Scale down and move up simultaneously - both finish together
+      // Only scale down, no translateY to keep natural scroll flow
       const scale = 1 - progress * 0.05; // Very subtle 5% scale down (1.0 to 0.95)
-      const translateY = -progress * videoHeight; // Move up by video height
       
-      videoRef.current.style.transform = `scale(${scale}) translateY(${translateY}px)`;
+      videoRef.current.style.transform = `scale(${scale})`;
     };
 
     window.addEventListener("scroll", handleScroll);
@@ -27,7 +26,7 @@ export function Hero() {
   return (
     <section
       id="hero"
-      className="relative min-h-[200vh] dark:bg-black bg-white"
+      className="relative min-h-[100vh] dark:bg-black bg-white"
     >
       {/* Video Container */}
       <div

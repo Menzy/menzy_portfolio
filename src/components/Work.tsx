@@ -85,13 +85,13 @@ export function Work() {
   return (
     <section 
       id="work" 
-      className="relative dark:bg-black bg-white pt-20"
+      className="relative pt-20"
     >
       {/* Header - Sticky */}
       <div className="sticky top-[72px] z-10 pt-6 pb-0 mb-12">
         <div className="container">
           <h2 className="text-4xl md:text-6xl font-bold text-center">
-            Featured Projects
+            Projects
           </h2>
         </div>
       </div>

@@ -24,7 +24,7 @@ export function Navbar() {
 
   return (
     <>
-      <nav className="fixed top-0 w-full h-[60px] z-50 bg-background/95 backdrop-blur-sm">
+      <nav className={`fixed top-0 w-full h-[60px] z-50 ${isMenuOpen ? 'bg-background' : 'bg-background/95 backdrop-blur-sm'}`}>
         <div className="h-full px-6 flex justify-between items-center">
           {/* Homepage Layout - 5 items evenly spaced */}
           {isHomePage && !isMenuOpen && (
@@ -230,50 +230,50 @@ export function Navbar() {
             animate={{ y: 0 }}
             exit={{ y: "-60vh" }}
             transition={{ duration: 0.4, ease: "easeInOut" }}
-            className="fixed top-[60px] left-0 right-0 h-[60vh] z-40 bg-background backdrop-blur-sm"
+            className="fixed top-0 left-0 right-0 h-[calc(60px+60vh)] z-40 bg-background backdrop-blur-sm"
           >
-            <div className="h-full flex flex-col justify-center items-center space-y-1">
+            <div className="h-full flex flex-col justify-center items-center space-y-2 -mt-[30px]">
               {/* Section Navigation */}
               {isHomePage && (
                 <>
                   <motion.button
-                    initial={{ y: 30 }}
-                    animate={{ y: 0 }}
-                    transition={{ delay: 0.1, duration: 0.3 }}
+                    initial={{ y: -20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.1, duration: 0.4, ease: "easeOut" }}
                     onClick={() => scrollToSection("work")}
                     className="text-foreground/80 hover:text-primary transition-colors"
                     style={{ 
                       fontSize: '60px', 
                       fontWeight: 600, 
-                      lineHeight: '120%' 
+                      lineHeight: '100%' 
                     }}
                   >
                     Work
                   </motion.button>
                   <motion.button
-                    initial={{ y: 30 }}
-                    animate={{ y: 0 }}
-                    transition={{ delay: 0.15, duration: 0.3 }}
+                    initial={{ y: -20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.2, duration: 0.4, ease: "easeOut" }}
                     onClick={() => scrollToSection("projects")}
                     className="text-foreground/80 hover:text-primary transition-colors"
                     style={{ 
                       fontSize: '60px', 
                       fontWeight: 600, 
-                      lineHeight: '120%' 
+                      lineHeight: '100%' 
                     }}
                   >
                     Projects
                   </motion.button>
                   <motion.button
-                    initial={{ y: 30 }}
-                    animate={{ y: 0 }}
-                    transition={{ delay: 0.2, duration: 0.3 }}
+                    initial={{ y: -20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.3, duration: 0.4, ease: "easeOut" }}
                     onClick={() => scrollToSection("contact")}
                     className="text-foreground/80 hover:text-primary transition-colors"
                     style={{ 
                       fontSize: '60px', 
                       fontWeight: 600, 
-                      lineHeight: '120%' 
+                      lineHeight: '100%' 
                     }}
                   >
                     Contact
@@ -283,10 +283,10 @@ export function Navbar() {
               
               {/* Bottom Actions */}
               <motion.div 
-                initial={{ y: 30 }}
-                animate={{ y: 0 }}
-                transition={{ delay: isHomePage ? 0.3 : 0.1, duration: 0.3 }}
-                className="absolute bottom-12 left-0 right-0 flex items-center justify-evenly px-12"
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: isHomePage ? 0.4 : 0.1, duration: 0.4, ease: "easeOut" }}
+                className="absolute bottom-6 left-0 right-0 flex items-center justify-between px-12"
               >
                 <Link
                   to="/shop"

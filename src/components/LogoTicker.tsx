@@ -68,7 +68,7 @@ export function LogoTicker() {
   }, []);
 
   return (
-    <section className="py-16 dark:bg-black bg-white">
+    <section className="relative py-16 dark:bg-black bg-white z-10">
       <div className="px-20">
         <h3 className="text-center text-md text-muted-foreground mb-12 animate-fade-in">
           TRUSTED BY BRANDS AT

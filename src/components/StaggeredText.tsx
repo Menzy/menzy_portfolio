@@ -36,7 +36,7 @@ export const StaggeredText = ({
       y: 0,
       transition: {
         duration: 0.6,
-        ease: [0.05, 0.7, 0.1, 1],
+        ease: "easeOut" as const,
       },
     },
   };

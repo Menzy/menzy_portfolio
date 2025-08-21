@@ -84,7 +84,7 @@ export function Projects() {
   return (
     <section
       id="projects"
-      className="min-h-screen py-32 dark:bg-black bg-white"
+      className="min-h-screen py-32"
     >
       <div className="container mx-auto px-4">
         {/* Project Navigation */}
