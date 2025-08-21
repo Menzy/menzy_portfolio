@@ -15,7 +15,7 @@ import { EchoAuthCallbackPage } from "@/pages/EchoAuthCallbackPage";
 
 function App() {
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+    <ThemeProvider attribute="class" defaultTheme="light">
       <Router>
         <Routes>
           <Route path="/" element={<PageTransition><HomePage /></PageTransition>} />

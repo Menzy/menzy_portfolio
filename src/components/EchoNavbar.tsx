@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { EchoThemeToggle } from "@/components/EchoThemeToggle";
 
 export function EchoNavbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -116,9 +115,7 @@ export function EchoNavbar() {
           </div>
 
           {/* Right side items */}
-          <div className="flex items-center space-x-2">
-            <EchoThemeToggle />
-            
+          <div className="flex items-center">
             {/* Mobile menu button */}
             <Button
               variant="ghost"

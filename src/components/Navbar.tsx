@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { Cart } from "@/components/Cart";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -153,7 +152,6 @@ export function Navbar() {
                   Echo
                 </Link>
                 {(isShopPage || isItemDetailsPage) && <Cart />}
-                <ThemeToggle />
               </div>
               <Button
                 variant="ghost"
@@ -310,7 +308,6 @@ export function Navbar() {
                   Echo
                 </Link>
                 {(isShopPage || isItemDetailsPage) && <Cart />}
-                <ThemeToggle />
               </motion.div>
             </div>
           </motion.div>

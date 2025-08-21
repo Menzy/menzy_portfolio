@@ -1,6 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { Menu, X } from "lucide-react";
 import { useCallback, useState } from "react";
 import { ThemeLogo } from "./ThemeLogo";
@@ -96,11 +95,9 @@ export function TimelapseNavbar() {
             >
               Privacy
             </Link>
-            <ThemeToggle />
           </div>
           
-          <div className="md:hidden flex items-center space-x-2">
-            <ThemeToggle />
+          <div className="md:hidden flex items-center">
             <Button 
               variant="ghost" 
               size="icon" 

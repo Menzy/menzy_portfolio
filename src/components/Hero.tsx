@@ -1,9 +1,11 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export function Hero() {
   const videoRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLSpanElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const topTextRef = useRef<HTMLDivElement>(null);
+  const [currentText, setCurrentText] = useState("FILMMAKER");
 
   useEffect(() => {
     const handleScroll = () => {
@@ -18,6 +20,15 @@ export function Hero() {
       const scale = 1 - progress * 0.05; // Very subtle 5% scale down (1.0 to 0.95)
       
       videoRef.current.style.transform = `scale(${scale})`;
+
+      // Update text based on scroll progress
+      if (progress < 0.2) {
+        setCurrentText("FILMMAKER");
+      } else if (progress < 0.4) {
+        setCurrentText("CREATOR");
+      } else {
+        setCurrentText("WANNNN");
+      }
     };
 
     window.addEventListener("scroll", handleScroll);
@@ -31,15 +42,28 @@ export function Hero() {
         const text = textRef.current;
         
         // Reset transform to get natural width
-        text.style.transform = 'scaleX(1)';
+        text.style.transform = 'scale(1)';
         
-        const containerWidth = container.offsetWidth;
-        const textWidth = text.scrollWidth;
-        
-        if (textWidth > 0) {
-          const scaleX = containerWidth / textWidth;
-          text.style.transform = `scaleX(${scaleX})`;
-        }
+        // Small delay to ensure DOM has updated with new text
+        requestAnimationFrame(() => {
+          const containerWidth = container.offsetWidth + 12; // Add back the -mx-6 (6px * 2)
+          const textWidth = text.scrollWidth;
+          
+          if (textWidth > 0) {
+            const scale = Math.max(containerWidth / textWidth, 1); // Don't scale down below 1
+            text.style.transform = `scale(${scale})`;
+            
+            // Calculate how much extra height the scaling adds
+            const originalHeight = parseFloat(getComputedStyle(text).fontSize) * 0.8; // lineHeight is 0.8
+            const scaledHeight = originalHeight * scale;
+            const extraHeight = scaledHeight - originalHeight;
+            
+            // Move top text up by the extra height
+            if (topTextRef.current) {
+              topTextRef.current.style.transform = `translateY(-${extraHeight}px)`;
+            }
+          }
+        });
       }
     };
 
@@ -47,7 +71,7 @@ export function Hero() {
     window.addEventListener('resize', adjustTextScale);
     
     return () => window.removeEventListener('resize', adjustTextScale);
-  }, []);
+  }, [currentText]); // Add currentText as dependency
 
   return (
     <section
@@ -82,23 +106,23 @@ export function Hero() {
 
         {/* Hero Text - spans full width */}
         <div className="absolute bottom-6 left-0 right-0 z-10 px-6">
-          <div className="flex items-center justify-between w-full leading-none">
+          <div ref={topTextRef} className="flex items-center justify-between w-full leading-none transition-transform duration-300">
             <span className="text-white text-sm font-medium tracking-wider uppercase">A</span>
             <span className="text-white text-sm font-medium tracking-wider uppercase">REALLY</span>
             <span className="text-white text-sm font-medium tracking-wider uppercase">GOOD</span>
           </div>
-          <div ref={containerRef} className="mt-1 w-full -mx-6 overflow-hidden">
+          <div ref={containerRef} className="mt-1 w-full -mx-6">
             <span 
               ref={textRef}
               className="text-white font-bold tracking-tight uppercase whitespace-nowrap block"
               style={{
                 fontSize: '15vw',
-                transformOrigin: 'left center',
+                transformOrigin: 'left bottom',
                 width: 'fit-content',
                 lineHeight: '0.8'
               }}
             >
-              FILMMAKER
+              {currentText}
             </span>
           </div>
         </div>
@@ -120,7 +144,7 @@ export function Hero() {
             {/* Expanded state - Contact info */}
              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-2 flex flex-col justify-between">
                <div className="text-left">
-                 <div className="text-xs font-semibold mb-1">Team Lead at</div>
+                 <div className="text-s font-semibold mb-1">Team Lead at</div>
                  <div className="text-xs mb-1">EnzymsGH</div>
                  <div className="text-xl font-bold">Wan Menzy</div>
                </div>
