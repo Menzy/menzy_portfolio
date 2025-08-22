@@ -19,12 +19,36 @@ export function HomePage() {
     const isReload = navigationEntries.length > 0 && navigationEntries[0].type === 'reload';
     const isDirectLoad = !sessionStorage.getItem('hasVisited');
     
+    // Always scroll to top on page reload or direct load
     if (isReload || isDirectLoad) {
+      // Immediate scroll to top without smooth behavior for instant effect
+      window.scrollTo(0, 0);
       setShowLoader(true);
       sessionStorage.setItem('hasVisited', 'true');
     } else {
       setShouldAnimate(true);
     }
+  }, []);
+
+  // Additional effect to ensure scroll to top on any page reload
+  useEffect(() => {
+    // Force scroll to top on component mount (covers all reload scenarios)
+    const handleBeforeUnload = () => {
+      // This ensures the next page load starts from the top
+      window.scrollTo(0, 0);
+    };
+
+    // Also handle the case where user reloads while not at top
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    // Ensure immediate scroll to top on mount
+    if (window.scrollY > 0) {
+      window.scrollTo(0, 0);
+    }
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
   }, []);
 
   const handleLoaderComplete = () => {

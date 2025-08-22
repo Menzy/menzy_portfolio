@@ -69,6 +69,7 @@ export default {
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
+        'card-black': 'oklch(20.5% 0 0)',
       },
       fontFamily: {
         sans: ['Inter', 'sans-serif'],

@@ -44,14 +44,12 @@ function ProjectCard({ project }: ProjectCardProps) {
   useEffect(() => {
     if (tickerRef.current) {
       const element = tickerRef.current;
-      const scrollWidth = element.scrollWidth;
-      const clientWidth = element.clientWidth;
       
-      if (scrollWidth > clientWidth) {
-        // Calculate duration based on text length for consistent speed
-        const duration = scrollWidth / 60; // Adjust speed as needed
-        element.style.animation = `scroll-ticker-seamless ${duration}s linear infinite`;
-      }
+      // Fixed duration for all cards - slightly slower speed
+      const fixedDuration = 10; // 10 seconds (was 8) for slightly slower animation
+      
+      // Set CSS custom property for animation duration
+      element.style.setProperty('--scroll-duration', `${fixedDuration}s`);
     }
   }, []);
 
@@ -66,7 +64,7 @@ function ProjectCard({ project }: ProjectCardProps) {
 
   return (
     <motion.div
-      className="relative bg-black p-4 rounded-xl group cursor-pointer"
+      className="relative bg-card-black p-4 rounded-xl group cursor-pointer"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
@@ -97,7 +95,7 @@ function ProjectCard({ project }: ProjectCardProps) {
                   type: "tween"
                 }}
                 style={{ originY: 1, originX: 0.5 }}
-                className="w-4/5 md:w-3/5 h-4/5 md:h-3/5 rounded-lg overflow-hidden shadow-lg bg-black"
+                className="w-4/5 md:w-3/5 h-4/5 md:h-3/5 rounded-lg overflow-hidden shadow-lg bg-card-black"
               >
                 <iframe
                   src={`https://www.youtube.com/embed/${project.videoId}?autoplay=1&controls=0&showinfo=0&rel=0&modestbranding=1&loop=1&playlist=${project.videoId}&iv_load_policy=3&cc_load_policy=0&fs=0&disablekb=1`}
@@ -112,18 +110,18 @@ function ProjectCard({ project }: ProjectCardProps) {
       </div>
 
       {/* Bottom content section with sharp cut from thumbnail */}
-      <div className="bg-black py-4">
-        <h3 className="text-white text-2xl font-bold mb-3 px-4">{project.title}</h3>
+      <div className="bg-card-black py-4">
+        <h3 className="text-white text-l font-medium mb-3 uppercase">{project.title}</h3>
         <div className="relative overflow-hidden">
           {/* Fade in gradient on the left */}
-          <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-black via-black/80 to-transparent z-10 pointer-events-none" />
+          <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-card-black to-transparent z-10 pointer-events-none" />
           
           {/* Fade out gradient on the right */}
-          <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-black via-black/80 to-transparent z-10 pointer-events-none" />
+          <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-card-black to-transparent z-10 pointer-events-none" />
           
           <div
             ref={tickerRef}
-            className="text-white/70 text-base whitespace-nowrap ticker-text-seamless px-4"
+            className="text-white/70 text-base whitespace-nowrap px-4 ticker-scroll uppercase"
           >
             <span className="inline-block">
               {project.subtitle} • {project.subtitle} • {project.subtitle} • {project.subtitle} • {project.subtitle} • {project.subtitle} • 
@@ -157,47 +155,7 @@ export function Projects() {
     return () => observer.disconnect();
   }, []);
 
-  useEffect(() => {
-    // Add CSS for ticker animation
-    const style = document.createElement('style');
-    style.textContent = `
-      @keyframes scroll-ticker {
-        0% {
-          transform: translateX(100%);
-        }
-        100% {
-          transform: translateX(-100%);
-        }
-      }
-      
-      @keyframes scroll-ticker-seamless {
-        0% {
-          transform: translateX(0%);
-        }
-        100% {
-          transform: translateX(-50%);
-        }
-      }
-      
-      .ticker-text {
-        animation: scroll-ticker 15s linear infinite;
-      }
-      
-      .ticker-text-seamless {
-        animation: scroll-ticker-seamless 15s linear infinite;
-      }
-      
-      .ticker-text:hover,
-      .ticker-text-seamless:hover {
-        animation-play-state: paused;
-      }
-    `;
-    document.head.appendChild(style);
 
-    return () => {
-      document.head.removeChild(style);
-    };
-  }, []);
 
   return (
     <section
@@ -212,7 +170,7 @@ export function Projects() {
           transition={{ duration: 0.6 }}
           className="text-left"
         >
-          <h2 className="text-7xl md:text-9xl font-extrabold uppercase tracking-tight">
+          <h2 className="text-7xl md:text-9xl font-black uppercase tracking-tight">
             Selected Projects
           </h2>
         </motion.div>

@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
+import { useEffect } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { Analytics } from "@vercel/analytics/react";
 import { PageTransition } from "@/components/PageTransition";
@@ -14,6 +15,17 @@ import { EchoPage } from "@/pages/EchoPage";
 import { EchoAuthCallbackPage } from "@/pages/EchoAuthCallbackPage";
 
 function App() {
+  // Global scroll restoration override
+  useEffect(() => {
+    // Disable browser's automatic scroll restoration
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+    }
+
+    // Force scroll to top on app initialization
+    window.scrollTo(0, 0);
+  }, []);
+
   return (
     <ThemeProvider attribute="class" defaultTheme="light">
       <Router>
