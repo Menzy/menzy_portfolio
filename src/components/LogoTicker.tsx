@@ -80,22 +80,19 @@ export function LogoTicker() {
   const getBackgroundPosition = () => {
     if (hoveredIndex === null) return { opacity: 0 };
     
-    let rowIndex, indexInRow, totalInRow, yPosition;
+    let indexInRow, totalInRow, yPosition;
     
     if (isMobile) {
       // Mobile: 3 rows of 2 logos each
       if (hoveredIndex < 2) {
-        rowIndex = 0;
         indexInRow = hoveredIndex;
         totalInRow = 2;
         yPosition = 0; // 0% for top row
       } else if (hoveredIndex < 4) {
-        rowIndex = 1;
         indexInRow = hoveredIndex - 2;
         totalInRow = 2;
         yPosition = 33.33; // 33.33% for middle row
       } else {
-        rowIndex = 2;
         indexInRow = hoveredIndex - 4;
         totalInRow = 2;
         yPosition = 66.66; // 66.66% for bottom row
