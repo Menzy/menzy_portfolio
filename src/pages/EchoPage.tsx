@@ -353,7 +353,7 @@ function EchoNoteComponent() {
         setMessage(result.error || 'Failed to join waitlist. Please try again.');
         setIsSuccess(false);
       }
-    } catch (error) {
+    } catch {
       setMessage('Failed to join waitlist. Please try again.');
       setIsSuccess(false);
     } finally {

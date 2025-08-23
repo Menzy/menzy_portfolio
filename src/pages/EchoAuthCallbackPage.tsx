@@ -30,10 +30,11 @@ export function EchoAuthCallbackPage() {
         // user can still close manually if it doesn't work.
         window.close();
       }, 600);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setStatus('error');
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
       setErrorMsg(
-        err?.message ||
+        errorMessage ||
           'Could not contact the EchoNote app. Please ensure the app is running.'
       );
     }

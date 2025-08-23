@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import sandmarcLogo from "/assets/logos/SANDMARC.png";
 import momentLogo from "/assets/logos/moment.svg";
@@ -41,77 +41,173 @@ const logos = [
 ];
 
 export function LogoTicker() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [animationDistance, setAnimationDistance] = useState(0);
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(0);
 
+  // Load saved hover state from sessionStorage on component mount
   useEffect(() => {
-    const calculateDistance = () => {
-      if (containerRef.current) {
-        const firstSet = containerRef.current.children[0];
-        if (firstSet) {
-          const width = firstSet.getBoundingClientRect().width;
-          // Only animate the distance of one set instead of the full width
-          setAnimationDistance(-(width + 48)); // Adding gap (12 * 4)
-        }
-      }
-    };
-
-    // Initial calculation after a small delay to ensure proper rendering
-    setTimeout(calculateDistance, 100);
-
-    const resizeObserver = new ResizeObserver(calculateDistance);
-    if (containerRef.current) {
-      resizeObserver.observe(containerRef.current);
+    const savedIndex = sessionStorage.getItem('logoTickerHoverIndex');
+    if (savedIndex !== null) {
+      setHoveredIndex(parseInt(savedIndex, 10));
     }
-
-    return () => resizeObserver.disconnect();
   }, []);
 
+  // Save hover state to sessionStorage whenever it changes
+  const handleHoverChange = (index: number) => {
+    setHoveredIndex(index);
+    sessionStorage.setItem('logoTickerHoverIndex', index.toString());
+  };
+
+  // Split logos differently based on screen size
+  // For mobile/tablet: 2 logos per row (2x3 grid)
+  // For desktop: 2 on top, 4 on bottom
+  const [isMobile, setIsMobile] = useState(false);
+  
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024); // lg breakpoint
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+  
+  const topRowLogos = isMobile ? logos.slice(0, 2) : logos.slice(0, 2);
+  const bottomRowLogos = isMobile ? logos.slice(2, 4) : logos.slice(2);
+  const thirdRowLogos = isMobile ? logos.slice(4) : [];
+
+  // Calculate position for the animated background
+  const getBackgroundPosition = () => {
+    if (hoveredIndex === null) return { opacity: 0 };
+    
+    let indexInRow, totalInRow, yPosition;
+    
+    if (isMobile) {
+      // Mobile: 3 rows of 2 logos each
+      if (hoveredIndex < 2) {
+        indexInRow = hoveredIndex;
+        totalInRow = 2;
+        yPosition = 0; // 0% for top row
+      } else if (hoveredIndex < 4) {
+        indexInRow = hoveredIndex - 2;
+        totalInRow = 2;
+        yPosition = 33.33; // 33.33% for middle row
+      } else {
+        indexInRow = hoveredIndex - 4;
+        totalInRow = 2;
+        yPosition = 66.66; // 66.66% for bottom row
+      }
+    } else {
+      // Desktop: 2 rows (2 logos top, 4 logos bottom)
+      const isTopRow = hoveredIndex < 2;
+      indexInRow = isTopRow ? hoveredIndex : hoveredIndex - 2;
+      totalInRow = isTopRow ? topRowLogos.length : bottomRowLogos.length;
+      yPosition = isTopRow ? 0 : 50; // 0% for top row, 50% for bottom row
+    }
+    
+    // Calculate exact position to match the hovered div
+    const containerWidth = 100; // Use percentage for responsive design
+    const itemWidth = containerWidth / totalInRow;
+    const xPosition = indexInRow * itemWidth;
+    const height = isMobile ? '33.33%' : '50%';
+    
+    return {
+      left: `${xPosition}%`,
+      top: `${yPosition}%`,
+      width: `${itemWidth}%`,
+      height: height,
+      opacity: 1
+    };
+  };
+
+  const LogoItem = ({ logo, index, rowType, totalInRow }: { logo: typeof logos[0], index: number, rowType: 'top' | 'bottom' | 'third', totalInRow: number }) => {
+    let globalIndex;
+    if (rowType === 'top') {
+      globalIndex = index;
+    } else if (rowType === 'bottom') {
+      globalIndex = index + 2;
+    } else {
+      globalIndex = index + 4;
+    }
+    const isHovered = hoveredIndex === globalIndex;
+    
+    // Determine border classes based on position
+    const isFirst = index === 0;
+    const isLast = index === totalInRow - 1;
+    const borderClasses = `${
+      isFirst ? "" : "border-l border-l-[0.5px]"
+    } ${
+      isLast ? "" : "border-r border-r-[0.5px]"
+    } border-gray-300 dark:border-gray-600`;
+    
+    return (
+      <div
+        className={`relative flex items-center justify-center h-full ${borderClasses} cursor-pointer z-10`}
+        onMouseEnter={() => handleHoverChange(globalIndex)}
+      >
+        <motion.img
+          src={logo.url}
+          alt={logo.name}
+          className={`max-h-12 max-w-32 object-contain relative z-20 grayscale`}
+          animate={{
+            filter: isHovered 
+              ? (logo.hasBackground ? "grayscale(1) invert(1)" : "brightness(0) invert(1)") 
+              : (logo.hasBackground ? "grayscale(1)" : "brightness(0)"),
+          }}
+          transition={{
+            duration: 0.15,
+            ease: [0.4, 0, 0.2, 1],
+          }}
+        />
+      </div>
+    );
+  };
+
   return (
-    <section className="py-16 dark:bg-black bg-white">
-      <div className="px-20">
-        <h3 className="text-center text-md text-muted-foreground mb-12 animate-fade-in">
-          TRUSTED BY BRANDS AT
+    <section className="relative py-8 px-4 md:px-8 lg:px-10 dark:bg-black bg-white z-10">
+      <div className="w-full">
+        <h3 className="text-left text-xl md:text-xl lg:text-2xl font-bold text-black dark:text-black mb-6 animate-fade-in tracking-wider">
+          TRUSTED BY
         </h3>
-        <div className="flex overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
+        <div className={`relative flex flex-col w-full`} style={{ height: '50vh' }}>
+          {/* Animated Background */}
           <motion.div
-            ref={containerRef}
-            animate={{ x: animationDistance }}
+            className="absolute bg-black z-0"
+            animate={getBackgroundPosition()}
             transition={{
-              duration: 20, // Shorter duration for one set
-              ease: "linear",
-              repeat: Infinity,
-              repeatType: "loop",
-              delay: 0.5,
+              duration: 0.15,
+              ease: [0.4, 0, 0.2, 1],
             }}
-            className="flex gap-12 items-center"
-          >
-            {Array.from({ length: 6 }).map(
-              (
-                _,
-                i // Increased copies to 6
-              ) => (
-                <div key={i} className="flex gap-12">
-                  {logos.map((logo) => (
-                    <div
-                      key={`${logo.name}-${i}`}
-                      className="flex items-center justify-center min-w-[150px] h-16 grayscale hover:grayscale-0 transition-all duration-300"
-                    >
-                      <img
-                        src={logo.url}
-                        alt={logo.name}
-                        className={`max-h-full max-w-full object-contain ${
-                          logo.hasBackground
-                            ? "dark:opacity-90"
-                            : "dark:brightness-0 dark:invert"
-                        }`}
-                      />
-                    </div>
-                  ))}
+          />
+          
+          {/* Top Row */}
+          <div className={`flex ${isMobile ? 'h-1/3' : 'h-1/2'} border-b border-b-[0.5px] border-gray-300 dark:border-gray-600 relative z-10`}>
+            {topRowLogos.map((logo, index) => (
+              <div key={logo.name} className="flex-1">
+                <LogoItem logo={logo} index={index} rowType="top" totalInRow={topRowLogos.length} />
+              </div>
+            ))}
+          </div>
+          
+          {/* Bottom Row */}
+          <div className={`flex ${isMobile ? 'h-1/3' : 'h-1/2'} ${isMobile && thirdRowLogos.length > 0 ? 'border-b border-b-[0.5px] border-gray-300 dark:border-gray-600' : ''} relative z-10`}>
+            {bottomRowLogos.map((logo, index) => (
+              <div key={logo.name} className="flex-1">
+                <LogoItem logo={logo} index={index} rowType="bottom" totalInRow={bottomRowLogos.length} />
+              </div>
+            ))}
+          </div>
+          
+          {/* Third Row - Mobile only */}
+          {isMobile && thirdRowLogos.length > 0 && (
+            <div className="flex h-1/3 relative z-10">
+              {thirdRowLogos.map((logo, index) => (
+                <div key={logo.name} className="flex-1">
+                  <LogoItem logo={logo} index={index} rowType="third" totalInRow={thirdRowLogos.length} />
                 </div>
-              )
-            )}
-          </motion.div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </section>

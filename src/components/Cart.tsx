@@ -10,7 +10,26 @@ import {
 } from "@/components/ui/sheet";
 import { useCartStore } from '@/lib/store';
 
-declare const PaystackPop: any;
+interface PaystackResponse {
+  reference: string;
+  status: string;
+}
+
+interface PaystackPop {
+  setup: (config: {
+    key: string;
+    email: string;
+    amount: number;
+    currency: string;
+    ref: string;
+    callback: (response: PaystackResponse) => void;
+    onClose: () => void;
+  }) => {
+    openIframe: () => void;
+  };
+}
+
+declare const PaystackPop: PaystackPop;
 
 export function Cart() {
   const { items, removeItem, updateQuantity, total, clearCart } = useCartStore();
@@ -30,7 +49,7 @@ export function Cart() {
       amount: amountInPesewas, // Amount in pesewas
       currency: 'GHS',
       ref: 'ref_' + Math.floor(Math.random() * 1000000000 + 1),
-      callback: function(response: any) {
+      callback: function(response: PaystackResponse) {
         console.log('Payment complete! Reference:', response.reference);
         clearCart();
       },

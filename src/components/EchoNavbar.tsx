@@ -1,43 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useLocation } from "react-router-dom";
-import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { EchoThemeToggle } from "@/components/EchoThemeToggle";
+import { motion, AnimatePresence } from "motion/react";
 
 export function EchoNavbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isVisible, setIsVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
   const location = useLocation();
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      const heroSection = document.querySelector("#hero");
-
-      if (!heroSection) return;
-
-      const heroHeight = heroSection.getBoundingClientRect().height;
-
-      // Show navbar at the very top
-      if (currentScrollY < 100) {
-        setIsVisible(true);
-      }
-      // Hide navbar during hero section
-      else if (currentScrollY < heroHeight) {
-        setIsVisible(false);
-      }
-      // Show navbar after hero section is completely scrolled past
-      else if (currentScrollY > heroHeight) {
-        setIsVisible(true);
-      }
-
-      setLastScrollY(currentScrollY);
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [lastScrollY]);
 
   const scrollToSection = (sectionId: string) => {
     if (location.pathname === "/echo") {
@@ -47,7 +15,6 @@ export function EchoNavbar() {
         setIsMenuOpen(false);
       }
     } else {
-      // If not on echo page, navigate to echo page with hash
       window.location.href = `/echo#${sectionId}`;
     }
   };
@@ -55,108 +22,176 @@ export function EchoNavbar() {
   const scrollToTop = () => {
     if (location.pathname === "/echo") {
       window.scrollTo({ top: 0, behavior: "smooth" });
+      setIsMenuOpen(false);
     }
   };
 
   return (
-    <div
-      className={`fixed w-full z-50 p-2 transition-transform duration-300 ${
-        isVisible ? "translate-y-0" : "-translate-y-full"
-      }`}
-    >
-      <nav
-        className={`max-w-6xl mx-auto relative overflow-hidden ${
-          isMenuOpen ? "rounded-xl" : "rounded-xl md:rounded-full"
-        }`}
-        style={{
-          background: 'var(--glass-bg)',
-          backdropFilter: 'blur(20px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-          border: '1px solid var(--glass-border)',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 var(--glass-border)'
-        }}
-      >
-        <div className="px-2 py-2 flex justify-between items-center">
-          <button
-              onClick={scrollToTop}
-              className="text-xl font-bold hover:text-green-600 transition-colors px-3 flex items-center gap-2 cursor-pointer"
-            >
-              EchoNote
-            </button>
-
-          {/* Desktop Menu */}
-          <div className="hidden md:flex items-center space-x-8">
-            <button
-              onClick={() => scrollToSection('features')}
-              className="relative group cursor-pointer"
-            >
-              <span className="text-foreground/80 hover:text-green-600 transition-colors">
-                Features
-              </span>
-              <span className="absolute inset-x-0 -bottom-1 h-0.5 bg-green-600 scale-x-0 group-hover:scale-x-100 transition-transform"></span>
-            </button>
-            <button
-              onClick={() => scrollToSection('use-cases')}
-              className="relative group cursor-pointer"
-            >
-              <span className="text-foreground/80 hover:text-green-600 transition-colors">
-                Use Cases
-              </span>
-              <span className="absolute inset-x-0 -bottom-1 h-0.5 bg-green-600 scale-x-0 group-hover:scale-x-100 transition-transform"></span>
-            </button>
-            <button
-              onClick={() => scrollToSection('download')}
-              className="relative group cursor-pointer"
-            >
-              <span className="text-foreground/80 hover:text-green-600 transition-colors">
-                Download
-              </span>
-              <span className="absolute inset-x-0 -bottom-1 h-0.5 bg-green-600 scale-x-0 group-hover:scale-x-100 transition-transform"></span>
-            </button>
-          </div>
-
-          {/* Right side items */}
-          <div className="flex items-center space-x-2">
-            <EchoThemeToggle />
-            
-            {/* Mobile menu button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="md:hidden"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-            >
-              {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
-            </Button>
-          </div>
-        </div>
-
-        {/* Mobile Menu */}
-        {isMenuOpen && (
-          <div className="md:hidden border-t border-border/50 bg-background/95 backdrop-blur-sm">
-            <div className="px-4 py-4 space-y-4">
+    <>
+      <nav className={`fixed top-0 w-full h-[60px] z-50 ${isMenuOpen ? 'bg-background' : 'bg-background/95 backdrop-blur-sm'}`}>
+        <div className="h-full px-6 flex justify-between items-center">
+          {/* Layout when menu is closed - evenly spaced items */}
+          {!isMenuOpen && (
+            <>
+              <button
+                onClick={scrollToTop}
+                className="text-xl font-bold hover:text-primary transition-colors flex items-center gap-2"
+              >
+                EchoNote
+              </button>
+              
               <button
                 onClick={() => scrollToSection('features')}
-                className="block w-full text-left text-foreground/80 hover:text-green-600 transition-colors py-2"
+                className="hidden md:block text-foreground/80 hover:text-primary transition-colors"
+                style={{ fontSize: '16px', fontWeight: 600 }}
               >
                 Features
               </button>
+              
               <button
                 onClick={() => scrollToSection('use-cases')}
-                className="block w-full text-left text-foreground/80 hover:text-green-600 transition-colors py-2"
+                className="hidden md:block text-foreground/80 hover:text-primary transition-colors"
+                style={{ fontSize: '16px', fontWeight: 600 }}
               >
                 Use Cases
               </button>
+              
               <button
                 onClick={() => scrollToSection('download')}
-                className="block w-full text-left text-foreground/80 hover:text-green-600 transition-colors py-2"
+                className="hidden md:block text-foreground/80 hover:text-primary transition-colors"
+                style={{ fontSize: '16px', fontWeight: 600 }}
               >
                 Download
               </button>
-            </div>
-          </div>
-        )}
+              
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="hover:bg-transparent"
+              >
+                <div className="flex flex-col justify-center items-center w-6 h-6">
+                  <motion.div
+                    className="w-5 h-0.5 bg-current mb-1"
+                    animate={{
+                      rotate: isMenuOpen ? 45 : 0,
+                      y: isMenuOpen ? 3 : 0,
+                    }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                  />
+                  <motion.div
+                    className="w-5 h-0.5 bg-current"
+                    animate={{
+                      rotate: isMenuOpen ? -45 : 0,
+                      y: isMenuOpen ? -3 : 0,
+                    }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                  />
+                </div>
+              </Button>
+            </>
+          )}
+
+          {/* Layout when menu is open - only logo and hamburger */}
+          {isMenuOpen && (
+            <>
+              <button
+                onClick={scrollToTop}
+                className="text-xl font-bold hover:text-primary transition-colors flex items-center gap-2"
+              >
+                EchoNote
+              </button>
+              
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="hover:bg-transparent"
+              >
+                <div className="flex flex-col justify-center items-center w-6 h-6">
+                  <motion.div
+                    className="w-5 h-0.5 bg-current mb-1"
+                    animate={{
+                      rotate: isMenuOpen ? 45 : 0,
+                      y: isMenuOpen ? 3 : 0,
+                    }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                  />
+                  <motion.div
+                    className="w-5 h-0.5 bg-current"
+                    animate={{
+                      rotate: isMenuOpen ? -45 : 0,
+                      y: isMenuOpen ? -3 : 0,
+                    }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                  />
+                </div>
+              </Button>
+            </>
+          )}
+        </div>
       </nav>
-    </div>
+
+      {/* Menu Overlay */}
+      <AnimatePresence>
+        {isMenuOpen && (
+          <motion.div
+            initial={{ y: "-60vh" }}
+            animate={{ y: 0 }}
+            exit={{ y: "-60vh" }}
+            transition={{ duration: 0.4, ease: "easeInOut" }}
+            className="fixed top-0 left-0 right-0 h-[calc(60px+60vh)] z-40 bg-background backdrop-blur-sm"
+          >
+            <div className="h-full flex flex-col justify-center items-center space-y-2 -mt-[30px]">
+              {/* Main navigation items */}
+              <motion.button
+                initial={{ y: -20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.1, duration: 0.4, ease: "easeOut" }}
+                onClick={() => scrollToSection('features')}
+                className="text-foreground/80 hover:text-primary transition-colors"
+                style={{ 
+                  fontSize: '60px', 
+                  fontWeight: 600, 
+                  lineHeight: '100%' 
+                }}
+              >
+                Features
+              </motion.button>
+              
+              <motion.button
+                initial={{ y: -20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.2, duration: 0.4, ease: "easeOut" }}
+                onClick={() => scrollToSection('use-cases')}
+                className="text-foreground/80 hover:text-primary transition-colors"
+                style={{ 
+                  fontSize: '60px', 
+                  fontWeight: 600, 
+                  lineHeight: '100%' 
+                }}
+              >
+                Use Cases
+              </motion.button>
+              
+              <motion.button
+                initial={{ y: -20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.3, duration: 0.4, ease: "easeOut" }}
+                onClick={() => scrollToSection('download')}
+                className="text-foreground/80 hover:text-primary transition-colors"
+                style={{ 
+                  fontSize: '60px', 
+                  fontWeight: 600, 
+                  lineHeight: '100%' 
+                }}
+              >
+                Download
+              </motion.button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
