@@ -35,12 +35,12 @@ export function Footer() {
   }, []);
 
   return (
-    <footer ref={footerRef} className="relative h-[70vh] border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-black overflow-hidden">
+    <footer ref={footerRef} className="relative min-h-[70vh] border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-black overflow-hidden">
       {/* Background Text */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
         <h1 
           ref={textRef}
-          className="text-[8rem] md:text-[10rem] lg:text-[12rem] font-black text-black select-none transition-transform duration-300 ease-out"
+          className="font-bold text-[clamp(50px,12vw,250px)] tracking-tight text-black select-none transition-transform duration-300 ease-out"
           style={{ transform: 'translateY(-120px)' }}
         >
           wanmenzy
@@ -48,59 +48,62 @@ export function Footer() {
       </div>
 
       {/* Bento Grid */}
-      <div className="relative z-10 h-full p-2">
-        {/* 3x3 grid with first row twice the height of second and third rows */}
-        <div className="w-full h-full p-2 grid grid-cols-3 gap-4" style={{ gridTemplateRows: '2fr 1fr 1fr' }}>
-          {/* Top Row */}
-          {/* Work - top-left spanning 2 columns */}
-          <div className="col-start-1 col-span-2 row-start-1 bg-neutral-200/50 backdrop-blur-sm border border-white/20 dark:border-white/10 rounded-2xl p-6 flex items-end justify-start hover:bg-neutral-200/65 hover:backdrop-blur-md transition-all duration-300 cursor-pointer">
-            <span className="text-lg font-medium text-foreground">Work</span>
+      <div className="relative z-10 p-2">
+        {/* Bento Grid with specific heights like the reference */}
+        <div className="px-2 lg:px-4 pt-8 lg:pt-16 pb-8 lg:pb-4 grid grid-cols-12 gap-2 lg:gap-4">
+          
+          {/* Work - Large card on left */}
+          <a 
+            href="/work"
+            className="col-span-12 lg:col-span-8 flex items-end p-4 lg:p-6 bg-neutral-300/50 backdrop-blur-sm h-[200px] lg:h-[350px] rounded-lg lg:rounded-xl text-[clamp(16px,1.4vw,24px)] font-medium leading-tight cursor-pointer hover:backdrop-blur-md transition-all duration-500"
+          >
+            Work
+          </a>
+
+          {/* Lab - Tall card on top right */}
+          <a 
+            href="/lab"
+            className="col-span-12 lg:col-span-4 flex items-end p-4 lg:p-6 bg-neutral-300/50 backdrop-blur-sm h-[200px] lg:h-[350px] rounded-lg lg:rounded-xl text-[clamp(16px,1.4vw,24px)] font-medium leading-tight cursor-pointer hover:backdrop-blur-md transition-all duration-500"
+          >
+            Lab
+          </a>
+
+          {/* Contact & Github - Small cards stacked on mobile, side by side on desktop */}
+          <div className="col-span-12 lg:col-span-4 grid grid-cols-2 lg:grid-rows-2 gap-2 lg:gap-4">
+            <a 
+              href="mailto:contact@wanmenzy.com" 
+              className="lg:col-span-12 flex items-end p-4 lg:p-6 bg-neutral-300/50 backdrop-blur-sm h-[120px] lg:h-full rounded-lg lg:rounded-xl text-[clamp(16px,1.4vw,24px)] font-medium leading-tight cursor-pointer hover:backdrop-blur-md transition-all duration-500"
+            >
+              Contact
+            </a>
+            <a 
+              href="https://github.com/menzy" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="lg:col-span-12 flex items-end p-4 lg:p-6 bg-neutral-300/50 backdrop-blur-sm h-[120px] lg:h-full rounded-lg lg:rounded-xl text-[clamp(16px,1.4vw,24px)] font-medium leading-tight cursor-pointer hover:backdrop-blur-md transition-all duration-500"
+            >
+              Github
+            </a>
           </div>
 
-          {/* Lab - top-right single cell */}
-          <div className="col-start-3 row-start-1 bg-neutral-200/50 backdrop-blur-sm border border-white/20 dark:border-white/10 rounded-2xl p-6 flex items-end justify-start hover:bg-neutral-200/65 hover:backdrop-blur-md transition-all duration-300 cursor-pointer">
-            <span className="text-lg font-medium text-foreground">Lab</span>
-          </div>
-
-          {/* Middle/Bottom Rows */}
-          {/* YouTube - middle-left */}
-          <a
-            href="https://youtube.com/@menzy"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="col-start-1 row-start-2 bg-neutral-200/50 backdrop-blur-sm border border-white/20 dark:border-white/10 rounded-2xl p-6 flex items-end justify-start hover:bg-neutral-200/65 hover:backdrop-blur-md transition-all duration-300"
+          {/* Instagram - Bottom left */}
+          <a 
+            href="https://instagram.com/1menzy" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="col-span-6 lg:col-span-4 flex items-end p-4 lg:p-6 bg-neutral-300/50 backdrop-blur-sm h-[120px] lg:h-[350px] rounded-lg lg:rounded-xl text-[clamp(16px,1.4vw,24px)] font-medium leading-tight cursor-pointer hover:backdrop-blur-md transition-all duration-500"
           >
-            <span className="text-lg font-medium text-foreground">YouTube</span>
+            Instagram
           </a>
 
-          {/* Github - bottom-left */}
-          <a
-            href="https://github.com/menzy"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="col-start-1 row-start-3 bg-neutral-200/50 backdrop-blur-sm border border-white/20 dark:border-white/10 rounded-2xl p-6 flex items-end justify-start hover:bg-neutral-200/65 hover:backdrop-blur-md transition-all duration-300"
+          {/* LinkedIn - Bottom right */}
+          <a 
+            href="https://linkedin.com/in/wanmenzy" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="col-span-6 lg:col-span-4 flex items-end p-4 lg:p-6 bg-neutral-300/50 backdrop-blur-sm h-[120px] lg:h-[350px] rounded-lg lg:rounded-xl text-[clamp(16px,1.4vw,24px)] font-medium leading-tight cursor-pointer hover:backdrop-blur-md transition-all duration-500"
           >
-            <span className="text-lg font-medium text-foreground">Github</span>
-          </a>
-
-          {/* Instagram - center column spanning two rows (middle and bottom) */}
-          <a
-            href="https://instagram.com/1menzy"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="col-start-2 row-start-2 row-span-2 bg-neutral-200/50 backdrop-blur-sm border border-white/20 dark:border-white/10 rounded-2xl p-6 flex items-end justify-start hover:bg-neutral-200/65 hover:backdrop-blur-md transition-all duration-300"
-          >
-            <span className="text-lg font-medium text-foreground">Instagram</span>
-          </a>
-
-          {/* LinkedIn - middle-right */}
-          <a
-            href="https://linkedin.com/in/wanmenzy"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="col-start-3 row-start-2 row-span-2 bg-neutral-200/50 backdrop-blur-sm border border-white/20 dark:border-white/10 rounded-2xl p-6 flex items-end justify-start hover:bg-neutral-200/65 hover:backdrop-blur-md transition-all duration-300"
-          >
-            <span className="text-lg font-medium text-foreground">LinkedIn</span>
+            LinkedIn
           </a>
         </div>
       </div>

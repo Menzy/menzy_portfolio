@@ -46,19 +46,23 @@ export function Hero() {
         
         // Small delay to ensure DOM has updated with new text
         requestAnimationFrame(() => {
-          const containerWidth = container.offsetWidth + 12; // Add back the -mx-6 (6px * 2)
-          const textWidth = text.scrollWidth;
+          const containerWidth = container.getBoundingClientRect().width;
+          const textWidth = text.getBoundingClientRect().width;
           
           if (textWidth > 0) {
-            const scale = Math.max(containerWidth / textWidth, 1); // Don't scale down below 1
-            text.style.transform = `scale(${scale})`;
+            const scaleX = (containerWidth + 2) / textWidth;
+            const scaleY = scaleX;
+            text.style.transform = `scaleX(${scaleX}) scaleY(${scaleY})`;
             
-            // Calculate how much extra height the scaling adds
-            const originalHeight = parseFloat(getComputedStyle(text).fontSize) * 0.8; // lineHeight is 0.8
-            const scaledHeight = originalHeight * scale;
-            const extraHeight = scaledHeight - originalHeight;
+            // Calculate the actual height needed and set container height
+            const originalHeight = parseFloat(getComputedStyle(text).fontSize) * 0.75; // lineHeight is 0.75
+            const scaledHeight = originalHeight * scaleY;
+            
+            // Set container height to match scaled text
+            container.style.height = `${scaledHeight}px`;
             
             // Move top text up by the extra height
+            const extraHeight = scaledHeight - originalHeight;
             if (topTextRef.current) {
               topTextRef.current.style.transform = `translateY(-${extraHeight}px)`;
             }
@@ -67,11 +71,14 @@ export function Hero() {
       }
     };
 
+    // Run immediately and after a short delay to ensure proper sizing
     adjustTextScale();
+    setTimeout(adjustTextScale, 100);
+    
     window.addEventListener('resize', adjustTextScale);
     
     return () => window.removeEventListener('resize', adjustTextScale);
-  }, [currentText]); // Add currentText as dependency
+  }, [currentText]);
 
   return (
     <section
@@ -96,7 +103,7 @@ export function Hero() {
       >
         <div className="relative w-full h-full">
           <iframe
-            className="absolute w-[177.78vh] h-[100vw] min-w-full min-h-full left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 md:w-[200%] md:h-[200%] md:-left-[50%] md:-top-[50%] md:translate-x-0 md:translate-y-0 lg:w-[160%] lg:h-[160%] lg:-left-[30%] lg:-top-[30%]"
+            className="absolute w-[177.78vh] h-[100vw] min-w-full min-h-full left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 md:w-[250%] md:h-[250%] md:-left-[75%] md:-top-[75%] md:translate-x-0 md:translate-y-0 lg:w-[160%] lg:h-[160%] lg:-left-[30%] lg:-top-[30%]"
             src="https://www.youtube.com/embed/rzjF6_uxkJw?autoplay=1&loop=1&playlist=rzjF6_uxkJw&controls=0&mute=1&showinfo=0&rel=0&playsinline=1&vq=hd1080&hd=1&modestbranding=1"
             title="Background Video"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -106,20 +113,25 @@ export function Hero() {
 
         {/* Hero Text - spans full width */}
         <div className="absolute bottom-6 left-0 right-0 z-10 px-6">
-          <div ref={topTextRef} className="flex items-center justify-between w-full leading-none transition-transform duration-300">
-            <span className="text-white text-sm font-medium tracking-wider uppercase">A</span>
-            <span className="text-white text-sm font-medium tracking-wider uppercase">REALLY</span>
-            <span className="text-white text-sm font-medium tracking-wider uppercase">GOOD</span>
+          <div ref={topTextRef} className="flex items-center justify-between w-full leading-none transition-transform duration-500 ease-out h-[10px] sm:h-[14px] lg:h-[16px]">
+            <span className="text-white text-[10px] sm:text-sm lg:text-base font-medium tracking-wider uppercase leading-none">A</span>
+            <span className="text-white text-[10px] sm:text-sm lg:text-base font-medium tracking-wider uppercase leading-none">REALLY</span>
+            <span className="text-white text-[10px] sm:text-sm lg:text-base font-medium tracking-wider uppercase leading-none">GOOD</span>
           </div>
-          <div ref={containerRef} className="mt-1 w-full -mx-6">
+          <div ref={containerRef} className="mt-0 sm:mt-1 w-full flex items-end h-auto overflow-visible">
             <span 
               ref={textRef}
               className="text-white font-bold tracking-tight uppercase whitespace-nowrap block"
               style={{
-                fontSize: '15vw',
+                fontSize: '20vw',
                 transformOrigin: 'left bottom',
                 width: 'fit-content',
-                lineHeight: '0.8'
+                lineHeight: '0.75',
+                textIndent: '-0.05em',
+                display: 'block',
+                verticalAlign: 'bottom',
+                margin: '0',
+                padding: '0'
               }}
             >
               {currentText}

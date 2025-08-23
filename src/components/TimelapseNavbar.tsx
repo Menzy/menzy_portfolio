@@ -1,27 +1,24 @@
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X } from "lucide-react";
 import { useCallback, useState } from "react";
 import { ThemeLogo } from "./ThemeLogo";
-
+import { motion, AnimatePresence } from "motion/react";
 
 export function TimelapseNavbar() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
   const isMainPage = location.pathname === "/timelapse";
 
   const scrollToSection = useCallback((sectionId: string) => {
     if (isMainPage) {
-      // If we're on the main page, scroll to the section
       const element = document.getElementById(sectionId);
       if (element) {
-        // Add a small delay to ensure consistent scrolling behavior
         setTimeout(() => {
           element.scrollIntoView({ 
             behavior: "smooth",
             block: "start"
           });
-          setMobileMenuOpen(false);
+          setIsMenuOpen(false);
         }, 50);
       }
     }
@@ -29,102 +26,37 @@ export function TimelapseNavbar() {
 
   const handleNavigation = useCallback((sectionId: string) => {
     if (isMainPage) {
-      // If we're on the main page, just scroll
       scrollToSection(sectionId);
     } else {
-      // If we're not on the main page, we'll navigate back to main page with hash
-      // React Router will handle this navigation
-      setMobileMenuOpen(false);
+      setIsMenuOpen(false);
     }
   }, [isMainPage, scrollToSection]);
 
   return (
-    <div className="w-full py-3 border-b border-b-muted/40 bg-background/95 backdrop-blur-sm sticky top-0 z-50">
-      <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center space-x-3">
-            <Link to="/timelapse" className="flex items-center">
-              <ThemeLogo width={36} height={36} className="mr-2" roundedSize="rounded-md" />
-              <span className="text-xl font-bold">TimeLapse</span>
-            </Link>
-          </div>
-          
-          <div className="hidden md:flex items-center space-x-6">
-            {isMainPage ? (
-              <button 
-                onClick={() => handleNavigation('features')} 
-                className="text-foreground/80 hover:text-primary transition-colors cursor-pointer appearance-none bg-transparent border-none p-0 font-inherit"
-              >
-                Features
-              </button>
-            ) : (
-              <Link 
-                to="/timelapse#features" 
-                className="text-foreground/80 hover:text-primary transition-colors"
-              >
-                Features
+    <>
+      <nav className={`fixed top-0 w-full h-[60px] z-50 ${isMenuOpen ? 'bg-background' : 'bg-background/95 backdrop-blur-sm'}`}>
+        <div className="h-full px-6 flex justify-between items-center">
+          {/* Layout when menu is closed - evenly spaced items */}
+          {!isMenuOpen && (
+            <>
+              <Link to="/timelapse" className="flex items-center space-x-3">
+                <ThemeLogo width={36} height={36} className="mr-2" roundedSize="rounded-md" />
+                <span className="text-xl font-bold hover:text-primary transition-colors">TimeLapse</span>
               </Link>
-            )}
-            
-            {isMainPage ? (
-              <button 
-                onClick={() => handleNavigation('getting-started')} 
-                className="text-foreground/80 hover:text-primary transition-colors cursor-pointer appearance-none bg-transparent border-none p-0 font-inherit"
-              >
-                Getting Started
-              </button>
-            ) : (
-              <Link 
-                to="/timelapse#getting-started" 
-                className="text-foreground/80 hover:text-primary transition-colors"
-              >
-                Getting Started
-              </Link>
-            )}
-            
-            <Link 
-              to="/timelapse/support" 
-              className="text-foreground/80 hover:text-primary transition-colors"
-            >
-              Support
-            </Link>
-            
-            <Link 
-              to="/privacy-policy" 
-              className="text-foreground/80 hover:text-primary transition-colors"
-            >
-              Privacy
-            </Link>
-          </div>
-          
-          <div className="md:hidden flex items-center">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="ml-1.5"
-            >
-              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </Button>
-          </div>
-        </div>
-
-        {/* Mobile menu */}
-        {mobileMenuOpen && (
-          <div className="md:hidden pt-5 pb-3 border-t mt-4 animate-in slide-in-from-top duration-300">
-            <nav className="flex flex-col space-y-4">
+              
               {isMainPage ? (
                 <button 
                   onClick={() => handleNavigation('features')} 
-                  className="text-foreground/80 hover:text-primary transition-colors cursor-pointer appearance-none bg-transparent border-none p-0 text-lg font-medium text-left"
+                  className="hidden md:block text-foreground/80 hover:text-primary transition-colors"
+                  style={{ fontSize: '16px', fontWeight: 600 }}
                 >
                   Features
                 </button>
               ) : (
                 <Link 
                   to="/timelapse#features" 
-                  className="text-foreground/80 hover:text-primary transition-colors text-lg font-medium"
-                  onClick={() => setMobileMenuOpen(false)}
+                  className="hidden md:block text-foreground/80 hover:text-primary transition-colors"
+                  style={{ fontSize: '16px', fontWeight: 600 }}
                 >
                   Features
                 </Link>
@@ -133,15 +65,16 @@ export function TimelapseNavbar() {
               {isMainPage ? (
                 <button 
                   onClick={() => handleNavigation('getting-started')} 
-                  className="text-foreground/80 hover:text-primary transition-colors cursor-pointer appearance-none bg-transparent border-none p-0 text-lg font-medium text-left"
+                  className="hidden md:block text-foreground/80 hover:text-primary transition-colors"
+                  style={{ fontSize: '16px', fontWeight: 600 }}
                 >
                   Getting Started
                 </button>
               ) : (
                 <Link 
                   to="/timelapse#getting-started" 
-                  className="text-foreground/80 hover:text-primary transition-colors text-lg font-medium"
-                  onClick={() => setMobileMenuOpen(false)}
+                  className="hidden md:block text-foreground/80 hover:text-primary transition-colors"
+                  style={{ fontSize: '16px', fontWeight: 600 }}
                 >
                   Getting Started
                 </Link>
@@ -149,23 +82,196 @@ export function TimelapseNavbar() {
               
               <Link 
                 to="/timelapse/support" 
-                className="text-foreground/80 hover:text-primary transition-colors text-lg font-medium"
-                onClick={() => setMobileMenuOpen(false)}
+                className="hidden md:block text-foreground/80 hover:text-primary transition-colors"
+                style={{ fontSize: '16px', fontWeight: 600 }}
               >
                 Support
               </Link>
               
               <Link 
                 to="/privacy-policy" 
-                className="text-foreground/80 hover:text-primary transition-colors text-lg font-medium"
-                onClick={() => setMobileMenuOpen(false)}
+                className="hidden md:block text-foreground/80 hover:text-primary transition-colors"
+                style={{ fontSize: '16px', fontWeight: 600 }}
               >
                 Privacy
               </Link>
-            </nav>
-          </div>
+              
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="hover:bg-transparent"
+              >
+                <div className="flex flex-col justify-center items-center w-6 h-6">
+                  <motion.div
+                    className="w-5 h-0.5 bg-current mb-1"
+                    animate={{
+                      rotate: isMenuOpen ? 45 : 0,
+                      y: isMenuOpen ? 3 : 0,
+                    }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                  />
+                  <motion.div
+                    className="w-5 h-0.5 bg-current"
+                    animate={{
+                      rotate: isMenuOpen ? -45 : 0,
+                      y: isMenuOpen ? -3 : 0,
+                    }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                  />
+                </div>
+              </Button>
+            </>
+          )}
+
+          {/* Layout when menu is open - only logo and hamburger */}
+          {isMenuOpen && (
+            <>
+              <Link to="/timelapse" className="flex items-center space-x-3">
+                <ThemeLogo width={36} height={36} className="mr-2" roundedSize="rounded-md" />
+                <span className="text-xl font-bold hover:text-primary transition-colors">TimeLapse</span>
+              </Link>
+              
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="hover:bg-transparent"
+              >
+                <div className="flex flex-col justify-center items-center w-6 h-6">
+                  <motion.div
+                    className="w-5 h-0.5 bg-current mb-1"
+                    animate={{
+                      rotate: isMenuOpen ? 45 : 0,
+                      y: isMenuOpen ? 3 : 0,
+                    }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                  />
+                  <motion.div
+                    className="w-5 h-0.5 bg-current"
+                    animate={{
+                      rotate: isMenuOpen ? -45 : 0,
+                      y: isMenuOpen ? -3 : 0,
+                    }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                  />
+                </div>
+              </Button>
+            </>
+          )}
+        </div>
+      </nav>
+
+      {/* Menu Overlay */}
+      <AnimatePresence>
+        {isMenuOpen && (
+          <motion.div
+            initial={{ y: "-60vh" }}
+            animate={{ y: 0 }}
+            exit={{ y: "-60vh" }}
+            transition={{ duration: 0.4, ease: "easeInOut" }}
+            className="fixed top-0 left-0 right-0 h-[calc(60px+60vh)] z-40 bg-background backdrop-blur-sm"
+          >
+            <div className="h-full flex flex-col justify-center items-center space-y-2 -mt-[30px]">
+              {/* Main navigation items */}
+              {isMainPage ? (
+                <motion.button
+                  initial={{ y: -20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.1, duration: 0.4, ease: "easeOut" }}
+                  onClick={() => handleNavigation('features')}
+                  className="text-foreground/80 hover:text-primary transition-colors"
+                  style={{ 
+                    fontSize: '60px', 
+                    fontWeight: 600, 
+                    lineHeight: '100%' 
+                  }}
+                >
+                  Features
+                </motion.button>
+              ) : (
+                <motion.div
+                  initial={{ y: -20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.1, duration: 0.4, ease: "easeOut" }}
+                >
+                  <Link 
+                    to="/timelapse#features" 
+                    className="text-foreground/80 hover:text-primary transition-colors"
+                    style={{ 
+                      fontSize: '60px', 
+                      fontWeight: 600, 
+                      lineHeight: '100%' 
+                    }}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Features
+                  </Link>
+                </motion.div>
+              )}
+
+              {isMainPage ? (
+                <motion.button
+                  initial={{ y: -20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.2, duration: 0.4, ease: "easeOut" }}
+                  onClick={() => handleNavigation('getting-started')}
+                  className="text-foreground/80 hover:text-primary transition-colors"
+                  style={{ 
+                    fontSize: '60px', 
+                    fontWeight: 600, 
+                    lineHeight: '100%' 
+                  }}
+                >
+                  Getting Started
+                </motion.button>
+              ) : (
+                <motion.div
+                  initial={{ y: -20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.2, duration: 0.4, ease: "easeOut" }}
+                >
+                  <Link 
+                    to="/timelapse#getting-started" 
+                    className="text-foreground/80 hover:text-primary transition-colors"
+                    style={{ 
+                      fontSize: '60px', 
+                      fontWeight: 600, 
+                      lineHeight: '100%' 
+                    }}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Getting Started
+                  </Link>
+                </motion.div>
+              )}
+              
+              {/* Bottom Actions */}
+              <motion.div 
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.3, duration: 0.4, ease: "easeOut" }}
+                className="absolute bottom-6 left-0 right-0 flex items-center justify-between px-12"
+              >
+                <Link
+                  to="/timelapse/support"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="text-sm font-normal text-foreground/70 hover:text-primary transition-colors"
+                >
+                  Support
+                </Link>
+                <Link
+                  to="/privacy-policy"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="text-sm font-normal text-foreground/70 hover:text-primary transition-colors"
+                >
+                  Privacy
+                </Link>
+              </motion.div>
+            </div>
+          </motion.div>
         )}
-      </div>
-    </div>
+      </AnimatePresence>
+    </>
   );
 }
