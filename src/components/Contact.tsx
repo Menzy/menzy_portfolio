@@ -19,7 +19,7 @@ export function Contact() {
   return (
     <section 
       id="contact" 
-      className="h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center px-6"
+      className="min-h-screen md:h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center px-6 py-20 md:py-0"
     >
       <div className="max-w-7xl w-full flex flex-col items-start gap-[120px]">
         {/* Header Section */}
@@ -42,7 +42,7 @@ export function Contact() {
               <div className="w-12 h-12 rounded-full bg-black">
               </div>
               <div>
-                <p className="font-medium text-black dark:text-white text-lg">Lauren Thompson</p>
+                <p className="font-medium text-black dark:text-white text-lg">Wan Menzy</p>
                 <p className="text-gray-500 dark:text-gray-400">Team lead</p>
               </div>
             </div>
@@ -57,7 +57,7 @@ export function Contact() {
                   placeholder="Your name *"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-0 py-4 border-0 border-b border-gray-300 dark:border-gray-600 rounded-none focus:ring-0 focus:border-black dark:focus:border-white bg-transparent placeholder:text-gray-500 text-lg"
+                  className="w-full px-0 py-4 border-0 border-b border-gray-300 dark:border-gray-600 rounded-none focus:ring-0 focus:ring-offset-0 focus:outline-none focus:border-gray-300 dark:focus:border-gray-600 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none bg-transparent placeholder:text-gray-500 text-lg"
                   required
                 />
               </div>
@@ -68,7 +68,7 @@ export function Contact() {
                   placeholder="Email *"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-0 py-4 border-0 border-b border-gray-300 dark:border-gray-600 rounded-none focus:ring-0 focus:border-black dark:focus:border-white bg-transparent placeholder:text-gray-500 text-lg"
+                  className="w-full px-0 py-4 border-0 border-b border-gray-300 dark:border-gray-600 rounded-none focus:ring-0 focus:ring-offset-0 focus:outline-none focus:border-gray-300 dark:focus:border-gray-600 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none bg-transparent placeholder:text-gray-500 text-lg"
                   required
                 />
               </div>
@@ -78,7 +78,7 @@ export function Contact() {
                   placeholder="Your message"
                   value={formData.message}
                   onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                  className="w-full px-0 py-4 border-0 border-b border-gray-300 dark:border-gray-600 rounded-none focus:ring-0 focus:border-black dark:focus:border-white bg-transparent min-h-[120px] resize-none placeholder:text-gray-500 text-lg"
+                  className="w-full px-0 py-4 border-0 border-b border-gray-300 dark:border-gray-600 rounded-none focus:ring-0 focus:ring-offset-0 focus:outline-none focus:border-gray-300 dark:focus:border-gray-600 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none bg-transparent min-h-[120px] resize-none placeholder:text-gray-500 text-lg"
                   rows={4}
                 />
               </div>

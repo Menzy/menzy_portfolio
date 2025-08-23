@@ -64,6 +64,7 @@ const projects = [
 export function Work() {
   const [playingInlineVideos, setPlayingInlineVideos] = useState<{[key: number]: boolean}>({});
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const checkDarkMode = () => {
@@ -76,6 +77,15 @@ export function Work() {
       attributeFilter: ['class']
     });
     return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   const handlePlayInlineVideo = (index: number) => {
@@ -111,7 +121,7 @@ export function Work() {
               className={`w-full max-w-6xl mx-4 overflow-hidden border-0 shadow-none`}
               style={{ 
                 backgroundColor: isDarkMode ? project.darkColor : project.lightColor,
-                borderRadius: '96px 24px 96px 24px',
+                borderRadius: isMobile ? '24px' : '96px 24px 96px 24px',
               }}
             >
               <div className="flex flex-col md:flex-row h-full min-h-[400px]">
@@ -127,11 +137,11 @@ export function Work() {
                     <DialogTrigger asChild>
                       <Button
                         size="lg"
-                        className="w-fit rounded-full px-6 py-3 font-semibold transition-all duration-300 hover:scale-105 shadow-lg"
+                        className="w-fit rounded-2xl px-6 py-4 font-semibold transition-all duration-300 hover:scale-105 shadow-none"
                         style={{
                           backgroundColor: isDarkMode ? '#ffffff' : '#ffffff',
                           color: isDarkMode ? '#353535' : '#353535',
-                          border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.3)' : 'rgba(53, 53, 53, 0.2)'}`
+                          border: 'none'
                         }}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.backgroundColor = isDarkMode ? '#f3f4f6' : '#f3f4f6';
