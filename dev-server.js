@@ -22,7 +22,7 @@ app.post('/api/waitlist', async (req, res) => {
 
   try {
     const { data, error } = await resend.emails.send({
-      from: 'EchoNote <noreply@wanmenzy.me>',
+      from: 'EchoNote <noreply@wanmenzy.dev>',
       to: [email],
       subject: 'Welcome to EchoNote Waitlist!',
       html: `
