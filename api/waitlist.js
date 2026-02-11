@@ -1,4 +1,5 @@
 import { Resend } from 'resend';
+import { WAITLIST_FROM } from '../site.config.js';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -15,7 +16,7 @@ export default async function handler(req, res) {
 
   try {
     const { data, error } = await resend.emails.send({
-      from: 'EchoNote <noreply@wanmenzy.dev>',
+      from: WAITLIST_FROM,
       to: [email],
       subject: 'Welcome to EchoNote Waitlist!',
       html: `

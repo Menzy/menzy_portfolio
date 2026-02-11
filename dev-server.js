@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { Resend } from 'resend';
 import dotenv from 'dotenv';
+import { WAITLIST_FROM } from './site.config.js';
 
 dotenv.config();
 
@@ -22,7 +23,7 @@ app.post('/api/waitlist', async (req, res) => {
 
   try {
     const { data, error } = await resend.emails.send({
-      from: 'EchoNote <noreply@wanmenzy.dev>',
+      from: WAITLIST_FROM,
       to: [email],
       subject: 'Welcome to EchoNote Waitlist!',
       html: `
