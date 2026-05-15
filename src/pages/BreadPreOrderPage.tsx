@@ -102,9 +102,8 @@ function LoafRow({
 
   return (
     <div
-      className={`grid grid-cols-[88px_1fr] gap-4 border-b border-stone-200 py-5 transition last:border-b-0 sm:grid-cols-[116px_1fr] ${
-        selected ? 'opacity-100' : 'opacity-80'
-      }`}
+      className={`grid grid-cols-[88px_1fr] gap-4 border-b border-stone-200 py-5 transition last:border-b-0 sm:grid-cols-[116px_1fr] ${selected ? 'opacity-100' : 'opacity-80'
+        }`}
     >
       <div className="relative h-24 overflow-hidden rounded-[8px] bg-stone-100 sm:h-28">
         <img src={image} alt={title} className="absolute inset-0 h-full w-full object-contain p-2" />
@@ -123,7 +122,7 @@ function LoafRow({
             </div>
             <p className="mt-1 text-sm leading-5 text-stone-500">{description}</p>
           </div>
-          <p className="shrink-0 text-sm font-semibold text-stone-950">GH₵{price.toFixed(2)}</p>
+          <p className="shrink-0 text-sm font-semibold text-[#87512E]">GH₵{price.toFixed(2)}</p>
         </div>
 
         <div className="flex items-center justify-between gap-3">
@@ -399,13 +398,13 @@ export function BreadPreOrderPage() {
               </section>
 
               <section className="border-t border-stone-200 pt-7">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center">
                   <img src="/assets/bread/date.png" alt="" className="h-14 w-14 object-contain bg-transparent" />
                   <h2 className="text-base font-semibold">Delivery day</h2>
                 </div>
 
                 {loadingSlots ? (
-                  <div className="mt-4 flex items-center rounded-[8px] border border-dashed border-stone-300 px-4 py-5 text-sm text-stone-500">
+                  <div className="mt-4 flex items-center rounded-2xl border border-dashed border-stone-300 px-4 py-5 text-sm text-stone-500">
                     <Loader2 className="mr-3 h-4 w-4 animate-spin" />
                     Checking availability
                   </div>
@@ -426,13 +425,12 @@ export function BreadPreOrderPage() {
                           type="button"
                           disabled={disabled}
                           onClick={() => setSelectedSlot(slotKey)}
-                          className={`rounded-[8px] border px-4 py-3 text-left transition ${
-                            disabled
-                              ? 'cursor-not-allowed border-stone-200 bg-stone-100 opacity-50'
-                              : selected
-                                ? 'border-[#AB6D40] bg-[#AB6D40] text-white'
-                                : 'border-stone-200 bg-white hover:border-stone-400'
-                          }`}
+                          className={`rounded-2xl border px-4 py-3 text-left transition ${disabled
+                            ? 'cursor-not-allowed border-stone-200 bg-stone-100 opacity-50'
+                            : selected
+                              ? 'border-[#AB6D40] bg-[#AB6D40] text-white'
+                              : 'border-stone-200 bg-white hover:border-stone-400'
+                            }`}
                         >
                           <div className="flex items-center justify-between gap-4">
                             <div className="min-w-0">
@@ -443,16 +441,14 @@ export function BreadPreOrderPage() {
                             </div>
                             <div className="flex shrink-0 items-center gap-3">
                               <p
-                                className={`text-xs font-medium uppercase tracking-[0.14em] ${
-                                  selected ? 'text-white/65' : 'text-stone-400'
-                                }`}
+                                className={`text-xs font-medium uppercase tracking-[0.14em] ${selected ? 'text-white/65' : 'text-stone-400'
+                                  }`}
                               >
                                 {slot.remaining} left
                               </p>
                               <span
-                                className={`grid h-5 w-5 place-items-center rounded-full border ${
-                                  selected ? 'border-white bg-white text-stone-950' : 'border-stone-300 text-transparent'
-                                }`}
+                                className={`grid h-5 w-5 place-items-center rounded-full border ${selected ? 'border-white bg-white text-stone-950' : 'border-stone-300 text-transparent'
+                                  }`}
                               >
                                 <Check className="h-3 w-3" />
                               </span>
@@ -479,7 +475,7 @@ export function BreadPreOrderPage() {
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         required
-                        className="h-12 rounded-[8px] border-stone-200 bg-white pl-11 text-base placeholder:text-sm focus-visible:ring-stone-950"
+                        className="h-12 rounded-2xl border-stone-200 bg-white pl-11 text-base placeholder:text-sm focus-visible:ring-stone-950"
                       />
                     </FieldWrap>
                   </div>
@@ -497,7 +493,7 @@ export function BreadPreOrderPage() {
                           value={phone}
                           onChange={(e) => setPhone(e.target.value)}
                           required
-                          className="h-12 rounded-[8px] border-stone-200 bg-white pl-11 text-base placeholder:text-sm focus-visible:ring-stone-950"
+                          className="h-12 rounded-2xl border-stone-200 bg-white pl-11 text-base placeholder:text-sm focus-visible:ring-stone-950"
                         />
                       </FieldWrap>
                     </div>
@@ -512,7 +508,7 @@ export function BreadPreOrderPage() {
                           placeholder="john@example.com"
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
-                          className="h-12 rounded-[8px] border-stone-200 bg-white pl-11 text-base placeholder:text-sm focus-visible:ring-stone-950"
+                          className="h-12 rounded-2xl border-stone-200 bg-white pl-11 text-base placeholder:text-sm focus-visible:ring-stone-950"
                         />
                       </FieldWrap>
                     </div>
@@ -529,7 +525,7 @@ export function BreadPreOrderPage() {
                         value={address}
                         onChange={(e) => setAddress(e.target.value)}
                         required
-                        className="h-12 rounded-[8px] border-stone-200 bg-white pl-11 text-base placeholder:text-sm focus-visible:ring-stone-950"
+                        className="h-12 rounded-2xl border-stone-200 bg-white pl-11 text-base placeholder:text-sm focus-visible:ring-stone-950"
                       />
                     </FieldWrap>
                   </div>
@@ -544,7 +540,7 @@ export function BreadPreOrderPage() {
           </section>
 
           <aside className="h-fit rounded-[8px] bg-white p-5 shadow-sm lg:sticky lg:top-6">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center">
               <img src="/assets/bread/order.png" alt="" className="h-14 w-14 object-contain bg-transparent" />
               <h2 className="text-base font-semibold">Order summary</h2>
             </div>
@@ -578,7 +574,7 @@ export function BreadPreOrderPage() {
             <Button
               type="submit"
               disabled={isProcessing || loadingSlots || slots.length === 0 || !selectedSlot}
-              className="mt-5 h-12 w-full rounded-full bg-stone-950 text-base font-semibold text-white hover:bg-stone-800"
+              className="mt-5 h-12 w-full rounded-full bg-[#AB6D40] text-base font-semibold text-white hover:bg-[#965E38]"
             >
               {isProcessing ? (
                 <>
