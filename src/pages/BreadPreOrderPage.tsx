@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { nextDay, isWednesday, isSaturday, startOfDay, format, addWeeks } from 'date-fns';
-import { Loader2, ArrowLeft, ArrowRight, ShieldCheck, Check } from 'lucide-react';
+import { Loader2, ArrowLeft, ArrowRight, ShieldCheck, Check, Minus, Plus } from 'lucide-react';
 import { PageTransition } from '@/components/PageTransition';
 
 interface Slot {
@@ -30,13 +30,24 @@ export function BreadPreOrderPage() {
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
   const [selectedSlot, setSelectedSlot] = useState<string>('');
-  const [isSliced, setIsSliced] = useState(false);
+  const [qtyWhole, setQtyWhole] = useState(1);
+  const [qtySliced, setQtySliced] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
   const BREAD_PRICE = 100;
-  const SLICED_ADDON = 10;
-  const totalAmount = BREAD_PRICE + (isSliced ? SLICED_ADDON : 0);
+  const SLICED_PRICE = 110;
+  const totalQty = qtyWhole + qtySliced;
+  const totalAmount = (qtyWhole * BREAD_PRICE) + (qtySliced * SLICED_PRICE);
+
+  useEffect(() => {
+    if (selectedSlot) {
+      const slotObj = slots.find(s => format(s.date, 'yyyy-MM-dd') === selectedSlot);
+      if (slotObj && slotObj.remaining < totalQty) {
+        setSelectedSlot('');
+      }
+    }
+  }, [totalQty, slots, selectedSlot]);
 
   const fetchSlots = async () => {
     setLoadingSlots(true);
@@ -45,14 +56,16 @@ export function BreadPreOrderPage() {
       
       const { data: orders, error } = await supabase
         .from('bread_orders')
-        .select('delivery_date, payment_status')
+        .select('delivery_date, payment_status, quantity_whole, quantity_sliced')
         .gte('delivery_date', format(today, 'yyyy-MM-dd'))
         .eq('payment_status', 'success');
 
       if (error) throw error;
 
       const orderCounts = (orders || []).reduce((acc: any, order) => {
-        acc[order.delivery_date] = (acc[order.delivery_date] || 0) + 1;
+        const qty = (order.quantity_whole || 0) + (order.quantity_sliced || 0);
+        const finalQty = qty > 0 ? qty : 1;
+        acc[order.delivery_date] = (acc[order.delivery_date] || 0) + finalQty;
         return acc;
       }, {});
 
@@ -121,7 +134,9 @@ export function BreadPreOrderPage() {
         customer_phone: phone,
         delivery_date: selectedSlot,
         delivery_day: selectedSlotObj?.dayName || '',
-        is_sliced: isSliced,
+        is_sliced: qtySliced > 0,
+        quantity_whole: qtyWhole,
+        quantity_sliced: qtySliced,
         total_amount: totalAmount,
         paystack_reference: reference.reference,
         payment_status: 'success'
@@ -185,7 +200,8 @@ export function BreadPreOrderPage() {
                 setName('');
                 setPhone('');
                 setAddress('');
-                setIsSliced(false);
+                setQtyWhole(1);
+                setQtySliced(0);
                 fetchSlots();
               }}
             >
@@ -235,8 +251,7 @@ export function BreadPreOrderPage() {
                       <div className="flex flex-col space-y-4">
                         {/* Option 1: Whole */}
                         <div 
-                          className={`relative border-2 rounded-2xl p-4 cursor-pointer transition-all duration-200 flex flex-row items-center text-left ${!isSliced ? 'border-primary bg-primary/5 shadow-md ring-1 ring-primary/20' : 'border-border/50 hover:border-primary/40 hover:bg-secondary/20'}`}
-                          onClick={() => setIsSliced(false)}
+                          className={`relative border-2 rounded-2xl p-4 transition-all duration-200 flex flex-row items-center text-left ${qtyWhole > 0 ? 'border-primary bg-primary/5 shadow-md ring-1 ring-primary/20' : 'border-border/50 hover:border-primary/40 hover:bg-secondary/20'}`}
                         >
                           <div className="w-20 h-20 sm:w-24 sm:h-24 mr-4 shrink-0 relative rounded-xl overflow-hidden bg-white/50">
                             <img src="/assets/bread/bread.png" alt="Whole Sourdough" className="object-contain w-full h-full drop-shadow-sm p-2" />
@@ -246,21 +261,30 @@ export function BreadPreOrderPage() {
                             <p className="text-sm font-medium text-primary mb-1">GH₵100.00</p>
                             <p className="text-xs text-muted-foreground hidden sm:block">Freshly baked, crusty on the outside</p>
                           </div>
-                          <div className="ml-4 shrink-0">
-                            {!isSliced ? (
-                              <div className="bg-primary text-primary-foreground rounded-full p-1 shadow-sm">
-                                <Check className="w-5 h-5" />
-                              </div>
-                            ) : (
-                              <div className="w-7 h-7 rounded-full border-2 border-muted" />
-                            )}
+                          <div className="ml-4 shrink-0 flex items-center bg-background rounded-full border border-border p-1 shadow-sm">
+                            <button 
+                              type="button"
+                              className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
+                              disabled={qtyWhole === 0 || (totalQty === 1 && qtyWhole === 1)}
+                              onClick={() => setQtyWhole(Math.max(0, qtyWhole - 1))}
+                            >
+                              <Minus className="w-4 h-4" />
+                            </button>
+                            <span className="w-8 text-center font-semibold">{qtyWhole}</span>
+                            <button 
+                              type="button"
+                              className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
+                              disabled={totalQty >= 3}
+                              onClick={() => setQtyWhole(qtyWhole + 1)}
+                            >
+                              <Plus className="w-4 h-4" />
+                            </button>
                           </div>
                         </div>
 
                         {/* Option 2: Sliced */}
                         <div 
-                          className={`relative border-2 rounded-2xl p-4 cursor-pointer transition-all duration-200 flex flex-row items-center text-left ${isSliced ? 'border-primary bg-primary/5 shadow-md ring-1 ring-primary/20' : 'border-border/50 hover:border-primary/40 hover:bg-secondary/20'}`}
-                          onClick={() => setIsSliced(true)}
+                          className={`relative border-2 rounded-2xl p-4 transition-all duration-200 flex flex-row items-center text-left ${qtySliced > 0 ? 'border-primary bg-primary/5 shadow-md ring-1 ring-primary/20' : 'border-border/50 hover:border-primary/40 hover:bg-secondary/20'}`}
                         >
                           <div className="w-20 h-20 sm:w-24 sm:h-24 mr-4 shrink-0 relative rounded-xl overflow-hidden bg-white/50">
                             <img src="/assets/bread/sliced.png" alt="Sliced Sourdough" className="object-contain w-full h-full drop-shadow-sm p-2" />
@@ -270,14 +294,24 @@ export function BreadPreOrderPage() {
                             <p className="text-sm font-medium text-primary mb-1">GH₵110.00</p>
                             <p className="text-xs text-muted-foreground hidden sm:block">Perfectly sliced for toast and sandwiches</p>
                           </div>
-                          <div className="ml-4 shrink-0">
-                            {isSliced ? (
-                              <div className="bg-primary text-primary-foreground rounded-full p-1 shadow-sm">
-                                <Check className="w-5 h-5" />
-                              </div>
-                            ) : (
-                              <div className="w-7 h-7 rounded-full border-2 border-muted" />
-                            )}
+                          <div className="ml-4 shrink-0 flex items-center bg-background rounded-full border border-border p-1 shadow-sm">
+                            <button 
+                              type="button"
+                              className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
+                              disabled={qtySliced === 0 || (totalQty === 1 && qtySliced === 1)}
+                              onClick={() => setQtySliced(Math.max(0, qtySliced - 1))}
+                            >
+                              <Minus className="w-4 h-4" />
+                            </button>
+                            <span className="w-8 text-center font-semibold">{qtySliced}</span>
+                            <button 
+                              type="button"
+                              className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
+                              disabled={totalQty >= 3}
+                              onClick={() => setQtySliced(qtySliced + 1)}
+                            >
+                              <Plus className="w-4 h-4" />
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -297,34 +331,39 @@ export function BreadPreOrderPage() {
                         </div>
                       ) : (
                         <div className="flex flex-col space-y-3">
-                          {slots.map((slot) => (
-                            <div 
-                              key={format(slot.date, 'yyyy-MM-dd')}
-                              className={`border-2 rounded-xl p-4 cursor-pointer transition-all flex items-center justify-between ${
-                                selectedSlot === format(slot.date, 'yyyy-MM-dd') 
-                                  ? 'border-primary bg-primary/5 shadow-md scale-[1.02]' 
-                                  : 'hover:border-primary/50 hover:bg-secondary/20 bg-background'
-                              }`}
-                              onClick={() => setSelectedSlot(format(slot.date, 'yyyy-MM-dd'))}
-                            >
-                              <div className="flex-1">
-                                <div className="font-bold text-lg mb-1">{slot.dayName}</div>
-                                <div className="text-sm text-muted-foreground">{slot.formattedDate}</div>
-                              </div>
-                              <div className="flex items-center space-x-4 shrink-0">
-                                <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary">
-                                  {slot.remaining} left
+                          {slots.map((slot) => {
+                            const isDisabled = slot.remaining < totalQty;
+                            return (
+                              <div 
+                                key={format(slot.date, 'yyyy-MM-dd')}
+                                className={`border-2 rounded-xl p-4 transition-all flex items-center justify-between ${
+                                  isDisabled 
+                                    ? 'opacity-50 cursor-not-allowed bg-secondary/10 border-border' 
+                                    : selectedSlot === format(slot.date, 'yyyy-MM-dd') 
+                                      ? 'border-primary bg-primary/5 shadow-md scale-[1.02] cursor-pointer' 
+                                      : 'hover:border-primary/50 hover:bg-secondary/20 bg-background cursor-pointer'
+                                }`}
+                                onClick={() => !isDisabled && setSelectedSlot(format(slot.date, 'yyyy-MM-dd'))}
+                              >
+                                <div className="flex-1">
+                                  <div className="font-bold text-lg mb-1">{slot.dayName}</div>
+                                  <div className="text-sm text-muted-foreground">{slot.formattedDate}</div>
                                 </div>
-                                {selectedSlot === format(slot.date, 'yyyy-MM-dd') ? (
-                                  <div className="bg-primary text-primary-foreground rounded-full p-1 shadow-sm">
-                                    <Check className="w-4 h-4" />
+                                <div className="flex items-center space-x-4 shrink-0">
+                                  <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${isDisabled ? 'bg-muted text-muted-foreground' : 'bg-primary/10 text-primary'}`}>
+                                    {slot.remaining} left
                                   </div>
-                                ) : (
-                                  <div className="w-6 h-6 rounded-full border-2 border-muted" />
-                                )}
+                                  {selectedSlot === format(slot.date, 'yyyy-MM-dd') && !isDisabled ? (
+                                    <div className="bg-primary text-primary-foreground rounded-full p-1 shadow-sm">
+                                      <Check className="w-4 h-4" />
+                                    </div>
+                                  ) : (
+                                    <div className="w-6 h-6 rounded-full border-2 border-muted" />
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       )}
                     </div>
@@ -353,9 +392,9 @@ export function BreadPreOrderPage() {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 20 }}
-                className="max-w-4xl mx-auto grid md:grid-cols-[1fr_350px] gap-8 items-start"
+                className="max-w-2xl mx-auto"
               >
-                <Card className="glass-card shadow-xl border-none overflow-hidden relative order-2 md:order-1">
+                <Card className="glass-card shadow-xl border-none overflow-hidden relative">
                   <CardHeader>
                     <div className="flex items-center mb-2">
                       <Button variant="ghost" size="sm" onClick={() => setStep(1)} className="-ml-3 mr-2 text-muted-foreground">
@@ -426,6 +465,44 @@ export function BreadPreOrderPage() {
                         </p>
                       </div>
 
+                      <div className="pt-4 pb-2">
+                        <Card className="bg-primary text-primary-foreground border-none overflow-hidden relative shadow-lg">
+                          <div className="absolute top-0 right-0 p-10 bg-white/10 rounded-bl-full w-24 h-24 -mr-6 -mt-6 pointer-events-none" />
+                          <CardHeader className="pb-3">
+                            <CardTitle className="text-lg">Order Summary</CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                            <div className="space-y-2 pb-4 border-b border-white/20 text-sm">
+                              {qtyWhole > 0 && (
+                                <div className="flex justify-between items-center text-primary-foreground/90">
+                                  <span>Sourdough Bread (Whole) x{qtyWhole}</span>
+                                  <span>GH₵{(qtyWhole * BREAD_PRICE).toFixed(2)}</span>
+                                </div>
+                              )}
+                              {qtySliced > 0 && (
+                                <div className="flex justify-between items-center text-primary-foreground/90">
+                                  <span>Sourdough Bread (Sliced) x{qtySliced}</span>
+                                  <span>GH₵{(qtySliced * SLICED_PRICE).toFixed(2)}</span>
+                                </div>
+                              )}
+                            </div>
+                            
+                            <div className="flex justify-between items-center text-lg font-bold">
+                              <span>Total</span>
+                              <span>GH₵{totalAmount.toFixed(2)}</span>
+                            </div>
+                            
+                            <div className="bg-black/20 p-3 rounded-xl backdrop-blur-sm mt-2 text-sm">
+                              <p className="text-xs text-primary-foreground/80 mb-1 uppercase tracking-wider font-semibold">Delivery Day</p>
+                              <p className="font-medium">
+                                {slots.find(s => format(s.date, 'yyyy-MM-dd') === selectedSlot)?.dayName},{' '}
+                                {slots.find(s => format(s.date, 'yyyy-MM-dd') === selectedSlot)?.formattedDate}
+                              </p>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </div>
+
                       <Button 
                         type="submit" 
                         className="w-full h-14 text-lg font-semibold mt-4 shadow-lg shadow-primary/20"
@@ -440,52 +517,14 @@ export function BreadPreOrderPage() {
                           `Pay GH₵${totalAmount.toFixed(2)}`
                         )}
                       </Button>
+                      
+                      <div className="flex items-center justify-center space-x-2 text-xs text-muted-foreground font-medium pt-2">
+                        <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                        <span>Secured by Paystack</span>
+                      </div>
                     </form>
                   </CardContent>
                 </Card>
-
-                {/* Summary Sidebar */}
-                <div className="space-y-6 order-1 md:order-2">
-                  <Card className="bg-primary text-primary-foreground border-none overflow-hidden relative shadow-xl">
-                    <div className="absolute top-0 right-0 p-12 bg-white/10 rounded-bl-full w-32 h-32 -mr-8 -mt-8 pointer-events-none" />
-                    <CardHeader>
-                      <CardTitle className="text-xl">Order Summary</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-5">
-                      
-                      <div className="space-y-3 pb-5 border-b border-white/20">
-                        <div className="flex justify-between items-center">
-                          <span>Sourdough Bread</span>
-                          <span className="font-semibold">GH₵100.00</span>
-                        </div>
-                        {isSliced && (
-                          <div className="flex justify-between items-center text-primary-foreground/90">
-                            <span>Sliced</span>
-                            <span>GH₵10.00</span>
-                          </div>
-                        )}
-                      </div>
-                      
-                      <div className="flex justify-between items-center text-xl font-bold">
-                        <span>Total</span>
-                        <span>GH₵{totalAmount.toFixed(2)}</span>
-                      </div>
-                      
-                      <div className="bg-black/20 p-4 rounded-xl backdrop-blur-sm mt-4">
-                        <p className="text-xs text-primary-foreground/80 mb-1 uppercase tracking-wider font-semibold">Delivery Day</p>
-                        <p className="font-medium">
-                          {slots.find(s => format(s.date, 'yyyy-MM-dd') === selectedSlot)?.dayName},{' '}
-                          {slots.find(s => format(s.date, 'yyyy-MM-dd') === selectedSlot)?.formattedDate}
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  
-                  <div className="flex items-center justify-center space-x-2 text-sm text-muted-foreground font-medium bg-secondary/30 p-3 rounded-full">
-                    <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-                    <span>Secured by Paystack</span>
-                  </div>
-                </div>
               </motion.div>
             )}
           </AnimatePresence>
