@@ -38,7 +38,7 @@ function App() {
           <Route path="/timelapse/support" element={<PageTransition><TimelapseSupportPage /></PageTransition>} />
           <Route path="/echo" element={<PageTransition><EchoPage /></PageTransition>} />
           <Route path="/echo/auth/callback" element={<PageTransition><EchoAuthCallbackPage /></PageTransition>} />
-          <Route path="/bread-preorder" element={<PageTransition><BreadPreOrderPage /></PageTransition>} />
+          <Route path="/zoza-order" element={<PageTransition><BreadPreOrderPage /></PageTransition>} />
           <Route path="/privacy-policy" element={<PageTransition><PrivacyPolicyPage /></PageTransition>} />
           <Route path="/terms" element={<PageTransition><TermsOfServicePage /></PageTransition>} />
         </Routes>

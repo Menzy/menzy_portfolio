@@ -545,16 +545,26 @@ export function BreadPreOrderPage() {
               <h2 className="text-base font-semibold">Order summary</h2>
             </div>
 
-            <div className="mt-5 space-y-3 border-y border-stone-200 py-5 text-sm">
+            <div className="mt-5 space-y-3 border-b border-stone-200 pb-5 text-sm">
               {qtyWhole > 0 && (
                 <div className="flex justify-between gap-4">
-                  <span className="text-stone-500">Whole Loaf x{qtyWhole}</span>
+                  <span className="flex items-center gap-2 text-stone-500">
+                    <span>Whole Loaf</span>
+                    <span className="rounded-full bg-stone-100 px-2 py-0.5 text-[11px] font-semibold text-stone-700">
+                      x{qtyWhole}
+                    </span>
+                  </span>
                   <span className="font-semibold text-stone-950">GH₵{(qtyWhole * BREAD_PRICE).toFixed(2)}</span>
                 </div>
               )}
               {qtySliced > 0 && (
                 <div className="flex justify-between gap-4">
-                  <span className="text-stone-500">Sliced Loaf x{qtySliced}</span>
+                  <span className="flex items-center gap-2 text-stone-500">
+                    <span>Sliced Loaf</span>
+                    <span className="rounded-full bg-stone-100 px-2 py-0.5 text-[11px] font-semibold text-stone-700">
+                      x{qtySliced}
+                    </span>
+                  </span>
                   <span className="font-semibold text-stone-950">GH₵{(qtySliced * SLICED_PRICE).toFixed(2)}</span>
                 </div>
               )}
