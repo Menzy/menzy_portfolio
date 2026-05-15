@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { usePaystackPayment } from 'react-paystack';
-import { addWeeks, format, isSaturday, isWednesday, nextDay, startOfDay } from 'date-fns';
+import { addWeeks, format, isSaturday, isWednesday, nextDay, startOfDay, subDays, setHours, setMinutes } from 'date-fns';
 import {
   BadgeCheck,
   Check,
@@ -204,8 +204,21 @@ export function BreadPreOrderPage() {
         return acc;
       }, {});
 
-      const candidateWed = isWednesday(today) ? today : nextDay(today, 3);
-      const candidateSat = isSaturday(today) ? today : nextDay(today, 6);
+      const now = new Date();
+      let candidateWed = isWednesday(today) ? today : nextDay(today, 3);
+      let candidateSat = isSaturday(today) ? today : nextDay(today, 6);
+
+      // Cutoff for Wednesday is Monday 9:00 AM
+      const cutoffWed = setMinutes(setHours(subDays(candidateWed, 2), 9), 0);
+      if (now > cutoffWed) {
+        candidateWed = addWeeks(candidateWed, 1);
+      }
+
+      // Cutoff for Saturday is Thursday 9:00 AM
+      const cutoffSat = setMinutes(setHours(subDays(candidateSat, 2), 9), 0);
+      if (now > cutoffSat) {
+        candidateSat = addWeeks(candidateSat, 1);
+      }
 
       const findAvailableSlot = (startDate: Date): Slot => {
         let current = startDate;
@@ -272,7 +285,13 @@ export function BreadPreOrderPage() {
         payment_status: 'success',
       });
 
-      if (error) throw error;
+      if (error) {
+        if (error.message?.includes('Daily bread order limit')) {
+          toast.error('We just sold out for this day! Please contact support for a refund or reschedule.');
+          return;
+        }
+        throw error;
+      }
 
       setIsSuccess(true);
     } catch (err: unknown) {
