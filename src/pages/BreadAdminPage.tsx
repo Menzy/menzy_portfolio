@@ -1,9 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
 import { format, parseISO } from 'date-fns';
-import { Loader2, ArrowLeft, Download, TrendingUp, Package, Users } from 'lucide-react';
+import { Loader2, TrendingUp, Package, Users } from 'lucide-react';
 import { toast } from 'sonner';
-import { Link } from 'react-router-dom';
 
 import { PageTransition } from '@/components/PageTransition';
 import { supabase } from '@/lib/supabase';
@@ -38,6 +36,8 @@ interface BreadOrder {
   quantity_sliced: number;
   total_amount: number;
   payment_status: string;
+  paystack_reference?: string;
+  fulfillment_status?: string;
 }
 
 export function BreadAdminPage() {
@@ -68,6 +68,23 @@ export function BreadAdminPage() {
     }
   };
 
+  const updateFulfillmentStatus = async (id: string, newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from('bread_orders')
+        .update({ fulfillment_status: newStatus })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setOrders(orders.map((o) => (o.id === id ? { ...o, fulfillment_status: newStatus } : o)));
+      toast.success(`Order marked as ${newStatus}`);
+    } catch (err: unknown) {
+      console.error('Error updating fulfillment:', err);
+      toast.error('Failed to update fulfillment status.');
+    }
+  };
+
   // Get unique delivery dates for the filter
   const uniqueDates = Array.from(new Set(orders.map((o) => o.delivery_date))).sort((a, b) => {
     return new Date(b).getTime() - new Date(a).getTime();
@@ -92,13 +109,6 @@ export function BreadAdminPage() {
         <div className="mx-auto max-w-7xl">
           <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <Link
-                to="/zoza-order"
-                className="mb-2 inline-flex items-center text-sm text-stone-500 hover:text-stone-900 transition-colors"
-              >
-                <ArrowLeft className="mr-1 h-4 w-4" />
-                Back to Pre-order
-              </Link>
               <h1 className="text-3xl font-semibold tracking-tight text-stone-900">Zoza Crumb Admin</h1>
               <p className="mt-1 text-sm text-stone-500">Manage your bread pre-orders and deliveries.</p>
             </div>
@@ -179,7 +189,9 @@ export function BreadAdminPage() {
                         <TableHead className="font-semibold text-stone-600">Address</TableHead>
                         <TableHead className="font-semibold text-stone-600">Order</TableHead>
                         <TableHead className="font-semibold text-stone-600">Amount</TableHead>
-                        <TableHead className="font-semibold text-stone-600 text-right">Status</TableHead>
+                        <TableHead className="font-semibold text-stone-600">Reference</TableHead>
+                        <TableHead className="font-semibold text-stone-600 text-right">Payment</TableHead>
+                        <TableHead className="font-semibold text-stone-600 text-right">Fulfillment</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -209,6 +221,9 @@ export function BreadAdminPage() {
                           <TableCell className="align-top font-medium text-stone-900">
                             GH₵{order.total_amount?.toFixed(2)}
                           </TableCell>
+                          <TableCell className="align-top font-mono text-xs text-stone-500">
+                            {order.paystack_reference || '-'}
+                          </TableCell>
                           <TableCell className="align-top text-right">
                             <Badge
                               variant="secondary"
@@ -220,6 +235,20 @@ export function BreadAdminPage() {
                             >
                               {order.payment_status}
                             </Badge>
+                          </TableCell>
+                          <TableCell className="align-top text-right">
+                            <Select 
+                              value={order.fulfillment_status || 'pending'} 
+                              onValueChange={(val) => updateFulfillmentStatus(order.id, val)}
+                            >
+                              <SelectTrigger className="w-[110px] h-8 text-xs ml-auto">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="pending">Pending</SelectItem>
+                                <SelectItem value="fulfilled">Fulfilled</SelectItem>
+                              </SelectContent>
+                            </Select>
                           </TableCell>
                         </TableRow>
                       ))}

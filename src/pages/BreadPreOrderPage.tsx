@@ -84,6 +84,7 @@ interface LoafRowProps {
   price: number;
   quantity: number;
   totalQty: number;
+  maxQty: number;
   onDecrease: () => void;
   onIncrease: () => void;
 }
@@ -95,6 +96,7 @@ function LoafRow({
   price,
   quantity,
   totalQty,
+  maxQty,
   onDecrease,
   onIncrease,
 }: LoafRowProps) {
@@ -126,11 +128,11 @@ function LoafRow({
         </div>
 
         <div className="flex items-center justify-between gap-3">
-          <p className="text-xs font-medium uppercase tracking-[0.14em] text-stone-400">Max 3 total</p>
+          <p className="text-xs font-medium uppercase tracking-[0.14em] text-stone-400">Max {maxQty} total</p>
           <QuantityControl
             value={quantity}
             canDecrease={quantity > 0 && !(totalQty === 1 && quantity === 1)}
-            canIncrease={totalQty < 3}
+            canIncrease={totalQty < maxQty}
             onDecrease={onDecrease}
             onIncrease={onIncrease}
           />
@@ -167,12 +169,17 @@ export function BreadPreOrderPage() {
   const [qtySliced, setQtySliced] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [paystackRef, setPaystackRef] = useState<string>('');
 
   const BREAD_PRICE = 100;
   const SLICED_PRICE = 110;
   const totalQty = qtyWhole + qtySliced;
   const totalAmount = qtyWhole * BREAD_PRICE + qtySliced * SLICED_PRICE;
   const selectedSlotObj = slots.find((slot) => format(slot.date, 'yyyy-MM-dd') === selectedSlot);
+  
+  const maxQty = selectedSlotObj 
+    ? selectedSlotObj.remaining 
+    : (slots.length > 0 ? Math.max(...slots.map((s) => s.remaining)) : 3);
 
   useEffect(() => {
     if (selectedSlot) {
@@ -293,6 +300,7 @@ export function BreadPreOrderPage() {
         throw error;
       }
 
+      setPaystackRef(reference.reference);
       setIsSuccess(true);
     } catch (err: unknown) {
       console.error('Error saving order:', err);
@@ -332,43 +340,110 @@ export function BreadPreOrderPage() {
   if (isSuccess) {
     return (
       <PageTransition>
-        <main className="min-h-screen bg-stone-100 px-4 py-8 text-stone-950 sm:px-6">
+        <main className="min-h-screen bg-stone-100 px-4 py-6 text-stone-950 sm:px-6 lg:px-8">
           <motion.section
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mx-auto flex min-h-[calc(100vh-64px)] max-w-2xl flex-col justify-center"
+            className="mx-auto grid min-h-[calc(100vh-48px)] max-w-6xl content-center gap-6 lg:grid-cols-[1fr_360px]"
           >
-            <div className="rounded-[8px] bg-white p-6 shadow-sm sm:p-8">
-              <div className="mb-6 grid h-12 w-12 place-items-center rounded-full bg-stone-950 text-white">
-                <BadgeCheck className="h-6 w-6" />
-              </div>
-              <p className="text-sm font-semibold uppercase tracking-[0.16em] text-stone-500">Order confirmed</p>
-              <h1 className="mt-3 text-3xl font-semibold tracking-normal sm:text-4xl">Your bread is reserved.</h1>
-              <p className="mt-4 leading-7 text-stone-500">
-                Thanks, {name}. Your {totalQty === 1 ? 'loaf is' : 'loaves are'} booked for{' '}
-                {selectedSlotObj?.formattedDate}. We will call {phone} before dispatch.
-              </p>
-
-              <dl className="mt-7 divide-y divide-stone-200 border-y border-stone-200">
-                <div className="flex justify-between py-3 text-sm">
-                  <dt className="text-stone-500">Delivery day</dt>
-                  <dd className="font-semibold text-stone-950">{selectedSlotObj?.dayName}</dd>
+            <div className="rounded-[8px] bg-white p-5 shadow-sm sm:p-7">
+              <div className="mb-6 flex items-start justify-between gap-4 border-b border-stone-200 pb-5">
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-[0.16em] text-stone-500">Zoza Crumb</p>
+                  <h1 className="mt-2 text-3xl font-semibold tracking-normal sm:text-4xl">Order confirmed</h1>
                 </div>
-                <div className="flex justify-between py-3 text-sm">
+                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-stone-950 text-white">
+                  <BadgeCheck className="h-5 w-5" />
+                </div>
+              </div>
+
+              <div className="grid gap-8 md:grid-cols-[1fr_220px] md:items-center">
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-[0.16em] text-stone-500">Your bread is reserved</p>
+                  <h2 className="mt-3 text-3xl font-semibold tracking-normal sm:text-5xl">
+                    Thanks, {name}.
+                  </h2>
+                  <p className="mt-4 max-w-2xl leading-7 text-stone-500">
+                    Your {totalQty === 1 ? 'loaf is' : 'loaves are'} booked for {selectedSlotObj?.formattedDate}. We will
+                    call {phone} before dispatch.
+                  </p>
+                </div>
+                <img src="/assets/bread/bread.png" alt="Sourdough loaf" className="hidden w-full object-contain md:block" />
+              </div>
+
+              <dl className="mt-8 divide-y divide-stone-200 border-y border-stone-200">
+                <div className="flex items-center justify-between gap-4 py-4 text-sm">
+                  <dt className="flex items-center gap-1 text-stone-500">
+                    <img src="/assets/bread/date.png" alt="" className="h-10 w-10 object-contain bg-transparent" />
+                    <span>Delivery day</span>
+                  </dt>
+                  <dd className="text-right font-semibold text-stone-950">{selectedSlotObj?.dayName}</dd>
+                </div>
+                <div className="flex justify-between gap-4 py-4 text-sm">
                   <dt className="text-stone-500">Loaves</dt>
                   <dd className="font-semibold text-stone-950">{totalQty}</dd>
                 </div>
-                <div className="flex justify-between py-3 text-sm">
+                <div className="flex justify-between gap-4 py-4 text-sm">
                   <dt className="text-stone-500">Paid</dt>
-                  <dd className="font-semibold text-stone-950">GH₵{totalAmount.toFixed(2)}</dd>
+                  <dd className="font-semibold text-[#87512E]">GH₵{totalAmount.toFixed(2)}</dd>
+                </div>
+                <div className="flex justify-between gap-4 py-4 text-sm">
+                  <dt className="text-stone-500">Reference</dt>
+                  <dd className="font-mono text-xs font-semibold text-stone-950">{paystackRef}</dd>
                 </div>
               </dl>
+            </div>
 
-              <Button className="mt-7 h-12 rounded-full bg-stone-950 px-6 text-white hover:bg-stone-800" onClick={resetOrder}>
+            <aside className="h-fit rounded-[8px] bg-white p-5 shadow-sm lg:sticky lg:top-6">
+              <div className="flex items-center">
+                <img src="/assets/bread/order.png" alt="" className="h-14 w-14 object-contain bg-transparent" />
+                <h2 className="text-base font-semibold">Order summary</h2>
+              </div>
+
+              <div className="mt-5 space-y-3 border-b border-stone-200 pb-5 text-sm">
+                {qtyWhole > 0 && (
+                  <div className="flex justify-between gap-4">
+                    <span className="flex items-center gap-2 text-stone-500">
+                      <span>Whole Loaf</span>
+                      <span className="rounded-full bg-stone-100 px-2 py-0.5 text-[11px] font-semibold text-stone-700">
+                        x{qtyWhole}
+                      </span>
+                    </span>
+                    <span className="font-semibold text-stone-950">GH₵{(qtyWhole * BREAD_PRICE).toFixed(2)}</span>
+                  </div>
+                )}
+                {qtySliced > 0 && (
+                  <div className="flex justify-between gap-4">
+                    <span className="flex items-center gap-2 text-stone-500">
+                      <span>Sliced Loaf</span>
+                      <span className="rounded-full bg-stone-100 px-2 py-0.5 text-[11px] font-semibold text-stone-700">
+                        x{qtySliced}
+                      </span>
+                    </span>
+                    <span className="font-semibold text-stone-950">GH₵{(qtySliced * SLICED_PRICE).toFixed(2)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between gap-4">
+                  <span className="text-stone-500">Delivery day</span>
+                  <span className="text-right font-semibold text-stone-950">
+                    {selectedSlotObj ? `${selectedSlotObj.dayName}, ${selectedSlotObj.formattedDate}` : 'Selected'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="mt-5 flex items-end justify-between gap-4">
+                <span className="text-sm text-stone-500">Total paid</span>
+                <span className="text-3xl font-semibold tracking-normal text-stone-950">GH₵{totalAmount.toFixed(2)}</span>
+              </div>
+
+              <Button
+                className="mt-5 h-12 w-full rounded-full bg-[#AB6D40] px-6 text-base font-semibold text-white hover:bg-[#965E38]"
+                onClick={resetOrder}
+              >
                 <ShoppingBag className="mr-2 h-4 w-4" />
                 Place another order
               </Button>
-            </div>
+            </aside>
           </motion.section>
         </main>
       </PageTransition>
@@ -400,6 +475,7 @@ export function BreadPreOrderPage() {
                     price={BREAD_PRICE}
                     quantity={qtyWhole}
                     totalQty={totalQty}
+                    maxQty={maxQty}
                     onDecrease={() => setQtyWhole(Math.max(0, qtyWhole - 1))}
                     onIncrease={() => setQtyWhole(qtyWhole + 1)}
                   />
@@ -410,6 +486,7 @@ export function BreadPreOrderPage() {
                     price={SLICED_PRICE}
                     quantity={qtySliced}
                     totalQty={totalQty}
+                    maxQty={maxQty}
                     onDecrease={() => setQtySliced(Math.max(0, qtySliced - 1))}
                     onIncrease={() => setQtySliced(qtySliced + 1)}
                   />
