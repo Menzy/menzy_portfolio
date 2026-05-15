@@ -414,7 +414,7 @@ export function BreadPreOrderPage() {
                     We are sold out for the upcoming weeks. Please check back later.
                   </div>
                 ) : (
-                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <div className="mt-4 grid gap-3">
                     {slots.map((slot) => {
                       const slotKey = format(slot.date, 'yyyy-MM-dd');
                       const disabled = slot.remaining < totalQty;
@@ -426,7 +426,7 @@ export function BreadPreOrderPage() {
                           type="button"
                           disabled={disabled}
                           onClick={() => setSelectedSlot(slotKey)}
-                          className={`rounded-[8px] border p-4 text-left transition ${
+                          className={`rounded-[8px] border px-4 py-3 text-left transition ${
                             disabled
                               ? 'cursor-not-allowed border-stone-200 bg-stone-100 opacity-50'
                               : selected
@@ -434,24 +434,30 @@ export function BreadPreOrderPage() {
                                 : 'border-stone-200 bg-white hover:border-stone-400'
                           }`}
                         >
-                          <div className="flex items-start justify-between gap-3">
-                            <div>
+                          <div className="flex items-center justify-between gap-4">
+                            <div className="min-w-0">
                               <p className="font-semibold">{slot.dayName}</p>
                               <p className={`mt-1 text-sm ${selected ? 'text-white/70' : 'text-stone-500'}`}>
                                 {slot.formattedDate}
                               </p>
                             </div>
-                            <span
-                              className={`grid h-5 w-5 place-items-center rounded-full border ${
-                                selected ? 'border-white bg-white text-stone-950' : 'border-stone-300 text-transparent'
-                              }`}
-                            >
-                              <Check className="h-3 w-3" />
-                            </span>
+                            <div className="flex shrink-0 items-center gap-3">
+                              <p
+                                className={`text-xs font-medium uppercase tracking-[0.14em] ${
+                                  selected ? 'text-white/65' : 'text-stone-400'
+                                }`}
+                              >
+                                {slot.remaining} left
+                              </p>
+                              <span
+                                className={`grid h-5 w-5 place-items-center rounded-full border ${
+                                  selected ? 'border-white bg-white text-stone-950' : 'border-stone-300 text-transparent'
+                                }`}
+                              >
+                                <Check className="h-3 w-3" />
+                              </span>
+                            </div>
                           </div>
-                          <p className={`mt-4 text-xs font-medium uppercase tracking-[0.14em] ${selected ? 'text-white/65' : 'text-stone-400'}`}>
-                            {slot.remaining} left
-                          </p>
                         </button>
                       );
                     })}
@@ -538,7 +544,10 @@ export function BreadPreOrderPage() {
           </section>
 
           <aside className="h-fit rounded-[8px] bg-white p-5 shadow-sm lg:sticky lg:top-6">
-            <h2 className="text-base font-semibold">Order summary</h2>
+            <div className="flex items-center gap-2">
+              <img src="/assets/bread/order.png" alt="" className="h-14 w-14 object-contain bg-transparent" />
+              <h2 className="text-base font-semibold">Order summary</h2>
+            </div>
 
             <div className="mt-5 space-y-3 border-y border-stone-200 py-5 text-sm">
               {qtyWhole > 0 && (
