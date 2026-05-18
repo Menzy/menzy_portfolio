@@ -32,11 +32,9 @@ interface Slot {
   remaining: number;
 }
 
-interface BreadOrderRow {
+interface BreadAvailabilityRow {
   delivery_date: string;
-  payment_status: string;
-  quantity_whole: number | null;
-  quantity_sliced: number | null;
+  paid_quantity: number;
 }
 
 interface PaystackReference {
@@ -104,31 +102,30 @@ function LoafRow({
 
   return (
     <div
-      className={`grid grid-cols-[88px_1fr] gap-4 border-b border-stone-200 py-5 transition last:border-b-0 sm:grid-cols-[116px_1fr] ${selected ? 'opacity-100' : 'opacity-80'
+      className={`grid grid-cols-[72px_1fr] gap-3 border-b border-stone-200 py-4 transition last:border-b-0 sm:grid-cols-[116px_1fr] sm:gap-4 sm:py-5 ${selected ? 'opacity-100' : 'opacity-80'
         }`}
     >
-      <div className="relative h-24 overflow-hidden rounded-[8px] bg-stone-100 sm:h-28">
+      <div
+        className={`relative h-20 overflow-hidden rounded-[8px] border bg-stone-100 sm:h-28 ${
+          selected ? 'border-[#AB6D40]' : 'border-transparent'
+        }`}
+      >
         <img src={image} alt={title} className="absolute inset-0 h-full w-full object-contain p-2" />
       </div>
 
-      <div className="flex min-w-0 flex-col justify-between gap-4">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-lg font-semibold tracking-normal text-stone-950">{title}</h3>
-              {selected && (
-                <span className="grid h-4 w-4 place-items-center rounded-full bg-stone-950 text-white">
-                  <Check className="h-3 w-3" />
-                </span>
-              )}
-            </div>
+      <div className="flex min-w-0 flex-col justify-between gap-3 sm:gap-4">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <h3 className="whitespace-nowrap text-base font-semibold tracking-normal text-stone-950 sm:text-lg">{title}</h3>
             <p className="mt-1 text-sm leading-5 text-stone-500">{description}</p>
           </div>
           <p className="shrink-0 text-sm font-semibold text-[#87512E]">GH₵{price.toFixed(2)}</p>
         </div>
 
         <div className="flex items-center justify-between gap-3">
-          <p className="text-xs font-medium uppercase tracking-[0.14em] text-stone-400">Max {maxQty} total</p>
+          <p className="whitespace-nowrap text-[10px] font-medium uppercase tracking-[0.08em] text-stone-400">
+            Max {maxQty} total
+          </p>
           <QuantityControl
             value={quantity}
             canDecrease={quantity > 0 && !(totalQty === 1 && quantity === 1)}
@@ -156,6 +153,18 @@ function FieldWrap({ icon, children }: FieldWrapProps) {
   );
 }
 
+function setMetaTag(attribute: 'name' | 'property', key: string, content: string) {
+  let tag = document.head.querySelector<HTMLMetaElement>(`meta[${attribute}="${key}"]`);
+
+  if (!tag) {
+    tag = document.createElement('meta');
+    tag.setAttribute(attribute, key);
+    document.head.appendChild(tag);
+  }
+
+  tag.setAttribute('content', content);
+}
+
 export function BreadPreOrderPage() {
   const [slots, setSlots] = useState<Slot[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(true);
@@ -171,8 +180,8 @@ export function BreadPreOrderPage() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [paystackRef, setPaystackRef] = useState<string>('');
 
-  const BREAD_PRICE = 100;
-  const SLICED_PRICE = 110;
+  const BREAD_PRICE = 110;
+  const SLICED_PRICE = 120;
   const totalQty = qtyWhole + qtySliced;
   const totalAmount = qtyWhole * BREAD_PRICE + qtySliced * SLICED_PRICE;
   const selectedSlotObj = slots.find((slot) => format(slot.date, 'yyyy-MM-dd') === selectedSlot);
@@ -180,6 +189,43 @@ export function BreadPreOrderPage() {
   const maxQty = selectedSlotObj 
     ? selectedSlotObj.remaining 
     : (slots.length > 0 ? Math.max(...slots.map((s) => s.remaining)) : 3);
+
+  useEffect(() => {
+    const previousTitle = document.title;
+    const previousIcon = document.querySelector<HTMLLinkElement>('link[rel="icon"]')?.href;
+    const favicon = document.querySelector<HTMLLinkElement>('link[rel="icon"]') || document.createElement('link');
+    const pageUrl = `${window.location.origin}/zoza-order`;
+    const previewImage = `${window.location.origin}/assets/bread/bread.png`;
+
+    favicon.rel = 'icon';
+    favicon.type = 'image/svg+xml';
+    favicon.href = '/assets/bread/zoza-favicon.svg';
+    if (!favicon.parentNode) {
+      document.head.appendChild(favicon);
+    }
+
+    document.title = 'Zoza Bread';
+    setMetaTag('name', 'title', 'Zoza Bread');
+    setMetaTag('name', 'description', 'Freshly baked sourdough bread, available for pre-order from Zoza Crumb.');
+    setMetaTag('property', 'og:type', 'website');
+    setMetaTag('property', 'og:url', pageUrl);
+    setMetaTag('property', 'og:title', 'Zoza Bread');
+    setMetaTag('property', 'og:description', 'Freshly baked sourdough bread, available for pre-order from Zoza Crumb.');
+    setMetaTag('property', 'og:image', previewImage);
+    setMetaTag('property', 'og:site_name', 'Zoza Crumb');
+    setMetaTag('property', 'twitter:card', 'summary_large_image');
+    setMetaTag('property', 'twitter:url', pageUrl);
+    setMetaTag('property', 'twitter:title', 'Zoza Bread');
+    setMetaTag('property', 'twitter:description', 'Freshly baked sourdough bread, available for pre-order from Zoza Crumb.');
+    setMetaTag('property', 'twitter:image', previewImage);
+
+    return () => {
+      document.title = previousTitle;
+      if (previousIcon) {
+        favicon.href = previousIcon;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (selectedSlot) {
@@ -195,19 +241,16 @@ export function BreadPreOrderPage() {
     try {
       const today = startOfDay(new Date());
 
-      const { data: orders, error } = await supabase
-        .from('bread_orders')
-        .select('delivery_date, payment_status, quantity_whole, quantity_sliced')
+      const { data: availabilityRows, error } = await supabase
+        .from('bread_order_availability')
+        .select('delivery_date, paid_quantity')
         .gte('delivery_date', format(today, 'yyyy-MM-dd'))
-        .eq('payment_status', 'success')
-        .returns<BreadOrderRow[]>();
+        .returns<BreadAvailabilityRow[]>();
 
       if (error) throw error;
 
-      const orderCounts = (orders || []).reduce<Record<string, number>>((acc, order) => {
-        const qty = (order.quantity_whole || 0) + (order.quantity_sliced || 0);
-        const finalQty = qty > 0 ? qty : 1;
-        acc[order.delivery_date] = (acc[order.delivery_date] || 0) + finalQty;
+      const orderCounts = (availabilityRows || []).reduce<Record<string, number>>((acc, row) => {
+        acc[row.delivery_date] = row.paid_quantity || 0;
         return acc;
       }, {});
 
@@ -215,14 +258,14 @@ export function BreadPreOrderPage() {
       let candidateWed = isWednesday(today) ? today : nextDay(today, 3);
       let candidateSat = isSaturday(today) ? today : nextDay(today, 6);
 
-      // Cutoff for Wednesday is Monday 9:00 AM
-      const cutoffWed = setMinutes(setHours(subDays(candidateWed, 2), 9), 0);
+      // Cutoff for Wednesday orders is Monday 6:00 PM.
+      const cutoffWed = setMinutes(setHours(subDays(candidateWed, 2), 18), 0);
       if (now > cutoffWed) {
         candidateWed = addWeeks(candidateWed, 1);
       }
 
-      // Cutoff for Saturday is Thursday 9:00 AM
-      const cutoffSat = setMinutes(setHours(subDays(candidateSat, 2), 9), 0);
+      // Cutoff for Saturday orders is Thursday 6:00 PM.
+      const cutoffSat = setMinutes(setHours(subDays(candidateSat, 2), 18), 0);
       if (now > cutoffSat) {
         candidateSat = addWeeks(candidateSat, 1);
       }
@@ -278,25 +321,22 @@ export function BreadPreOrderPage() {
 
   const onSuccess = async (reference: PaystackReference) => {
     try {
-      const { error } = await supabase.from('bread_orders').insert({
-        customer_name: name,
-        customer_address: address,
-        customer_phone: phone,
-        delivery_date: selectedSlot,
-        delivery_day: selectedSlotObj?.dayName || '',
-        is_sliced: qtySliced > 0,
-        quantity_whole: qtyWhole,
-        quantity_sliced: qtySliced,
-        total_amount: totalAmount,
-        paystack_reference: reference.reference,
-        payment_status: 'success',
+      const { error } = await supabase.functions.invoke('verify-paystack-order', {
+        body: {
+          reference: reference.reference,
+          customer_name: name,
+          customer_address: address,
+          customer_phone: phone,
+          customer_email: email || undefined,
+          delivery_date: selectedSlot,
+          delivery_day: selectedSlotObj?.dayName || '',
+          quantity_whole: qtyWhole,
+          quantity_sliced: qtySliced,
+          total_amount: totalAmount,
+        },
       });
 
       if (error) {
-        if (error.message?.includes('Daily bread order limit')) {
-          toast.error('We just sold out for this day! Please contact support for a refund or reschedule.');
-          return;
-        }
         throw error;
       }
 
@@ -340,14 +380,14 @@ export function BreadPreOrderPage() {
   if (isSuccess) {
     return (
       <PageTransition>
-        <main className="min-h-screen bg-stone-100 px-4 py-6 text-stone-950 sm:px-6 lg:px-8">
+        <main className="min-h-screen bg-stone-100 px-2 py-4 text-stone-950 sm:px-6 sm:py-6 lg:px-8">
           <motion.section
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             className="mx-auto grid min-h-[calc(100vh-48px)] max-w-6xl content-center gap-6 lg:grid-cols-[1fr_360px]"
           >
-            <div className="rounded-[8px] bg-white p-5 shadow-sm sm:p-7">
-              <div className="mb-6 flex items-start justify-between gap-4 border-b border-stone-200 pb-5">
+            <div className="rounded-[8px] bg-white p-3 shadow-sm sm:p-6 lg:p-7">
+              <div className="mb-4 flex items-start justify-between gap-4 border-b border-stone-200 pb-4 sm:mb-6 sm:pb-5">
                 <div>
                   <p className="text-sm font-semibold uppercase tracking-[0.16em] text-stone-500">Zoza Crumb</p>
                   <h1 className="mt-2 text-3xl font-semibold tracking-normal sm:text-4xl">Order confirmed</h1>
@@ -394,7 +434,7 @@ export function BreadPreOrderPage() {
               </dl>
             </div>
 
-            <aside className="h-fit rounded-[8px] bg-white p-5 shadow-sm lg:sticky lg:top-6">
+            <aside className="h-fit rounded-[8px] bg-white p-4 shadow-sm sm:p-5 lg:sticky lg:top-6">
               <div className="flex items-center">
                 <img src="/assets/bread/order.png" alt="" className="h-14 w-14 object-contain bg-transparent" />
                 <h2 className="text-base font-semibold">Order summary</h2>
@@ -452,10 +492,10 @@ export function BreadPreOrderPage() {
 
   return (
     <PageTransition>
-      <main className="min-h-screen bg-stone-100 px-4 py-6 text-stone-950 sm:px-6 lg:px-8">
+      <main className="min-h-screen bg-stone-100 px-2 py-4 text-stone-950 sm:px-6 sm:py-6 lg:px-8">
         <form onSubmit={handleSubmit} className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[1fr_360px]">
-          <section className="rounded-[8px] bg-white p-5 shadow-sm sm:p-7">
-            <div className="mb-6 flex items-start justify-between gap-4 border-b border-stone-200 pb-5">
+          <section className="rounded-[8px] bg-white p-3 shadow-sm sm:p-6 lg:p-7">
+            <div className="mb-4 flex items-start justify-between gap-4 border-b border-stone-200 pb-4 sm:mb-6 sm:pb-5">
               <div>
                 <p className="text-sm font-semibold uppercase tracking-[0.16em] text-stone-500">Zoza Crumb</p>
                 <h1 className="mt-2 text-3xl font-semibold tracking-normal sm:text-4xl">Order bread</h1>
@@ -463,7 +503,7 @@ export function BreadPreOrderPage() {
               <img src="/assets/bread/bread.png" alt="Sourdough loaf" className="hidden h-24 w-36 object-contain sm:block" />
             </div>
 
-            <div className="space-y-8">
+            <div className="space-y-6 sm:space-y-8">
               <section>
                 <h2 className="text-base font-semibold">Choose your loaf</h2>
                 <div className="mt-1 text-sm text-stone-500">Fresh sourdough, baked Wednesdays and Saturdays.</div>
@@ -635,7 +675,7 @@ export function BreadPreOrderPage() {
             </div>
           </section>
 
-          <aside className="h-fit rounded-[8px] bg-white p-5 shadow-sm lg:sticky lg:top-6">
+          <aside className="h-fit rounded-[8px] bg-white p-4 shadow-sm sm:p-5 lg:sticky lg:top-6">
             <div className="flex items-center">
               <img src="/assets/bread/order.png" alt="" className="h-14 w-14 object-contain bg-transparent" />
               <h2 className="text-base font-semibold">Order summary</h2>
