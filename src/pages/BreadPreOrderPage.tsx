@@ -182,14 +182,14 @@ export function BreadPreOrderPage() {
 
   const BREAD_PRICE = 110;
   const SLICED_PRICE = 120;
-  const BREADS_PER_DELIVERY_DAY = 3;
+  const BREADS_PER_DELIVERY_DAY = 4;
   const totalQty = qtyWhole + qtySliced;
   const totalAmount = qtyWhole * BREAD_PRICE + qtySliced * SLICED_PRICE;
   const selectedSlotObj = slots.find((slot) => format(slot.date, 'yyyy-MM-dd') === selectedSlot);
   
   const maxQty = selectedSlotObj 
     ? selectedSlotObj.remaining 
-    : (slots.length > 0 ? Math.max(...slots.map((s) => s.remaining)) : 3);
+    : (slots.length > 0 ? Math.max(...slots.map((s) => s.remaining)) : BREADS_PER_DELIVERY_DAY);
 
   useEffect(() => {
     const previousTitle = document.title;
