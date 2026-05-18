@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { usePaystackPayment } from 'react-paystack';
-import { addWeeks, format, isSaturday, isWednesday, nextDay, startOfDay, subDays, setHours, setMinutes } from 'date-fns';
+import { format, isSaturday, isWednesday, nextDay, startOfDay, subDays, setHours, setMinutes } from 'date-fns';
 import {
   BadgeCheck,
   Check,
@@ -182,6 +182,7 @@ export function BreadPreOrderPage() {
 
   const BREAD_PRICE = 110;
   const SLICED_PRICE = 120;
+  const BREADS_PER_DELIVERY_DAY = 3;
   const totalQty = qtyWhole + qtySliced;
   const totalAmount = qtyWhole * BREAD_PRICE + qtySliced * SLICED_PRICE;
   const selectedSlotObj = slots.find((slot) => format(slot.date, 'yyyy-MM-dd') === selectedSlot);
@@ -255,42 +256,35 @@ export function BreadPreOrderPage() {
       }, {});
 
       const now = new Date();
-      let candidateWed = isWednesday(today) ? today : nextDay(today, 3);
-      let candidateSat = isSaturday(today) ? today : nextDay(today, 6);
+      const candidateWed = isWednesday(today) ? today : nextDay(today, 3);
+      const candidateSat = isSaturday(today) ? today : nextDay(today, 6);
 
       // Cutoff for Wednesday orders is Monday 6:00 PM.
       const cutoffWed = setMinutes(setHours(subDays(candidateWed, 2), 18), 0);
-      if (now > cutoffWed) {
-        candidateWed = addWeeks(candidateWed, 1);
-      }
 
       // Cutoff for Saturday orders is Thursday 6:00 PM.
       const cutoffSat = setMinutes(setHours(subDays(candidateSat, 2), 18), 0);
-      if (now > cutoffSat) {
-        candidateSat = addWeeks(candidateSat, 1);
-      }
 
-      const findAvailableSlot = (startDate: Date): Slot => {
-        let current = startDate;
-        for (let i = 0; i < 4; i++) {
-          const dateStr = format(current, 'yyyy-MM-dd');
-          const count = orderCounts[dateStr] || 0;
-          if (count < 3) {
-            return {
-              date: current,
-              dayName: format(current, 'EEEE'),
-              formattedDate: format(current, 'MMM do, yyyy'),
-              available: true,
-              remaining: 3 - count,
-            };
-          }
-          current = addWeeks(current, 1);
+      const buildSlot = (date: Date, cutoff: Date): Slot | null => {
+        const dateStr = format(date, 'yyyy-MM-dd');
+        const count = orderCounts[dateStr] || 0;
+        const remaining = Math.max(0, BREADS_PER_DELIVERY_DAY - count);
+
+        if (now > cutoff || remaining < 1) {
+          return null;
         }
-        return { date: startDate, dayName: '', formattedDate: '', available: false, remaining: 0 };
+
+        return {
+          date,
+          dayName: format(date, 'EEEE'),
+          formattedDate: format(date, 'MMM do, yyyy'),
+          available: true,
+          remaining,
+        };
       };
 
-      const availableSlots = [findAvailableSlot(candidateWed), findAvailableSlot(candidateSat)]
-        .filter((slot) => slot.available)
+      const availableSlots = [buildSlot(candidateWed, cutoffWed), buildSlot(candidateSat, cutoffSat)]
+        .filter((slot): slot is Slot => Boolean(slot))
         .sort((a, b) => a.date.getTime() - b.date.getTime());
 
       setSlots(availableSlots);
@@ -546,7 +540,7 @@ export function BreadPreOrderPage() {
                   </div>
                 ) : slots.length === 0 ? (
                   <div className="mt-4 rounded-[8px] bg-stone-200 px-4 py-5 text-sm font-medium text-stone-700">
-                    We are sold out for the upcoming weeks. Please check back later.
+                    We are sold out for this week. Please come back next week.
                   </div>
                 ) : (
                   <div className="mt-4 grid gap-3">
