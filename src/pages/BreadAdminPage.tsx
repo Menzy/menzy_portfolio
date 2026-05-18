@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { format, parseISO } from 'date-fns';
-import { Loader2, TrendingUp, Package, Users } from 'lucide-react';
+import { Loader2, TrendingUp, Package, Users, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { PageTransition } from '@/components/PageTransition';
@@ -22,6 +22,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 interface BreadOrder {
   id: string;
@@ -42,40 +45,79 @@ interface BreadOrder {
 
 export function BreadAdminPage() {
   const [orders, setOrders] = useState<BreadOrder[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [dateFilter, setDateFilter] = useState<string>('all');
+  const [password, setPassword] = useState(() => sessionStorage.getItem('zoza_admin_password') || '');
+  const [passwordInput, setPasswordInput] = useState('');
+  const isUnlocked = password.length > 0;
 
-  useEffect(() => {
-    fetchOrders();
-  }, []);
-
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async (adminPassword = password) => {
+    if (!adminPassword) return;
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('bread_orders')
-        .select('*')
-        .order('delivery_date', { ascending: false })
-        .order('created_at', { ascending: false });
+      const { data, error } = await supabase.functions.invoke('bread-admin', {
+        body: {
+          action: 'list',
+          password: adminPassword,
+        },
+      });
 
       if (error) throw error;
-      setOrders(data || []);
+
+      if (!data?.ok) {
+        throw new Error(data?.error || 'Failed to load orders.');
+      }
+
+      setOrders(data.orders || []);
     } catch (err: unknown) {
       console.error('Error fetching orders:', err);
+      sessionStorage.removeItem('zoza_admin_password');
+      setPassword('');
       toast.error('Failed to load orders.');
     } finally {
       setLoading(false);
     }
+  }, [password]);
+
+  useEffect(() => {
+    if (password) {
+      fetchOrders(password);
+    }
+  }, [fetchOrders, password]);
+
+  const handleUnlock = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmedPassword = passwordInput.trim();
+
+    if (!trimmedPassword) {
+      toast.error('Enter the admin password.');
+      return;
+    }
+
+    sessionStorage.setItem('zoza_admin_password', trimmedPassword);
+    setPassword(trimmedPassword);
+    setPasswordInput('');
+  };
+
+  const handleLock = () => {
+    sessionStorage.removeItem('zoza_admin_password');
+    setPassword('');
+    setOrders([]);
   };
 
   const updateFulfillmentStatus = async (id: string, newStatus: string) => {
     try {
-      const { error } = await supabase
-        .from('bread_orders')
-        .update({ fulfillment_status: newStatus })
-        .eq('id', id);
+      const { data, error } = await supabase.functions.invoke('bread-admin', {
+        body: {
+          action: 'update_fulfillment',
+          password,
+          order_id: id,
+          fulfillment_status: newStatus,
+        },
+      });
 
       if (error) throw error;
+      if (!data?.ok) throw new Error(data?.error || 'Failed to update fulfillment status.');
 
       setOrders(orders.map((o) => (o.id === id ? { ...o, fulfillment_status: newStatus } : o)));
       toast.success(`Order marked as ${newStatus}`);
@@ -103,6 +145,45 @@ export function BreadAdminPage() {
   const totalSliced = successfulOrders.reduce((sum, o) => sum + (o.quantity_sliced || 0), 0);
   const totalLoaves = totalWhole + totalSliced;
 
+  if (!isUnlocked) {
+    return (
+      <PageTransition>
+        <main className="flex min-h-screen items-center justify-center bg-stone-50 px-4 py-8 text-stone-950">
+          <Card className="w-full max-w-md border-stone-200 shadow-sm">
+            <CardHeader className="space-y-3">
+              <div className="grid h-12 w-12 place-items-center rounded-full bg-stone-950 text-white">
+                <Lock className="h-5 w-5" />
+              </div>
+              <div>
+                <CardTitle className="text-2xl font-semibold tracking-tight">Zoza Admin</CardTitle>
+                <p className="mt-1 text-sm text-stone-500">Enter the admin password to view bread orders.</p>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleUnlock} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="admin-password">Password</Label>
+                  <Input
+                    id="admin-password"
+                    type="password"
+                    value={passwordInput}
+                    onChange={(event) => setPasswordInput(event.target.value)}
+                    placeholder="Enter password"
+                    className="h-11 bg-white"
+                    autoComplete="current-password"
+                  />
+                </div>
+                <Button type="submit" className="h-11 w-full bg-[#AB6D40] text-white hover:bg-[#965E38]">
+                  Unlock Admin
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </main>
+      </PageTransition>
+    );
+  }
+
   return (
     <PageTransition>
       <main className="min-h-screen bg-stone-50 px-4 py-8 text-stone-950 sm:px-6 lg:px-8">
@@ -113,6 +194,9 @@ export function BreadAdminPage() {
               <p className="mt-1 text-sm text-stone-500">Manage your bread pre-orders and deliveries.</p>
             </div>
             <div className="flex items-center gap-4">
+              <Button variant="outline" onClick={handleLock}>
+                Lock
+              </Button>
               <Select value={dateFilter} onValueChange={setDateFilter}>
                 <SelectTrigger className="w-[180px] bg-white">
                   <SelectValue placeholder="Filter by date" />
