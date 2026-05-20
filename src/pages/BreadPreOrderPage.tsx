@@ -191,6 +191,62 @@ export function BreadPreOrderPage() {
     ? selectedSlotObj.remaining 
     : (slots.length > 0 ? Math.max(...slots.map((s) => s.remaining)) : BREADS_PER_DELIVERY_DAY);
 
+  const orderMetadata = {
+    customer_name: name,
+    customer_phone: phone,
+    customer_email: email || '',
+    customer_address: address,
+    delivery_date: selectedSlot,
+    delivery_day: selectedSlotObj?.dayName || '',
+    quantity_whole: qtyWhole,
+    quantity_sliced: qtySliced,
+    total_quantity: totalQty,
+    total_amount: totalAmount,
+    order_source: 'zoza-order',
+    custom_fields: [
+      {
+        display_name: 'Customer Name',
+        variable_name: 'customer_name',
+        value: name,
+      },
+      {
+        display_name: 'Phone',
+        variable_name: 'customer_phone',
+        value: phone,
+      },
+      {
+        display_name: 'Delivery Address',
+        variable_name: 'customer_address',
+        value: address,
+      },
+      {
+        display_name: 'Delivery Date',
+        variable_name: 'delivery_date',
+        value: selectedSlot,
+      },
+      {
+        display_name: 'Delivery Day',
+        variable_name: 'delivery_day',
+        value: selectedSlotObj?.dayName || '',
+      },
+      {
+        display_name: 'Whole Loaves',
+        variable_name: 'quantity_whole',
+        value: qtyWhole,
+      },
+      {
+        display_name: 'Sliced Loaves',
+        variable_name: 'quantity_sliced',
+        value: qtySliced,
+      },
+      {
+        display_name: 'Total Loaves',
+        variable_name: 'total_quantity',
+        value: totalQty,
+      },
+    ],
+  };
+
   useEffect(() => {
     const previousTitle = document.title;
     const previousIcon = document.querySelector<HTMLLinkElement>('link[rel="icon"]')?.href;
@@ -309,6 +365,9 @@ export function BreadPreOrderPage() {
     amount: totalAmount * 100,
     publicKey: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || 'pk_test_placeholder',
     currency: 'GHS',
+    firstname: name,
+    phone,
+    metadata: orderMetadata,
   };
 
   const initializePayment = usePaystackPayment(config);
