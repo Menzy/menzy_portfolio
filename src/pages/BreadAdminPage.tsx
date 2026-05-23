@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { endOfWeek, format, isAfter, isWithinInterval, parseISO, startOfWeek } from 'date-fns';
+import { endOfWeek, format, isAfter, isWithinInterval, parseISO, startOfWeek, nextWednesday, nextSaturday } from 'date-fns';
 import {
   CalendarDays,
   ChefHat,
@@ -53,7 +53,7 @@ import {
 } from '@/components/ui/drawer';
 
 type FulfillmentStatus = 'pending' | 'baked' | 'out_for_delivery' | 'fulfilled';
-type OrderTab = 'this_week' | 'coming_up' | 'fulfilled';
+type OrderTab = 'this_week' | 'coming_up' | 'fulfilled' | 'manage_days';
 
 interface BreadOrder {
   id: string;
@@ -70,6 +70,13 @@ interface BreadOrder {
   payment_status: string;
   paystack_reference?: string;
   fulfillment_status?: FulfillmentStatus | string;
+}
+
+interface AvailabilitySlot {
+  delivery_date: string;
+  status: 'open' | 'closed';
+  capacity: number;
+  paid_quantity: number;
 }
 
 const FULFILLMENT_STATUSES: Array<{
@@ -309,6 +316,7 @@ function OrderDetailDrawer({ order, canUpdateStatus = true, onStatusChange }: Or
 
 export function BreadAdminPage() {
   const [orders, setOrders] = useState<BreadOrder[]>([]);
+  const [availability, setAvailability] = useState<AvailabilitySlot[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<OrderTab>('this_week');
   const [password, setPassword] = useState(() => sessionStorage.getItem('zoza_admin_password') || '');
@@ -343,11 +351,32 @@ export function BreadAdminPage() {
     }
   }, [password]);
 
+  const fetchAvailability = useCallback(async (adminPassword = password) => {
+    if (!adminPassword) return;
+    try {
+      const { data, error } = await supabase.functions.invoke('bread-admin', {
+        body: {
+          action: 'list_availability',
+          password: adminPassword,
+        },
+      });
+
+      if (error) throw error;
+      if (!data?.ok) throw new Error(data?.error || 'Failed to load availability.');
+
+      setAvailability(data.availability || []);
+    } catch (err: unknown) {
+      console.error('Error fetching availability:', err);
+      toast.error('Failed to load availability.');
+    }
+  }, [password]);
+
   useEffect(() => {
     if (password) {
       fetchOrders(password);
+      fetchAvailability(password);
     }
-  }, [fetchOrders, password]);
+  }, [fetchOrders, fetchAvailability, password]);
 
   const handleUnlock = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -367,6 +396,7 @@ export function BreadAdminPage() {
     sessionStorage.removeItem('zoza_admin_password');
     setPassword('');
     setOrders([]);
+    setAvailability([]);
   };
 
   const updateFulfillmentStatus = async (id: string, newStatus: FulfillmentStatus) => {
@@ -393,6 +423,37 @@ export function BreadAdminPage() {
     }
   };
 
+  const updateAvailability = async (date: string, status: 'open' | 'closed', capacity: number) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('bread-admin', {
+        body: {
+          action: 'update_availability',
+          password,
+          delivery_date: date,
+          status,
+          capacity,
+        },
+      });
+
+      if (error) throw error;
+      if (!data?.ok) throw new Error(data?.error || 'Failed to update availability.');
+
+      setAvailability((current) => {
+        const existing = current.find((a) => a.delivery_date === date);
+        if (existing) {
+          return current.map((a) => (a.delivery_date === date ? { ...a, status, capacity } : a));
+        }
+        return [...current, { delivery_date: date, status, capacity, paid_quantity: 0 }].sort(
+          (a, b) => new Date(b.delivery_date).getTime() - new Date(a.delivery_date).getTime()
+        );
+      });
+      toast.success(`Availability for ${date} updated to ${status}`);
+    } catch (err: unknown) {
+      console.error('Error updating availability:', err);
+      toast.error('Failed to update availability.');
+    }
+  };
+
   const today = new Date();
   const currentWeek = {
     start: startOfWeek(today, { weekStartsOn: 1 }),
@@ -411,13 +472,13 @@ export function BreadAdminPage() {
     .filter((order) => getFulfillmentStatus(order) === 'fulfilled')
     .sort((a, b) => sortOrdersByDeliveryDate(b, a));
 
-  const tabOrders: Record<OrderTab, BreadOrder[]> = {
+  const tabOrders: Record<Exclude<OrderTab, 'manage_days'>, BreadOrder[]> = {
     this_week: thisWeekOrders,
     coming_up: comingUpOrders,
     fulfilled: fulfilledOrders,
   };
 
-  const filteredOrders = tabOrders[activeTab];
+  const filteredOrders = activeTab === 'manage_days' ? [] : tabOrders[activeTab as Exclude<OrderTab, 'manage_days'>];
   const groupedFilteredOrders = groupOrdersByDeliveryDate(filteredOrders);
 
   const totalRevenue = paidOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0);
@@ -541,7 +602,7 @@ export function BreadAdminPage() {
                 </p>
               </div>
               <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as OrderTab)}>
-                <TabsList className="grid h-auto w-full grid-cols-3 rounded-md bg-stone-100 p-1">
+                <TabsList className="grid h-auto w-full grid-cols-4 rounded-md bg-stone-100 p-1">
                   <TabsTrigger
                     className="min-w-0 gap-1 rounded-sm px-2 py-2 text-xs sm:gap-2 sm:text-sm"
                     value="this_week"
@@ -568,6 +629,12 @@ export function BreadAdminPage() {
                     <Badge variant="secondary" className="px-2 py-0 text-[11px] bg-white text-stone-600 hover:bg-white">
                       {fulfilledOrders.length}
                     </Badge>
+                  </TabsTrigger>
+                  <TabsTrigger
+                    className="min-w-0 gap-1 rounded-sm px-2 py-2 text-xs sm:gap-2 sm:text-sm"
+                    value="manage_days"
+                  >
+                    Manage Days
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
@@ -761,6 +828,133 @@ export function BreadAdminPage() {
                 )}
               </CardContent>
             </Card>
+
+            {activeTab === 'manage_days' && (
+              <div className="space-y-6">
+                <Card className="border-stone-200 shadow-sm">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Manage Delivery Days</CardTitle>
+                    <p className="text-sm text-stone-500">
+                      Open or close specific dates and set their maximum order capacity.
+                    </p>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="mb-6 space-y-4 rounded-md border border-stone-200 bg-stone-50/50 p-4">
+                      <h4 className="text-sm font-medium text-stone-900">Quick Actions</h4>
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const date = format(nextWednesday(today), 'yyyy-MM-dd');
+                            const slot = availability.find(a => a.delivery_date === date);
+                            if (!slot || slot.status !== 'open') {
+                              updateAvailability(date, 'open', slot ? slot.capacity : 4);
+                            }
+                          }}
+                        >
+                          Open Next Wednesday
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const date = format(nextSaturday(today), 'yyyy-MM-dd');
+                            const slot = availability.find(a => a.delivery_date === date);
+                            if (!slot || slot.status !== 'open') {
+                              updateAvailability(date, 'open', slot ? slot.capacity : 4);
+                            }
+                          }}
+                        >
+                          Open Next Saturday
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Capacity</TableHead>
+                            <TableHead>Paid Orders</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {availability.length === 0 ? (
+                            <TableRow>
+                              <TableCell colSpan={5} className="py-8 text-center text-stone-500">
+                                No delivery days configured.
+                              </TableCell>
+                            </TableRow>
+                          ) : (
+                            availability.map((slot) => {
+                              const isPast = new Date(slot.delivery_date) < startOfWeek(today);
+                              
+                              return (
+                                <TableRow key={slot.delivery_date} className={isPast ? 'opacity-50' : ''}>
+                                  <TableCell className="font-medium">
+                                    {format(parseISO(slot.delivery_date), 'MMM d, yyyy')}
+                                    <div className="text-xs text-stone-500">
+                                      {format(parseISO(slot.delivery_date), 'EEEE')}
+                                    </div>
+                                  </TableCell>
+                                  <TableCell>
+                                    <Badge
+                                      variant="secondary"
+                                      className={cn(
+                                        slot.status === 'open' ? 'bg-green-100 text-green-700' : 'bg-stone-100 text-stone-700'
+                                      )}
+                                    >
+                                      {slot.status}
+                                    </Badge>
+                                  </TableCell>
+                                  <TableCell>
+                                    <div className="flex items-center gap-2">
+                                      <Button
+                                        variant="outline"
+                                        size="icon"
+                                        className="h-6 w-6"
+                                        onClick={() => updateAvailability(slot.delivery_date, slot.status, Math.max(1, slot.capacity - 1))}
+                                      >
+                                        -
+                                      </Button>
+                                      <span className="w-4 text-center tabular-nums">{slot.capacity}</span>
+                                      <Button
+                                        variant="outline"
+                                        size="icon"
+                                        className="h-6 w-6"
+                                        onClick={() => updateAvailability(slot.delivery_date, slot.status, slot.capacity + 1)}
+                                      >
+                                        +
+                                      </Button>
+                                    </div>
+                                  </TableCell>
+                                  <TableCell>
+                                    {slot.paid_quantity}
+                                  </TableCell>
+                                  <TableCell className="text-right">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => updateAvailability(slot.delivery_date, slot.status === 'open' ? 'closed' : 'open', slot.capacity)}
+                                    >
+                                      {slot.status === 'open' ? 'Close slot' : 'Open slot'}
+                                    </Button>
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
           </section>
         </div>
       </main>

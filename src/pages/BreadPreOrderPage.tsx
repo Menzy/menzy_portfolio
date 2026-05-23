@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { usePaystackPayment } from 'react-paystack';
-import { format, isSaturday, isWednesday, nextDay, startOfDay, subDays, setHours, setMinutes } from 'date-fns';
+import { format, startOfDay } from 'date-fns';
 import {
   BadgeCheck,
   Check,
@@ -35,6 +35,8 @@ interface Slot {
 interface BreadAvailabilityRow {
   delivery_date: string;
   paid_quantity: number;
+  status: 'open' | 'closed';
+  capacity: number;
 }
 
 interface PaystackReference {
@@ -182,14 +184,13 @@ export function BreadPreOrderPage() {
 
   const BREAD_PRICE = 110;
   const SLICED_PRICE = 120;
-  const BREADS_PER_DELIVERY_DAY = 4;
   const totalQty = qtyWhole + qtySliced;
   const totalAmount = qtyWhole * BREAD_PRICE + qtySliced * SLICED_PRICE;
   const selectedSlotObj = slots.find((slot) => format(slot.date, 'yyyy-MM-dd') === selectedSlot);
   
   const maxQty = selectedSlotObj 
     ? selectedSlotObj.remaining 
-    : (slots.length > 0 ? Math.max(...slots.map((s) => s.remaining)) : BREADS_PER_DELIVERY_DAY);
+    : (slots.length > 0 ? Math.max(...slots.map((s) => s.remaining)) : 4);
 
   const orderMetadata = {
     customer_name: name,
@@ -300,46 +301,30 @@ export function BreadPreOrderPage() {
 
       const { data: availabilityRows, error } = await supabase
         .from('bread_order_availability')
-        .select('delivery_date, paid_quantity')
+        .select('delivery_date, paid_quantity, status, capacity')
         .gte('delivery_date', format(today, 'yyyy-MM-dd'))
+        .eq('status', 'open')
         .returns<BreadAvailabilityRow[]>();
 
       if (error) throw error;
 
-      const orderCounts = (availabilityRows || []).reduce<Record<string, number>>((acc, row) => {
-        acc[row.delivery_date] = row.paid_quantity || 0;
-        return acc;
-      }, {});
+      const availableSlots = (availabilityRows || [])
+        .map((row) => {
+          const remaining = Math.max(0, row.capacity - (row.paid_quantity || 0));
+          if (remaining < 1) return null;
 
-      const now = new Date();
-      const candidateWed = isWednesday(today) ? today : nextDay(today, 3);
-      const candidateSat = isSaturday(today) ? today : nextDay(today, 6);
+          // Note: dates from supabase might need parsing if we want to ensure correct local timezone
+          // but row.delivery_date is YYYY-MM-DD. Appending T00:00:00 ensures local timezone parsing.
+          const date = new Date(`${row.delivery_date}T00:00:00`);
 
-      // Cutoff for Wednesday orders is Monday 6:00 PM.
-      const cutoffWed = setMinutes(setHours(subDays(candidateWed, 2), 18), 0);
-
-      // Cutoff for Saturday orders is Thursday 6:00 PM.
-      const cutoffSat = setMinutes(setHours(subDays(candidateSat, 2), 18), 0);
-
-      const buildSlot = (date: Date, cutoff: Date): Slot | null => {
-        const dateStr = format(date, 'yyyy-MM-dd');
-        const count = orderCounts[dateStr] || 0;
-        const remaining = Math.max(0, BREADS_PER_DELIVERY_DAY - count);
-
-        if (now > cutoff || remaining < 1) {
-          return null;
-        }
-
-        return {
-          date,
-          dayName: format(date, 'EEEE'),
-          formattedDate: format(date, 'MMM do, yyyy'),
-          available: true,
-          remaining,
-        };
-      };
-
-      const availableSlots = [buildSlot(candidateWed, cutoffWed), buildSlot(candidateSat, cutoffSat)]
+          return {
+            date,
+            dayName: format(date, 'EEEE'),
+            formattedDate: format(date, 'MMM do, yyyy'),
+            available: true,
+            remaining,
+          };
+        })
         .filter((slot): slot is Slot => Boolean(slot))
         .sort((a, b) => a.date.getTime() - b.date.getTime());
 
