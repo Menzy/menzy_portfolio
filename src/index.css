@@ -115,6 +115,86 @@
   .pause-animation {
     animation-play-state: paused;
   }
+
+  .zoza-dark {
+    background-color: #1f1f1c !important;
+    color: #f7f7f5 !important;
+  }
+
+  .zoza-dark .bg-white {
+    background-color: #101010 !important;
+  }
+
+  .zoza-dark .bg-stone-100 {
+    background-color: #1f1f1c !important;
+  }
+
+  .zoza-dark .bg-stone-200 {
+    background-color: #2b2b27 !important;
+  }
+
+  .zoza-dark .border-stone-200,
+  .zoza-dark .border-stone-300 {
+    border-color: #34332f !important;
+  }
+
+  .zoza-dark .border-transparent {
+    border-color: transparent !important;
+  }
+
+  .zoza-dark .text-stone-950,
+  .zoza-dark .text-stone-900,
+  .zoza-dark .text-stone-800,
+  .zoza-dark .text-stone-700 {
+    color: #f7f7f5 !important;
+  }
+
+  .zoza-dark .text-stone-600,
+  .zoza-dark .text-stone-500 {
+    color: #9d9994 !important;
+  }
+
+  .zoza-dark .text-stone-400 {
+    color: #77736e !important;
+  }
+
+  .zoza-dark .text-\[\#87512E\] {
+    color: #d79a6a !important;
+  }
+
+  .zoza-dark .bg-\[\#AB6D40\] {
+    background-color: #ab6d40 !important;
+  }
+
+  .zoza-dark .border-\[\#AB6D40\] {
+    border-color: #8a5636 !important;
+  }
+
+  .zoza-dark .hover\:bg-\[\#965E38\]:hover {
+    background-color: #965e38 !important;
+  }
+
+  .zoza-dark input {
+    background-color: #151513 !important;
+    border-color: #34332f !important;
+    color: #f7f7f5 !important;
+  }
+
+  .zoza-dark input::placeholder {
+    color: #77736e !important;
+  }
+
+  .zoza-dark button:not(:disabled):hover {
+    border-color: #555049;
+  }
+
+  .zoza-dark .disabled\:opacity-30:disabled {
+    opacity: 0.3 !important;
+  }
+
+  .zoza-dark .disabled\:opacity-50:disabled {
+    opacity: 0.5 !important;
+  }
 }
 
 @keyframes slideUp {

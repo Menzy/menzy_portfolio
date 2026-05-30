@@ -53,7 +53,7 @@ interface QuantityControlProps {
 
 function QuantityControl({ value, canDecrease, canIncrease, onDecrease, onIncrease }: QuantityControlProps) {
   return (
-    <div className="flex h-10 items-center rounded-full border border-stone-200 bg-white">
+    <div className="flex h-10 w-[128px] max-w-full items-center justify-between rounded-full border border-stone-200 bg-white">
       <button
         type="button"
         aria-label="Decrease quantity"
@@ -63,7 +63,7 @@ function QuantityControl({ value, canDecrease, canIncrease, onDecrease, onIncrea
       >
         <Minus className="h-4 w-4" />
       </button>
-      <span className="w-8 text-center text-sm font-semibold tabular-nums text-stone-950">{value}</span>
+      <span className="min-w-8 text-center text-sm font-semibold tabular-nums text-stone-950">{value}</span>
       <button
         type="button"
         aria-label="Increase quantity"
@@ -85,6 +85,7 @@ interface LoafRowProps {
   quantity: number;
   totalQty: number;
   maxQty: number;
+  disabled?: boolean;
   onDecrease: () => void;
   onIncrease: () => void;
 }
@@ -97,6 +98,7 @@ function LoafRow({
   quantity,
   totalQty,
   maxQty,
+  disabled = false,
   onDecrease,
   onIncrease,
 }: LoafRowProps) {
@@ -104,7 +106,7 @@ function LoafRow({
 
   return (
     <div
-      className={`grid grid-cols-[72px_1fr] gap-3 border-b border-stone-200 py-4 transition last:border-b-0 sm:grid-cols-[116px_1fr] sm:gap-4 sm:py-5 ${selected ? 'opacity-100' : 'opacity-80'
+      className={`grid grid-cols-[72px_minmax(0,1fr)] gap-3 border-b border-stone-200 py-4 transition last:border-b-0 sm:grid-cols-[116px_minmax(0,1fr)] sm:gap-4 sm:py-5 ${selected ? 'opacity-100' : 'opacity-80'
         }`}
     >
       <div
@@ -112,29 +114,38 @@ function LoafRow({
           selected ? 'border-[#AB6D40]' : 'border-transparent'
         }`}
       >
-        <img src={image} alt={title} className="absolute inset-0 h-full w-full object-contain p-2" />
+        <img src={image} alt={title} className={`absolute inset-0 h-full w-full object-contain p-2 ${disabled ? 'grayscale' : ''}`} />
       </div>
 
       <div className="flex min-w-0 flex-col justify-between gap-3 sm:gap-4">
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <h3 className="whitespace-nowrap text-base font-semibold tracking-normal text-stone-950 sm:text-lg">{title}</h3>
+        <div className="grid min-w-0 gap-1 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start sm:gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="text-base font-semibold tracking-normal text-stone-950 sm:text-lg">{title}</h3>
+              {disabled && (
+                <span className="rounded-full bg-stone-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-stone-500">
+                  Unavailable
+                </span>
+              )}
+            </div>
             <p className="mt-1 text-sm leading-5 text-stone-500">{description}</p>
           </div>
-          <p className="shrink-0 text-sm font-semibold text-[#87512E]">GH₵{price.toFixed(2)}</p>
+          {!disabled && <p className="text-sm font-semibold text-[#87512E] sm:shrink-0">GH₵{price.toFixed(2)}</p>}
         </div>
 
-        <div className="flex items-center justify-between gap-3">
-          <p className="whitespace-nowrap text-[10px] font-medium uppercase tracking-[0.08em] text-stone-400">
+        <div className="mt-auto flex min-w-0 flex-wrap items-center justify-between gap-3">
+          <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-stone-400">
             Max {maxQty} total
           </p>
-          <QuantityControl
-            value={quantity}
-            canDecrease={quantity > 0 && !(totalQty === 1 && quantity === 1)}
-            canIncrease={totalQty < maxQty}
-            onDecrease={onDecrease}
-            onIncrease={onIncrease}
-          />
+          <div className="min-w-0 shrink-0">
+            <QuantityControl
+              value={quantity}
+              canDecrease={!disabled && quantity > 0 && !(totalQty === 1 && quantity === 1)}
+              canIncrease={!disabled && totalQty < maxQty}
+              onDecrease={onDecrease}
+              onIncrease={onIncrease}
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -178,6 +189,7 @@ export function BreadPreOrderPage() {
   const [selectedSlot, setSelectedSlot] = useState<string>('');
   const [qtyWhole, setQtyWhole] = useState(1);
   const [qtySliced, setQtySliced] = useState(0);
+  const [slicedAvailable, setSlicedAvailable] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [paystackRef, setPaystackRef] = useState<string>('');
@@ -294,6 +306,25 @@ export function BreadPreOrderPage() {
     }
   }, [totalQty, slots, selectedSlot]);
 
+  useEffect(() => {
+    if (!slicedAvailable && qtySliced > 0) {
+      setQtySliced(0);
+      setQtyWhole((current) => Math.max(1, current));
+    }
+  }, [qtySliced, slicedAvailable]);
+
+  const fetchSlicedAvailability = async () => {
+    const { data, error } = await supabase
+      .from('bread_product_availability')
+      .select('available')
+      .eq('product_key', 'sliced')
+      .maybeSingle();
+
+    const available = !error && Boolean(data?.available);
+    setSlicedAvailable(available);
+    return available;
+  };
+
   const fetchSlots = async () => {
     setLoadingSlots(true);
     try {
@@ -342,6 +373,7 @@ export function BreadPreOrderPage() {
 
   useEffect(() => {
     fetchSlots();
+    fetchSlicedAvailability();
   }, []);
 
   const config = {
@@ -393,10 +425,16 @@ export function BreadPreOrderPage() {
     toast.info('Payment cancelled');
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !phone || !address) {
       toast.error('Please fill in all required fields');
+      return;
+    }
+
+    if (qtySliced > 0 && !(await fetchSlicedAvailability())) {
+      toast.error('Sliced loaves are unavailable right now.');
+      setQtySliced(0);
       return;
     }
 
@@ -418,7 +456,7 @@ export function BreadPreOrderPage() {
   if (isSuccess) {
     return (
       <PageTransition>
-        <main className="min-h-screen bg-stone-100 px-2 py-4 text-stone-950 sm:px-6 sm:py-6 lg:px-8">
+        <main className="zoza-dark min-h-screen bg-stone-100 px-2 py-4 text-stone-950 sm:px-6 sm:py-6 lg:px-8">
           <motion.section
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
@@ -530,7 +568,7 @@ export function BreadPreOrderPage() {
 
   return (
     <PageTransition>
-      <main className="min-h-screen bg-stone-100 px-2 py-4 text-stone-950 sm:px-6 sm:py-6 lg:px-8">
+      <main className="zoza-dark min-h-screen bg-stone-100 px-2 py-4 text-stone-950 sm:px-6 sm:py-6 lg:px-8">
         <form onSubmit={handleSubmit} className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[1fr_360px]">
           <section className="rounded-[8px] bg-white p-3 shadow-sm sm:p-6 lg:p-7">
             <div className="mb-4 flex items-start justify-between gap-4 border-b border-stone-200 pb-4 sm:mb-6 sm:pb-5">
@@ -559,12 +597,13 @@ export function BreadPreOrderPage() {
                   />
                   <LoafRow
                     title="Sliced Loaf"
-                    description="Ready for toast, sandwiches, and sharing."
+                    description={slicedAvailable ? 'Ready for toast, sandwiches, and sharing.' : 'Slicing is unavailable right now.'}
                     image="/assets/bread/sliced.png"
                     price={SLICED_PRICE}
                     quantity={qtySliced}
                     totalQty={totalQty}
                     maxQty={maxQty}
+                    disabled={!slicedAvailable}
                     onDecrease={() => setQtySliced(Math.max(0, qtySliced - 1))}
                     onIncrease={() => setQtySliced(qtySliced + 1)}
                   />
@@ -645,7 +684,7 @@ export function BreadPreOrderPage() {
                     <FieldWrap icon={<User className="h-4 w-4" />}>
                       <Input
                         id="name"
-                        placeholder="John Doe"
+                        placeholder="Enter your full name"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         required
@@ -663,7 +702,7 @@ export function BreadPreOrderPage() {
                         <Input
                           id="phone"
                           type="tel"
-                          placeholder="024 123 4567"
+                          placeholder="Enter your phone number"
                           value={phone}
                           onChange={(e) => setPhone(e.target.value)}
                           required
@@ -679,7 +718,7 @@ export function BreadPreOrderPage() {
                         <Input
                           id="email"
                           type="email"
-                          placeholder="john@example.com"
+                          placeholder="Enter your email address"
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
                           className="h-12 rounded-2xl border-stone-200 bg-white pl-11 text-base placeholder:text-sm focus-visible:ring-stone-950"

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { endOfWeek, format, isAfter, isWithinInterval, parseISO, startOfWeek, nextWednesday, nextSaturday } from 'date-fns';
+import { endOfWeek, format, isAfter, isWithinInterval, parseISO, startOfWeek, nextWednesday, nextSaturday, startOfDay } from 'date-fns';
 import {
   CalendarDays,
   ChefHat,
@@ -42,7 +42,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Switch } from '@/components/ui/switch';
+
 import {
   Drawer,
   DrawerContent,
@@ -53,7 +54,7 @@ import {
 } from '@/components/ui/drawer';
 
 type FulfillmentStatus = 'pending' | 'baked' | 'out_for_delivery' | 'fulfilled';
-type OrderTab = 'this_week' | 'coming_up' | 'fulfilled' | 'manage_days';
+type OrderTab = 'this_week' | 'coming_up' | 'fulfilled';
 
 interface BreadOrder {
   id: string;
@@ -317,7 +318,10 @@ function OrderDetailDrawer({ order, canUpdateStatus = true, onStatusChange }: Or
 export function BreadAdminPage() {
   const [orders, setOrders] = useState<BreadOrder[]>([]);
   const [availability, setAvailability] = useState<AvailabilitySlot[]>([]);
+  const [slicedAvailable, setSlicedAvailable] = useState(false);
+  const [updatingSliced, setUpdatingSliced] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [topLevelTab, setTopLevelTab] = useState<'orders' | 'manage_days'>('orders');
   const [activeTab, setActiveTab] = useState<OrderTab>('this_week');
   const [password, setPassword] = useState(() => sessionStorage.getItem('zoza_admin_password') || '');
   const [passwordInput, setPasswordInput] = useState('');
@@ -371,12 +375,35 @@ export function BreadAdminPage() {
     }
   }, [password]);
 
+  const fetchProductAvailability = useCallback(async (adminPassword = password) => {
+    if (!adminPassword) return;
+
+    try {
+      const { data, error } = await supabase.functions.invoke('bread-admin', {
+        body: {
+          action: 'list_product_availability',
+          password: adminPassword,
+        },
+      });
+
+      if (error) throw error;
+      if (!data?.ok) throw new Error(data?.error || 'Failed to load loaf options.');
+
+      const sliced = data.product_availability?.find((item: { product_key: string }) => item.product_key === 'sliced');
+      setSlicedAvailable(Boolean(sliced?.available));
+    } catch (err: unknown) {
+      console.error('Error fetching loaf options:', err);
+      toast.error('Failed to load loaf options.');
+    }
+  }, [password]);
+
   useEffect(() => {
     if (password) {
       fetchOrders(password);
       fetchAvailability(password);
+      fetchProductAvailability(password);
     }
-  }, [fetchOrders, fetchAvailability, password]);
+  }, [fetchOrders, fetchAvailability, fetchProductAvailability, password]);
 
   const handleUnlock = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -397,6 +424,7 @@ export function BreadAdminPage() {
     setPassword('');
     setOrders([]);
     setAvailability([]);
+    setSlicedAvailable(false);
   };
 
   const updateFulfillmentStatus = async (id: string, newStatus: FulfillmentStatus) => {
@@ -454,6 +482,31 @@ export function BreadAdminPage() {
     }
   };
 
+  const updateSlicedAvailability = async (available: boolean) => {
+    setUpdatingSliced(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('bread-admin', {
+        body: {
+          action: 'update_product_availability',
+          password,
+          product_key: 'sliced',
+          available,
+        },
+      });
+
+      if (error) throw error;
+      if (!data?.ok) throw new Error(data?.error || 'Failed to update sliced loaf.');
+
+      setSlicedAvailable(available);
+      toast.success(`Sliced loaf ${available ? 'enabled' : 'paused'}`);
+    } catch (err: unknown) {
+      console.error('Error updating sliced loaf:', err);
+      toast.error('Failed to update sliced loaf.');
+    } finally {
+      setUpdatingSliced(false);
+    }
+  };
+
   const today = new Date();
   const currentWeek = {
     start: startOfWeek(today, { weekStartsOn: 1 }),
@@ -472,13 +525,13 @@ export function BreadAdminPage() {
     .filter((order) => getFulfillmentStatus(order) === 'fulfilled')
     .sort((a, b) => sortOrdersByDeliveryDate(b, a));
 
-  const tabOrders: Record<Exclude<OrderTab, 'manage_days'>, BreadOrder[]> = {
+  const tabOrders: Record<OrderTab, BreadOrder[]> = {
     this_week: thisWeekOrders,
     coming_up: comingUpOrders,
     fulfilled: fulfilledOrders,
   };
 
-  const filteredOrders = activeTab === 'manage_days' ? [] : tabOrders[activeTab as Exclude<OrderTab, 'manage_days'>];
+  const filteredOrders = topLevelTab === 'manage_days' ? [] : tabOrders[activeTab];
   const groupedFilteredOrders = groupOrdersByDeliveryDate(filteredOrders);
 
   const totalRevenue = paidOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0);
@@ -531,9 +584,57 @@ export function BreadAdminPage() {
 
   return (
     <PageTransition>
-      <main className="min-h-screen bg-stone-50 px-4 py-5 text-stone-950 sm:px-6 sm:py-8 lg:px-8">
-        <div className="mx-auto max-w-7xl">
-          <div className="mb-5 flex items-start justify-between gap-4 sm:mb-8 sm:items-center">
+      <div className="min-h-screen bg-stone-50 text-stone-950">
+
+        {/* ── Desktop left sidebar ────────────────────────────────── */}
+        <aside className="hidden lg:flex fixed inset-y-0 left-0 z-20 w-[180px] flex-col border-r border-stone-200 bg-white">
+          <div className="px-5 pt-7 pb-5 border-b border-stone-100">
+            <span className="text-[11px] font-semibold uppercase tracking-widest text-stone-400">Zoza Admin</span>
+          </div>
+          <nav className="flex-1 px-2 py-4 space-y-0.5">
+            <button
+              onClick={() => setTopLevelTab('orders')}
+              className={cn(
+                'w-full flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors',
+                topLevelTab === 'orders'
+                  ? 'bg-stone-100 text-stone-900'
+                  : 'text-stone-500 hover:bg-stone-50 hover:text-stone-800'
+              )}
+            >
+              <Package className="h-4 w-4 shrink-0" />
+              Orders
+              {activeOrders.length > 0 && (
+                <span className={cn(
+                  'ml-auto inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[11px] font-semibold',
+                  topLevelTab === 'orders' ? 'bg-stone-200 text-stone-700' : 'bg-stone-100 text-stone-500'
+                )}>{activeOrders.length}</span>
+              )}
+            </button>
+            <button
+              onClick={() => setTopLevelTab('manage_days')}
+              className={cn(
+                'w-full flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors',
+                topLevelTab === 'manage_days'
+                  ? 'bg-stone-100 text-stone-900'
+                  : 'text-stone-500 hover:bg-stone-50 hover:text-stone-800'
+              )}
+            >
+              <CalendarDays className="h-4 w-4 shrink-0" />
+              Manage Days
+            </button>
+          </nav>
+          <div className="px-3 py-4 border-t border-stone-100">
+            <Button variant="outline" size="sm" onClick={handleLock} className="w-full bg-white">
+              Lock
+            </Button>
+          </div>
+        </aside>
+
+        {/* ── Main content (offset on desktop) ───────────────────── */}
+        <main className="lg:ml-[180px] px-4 py-5 pb-24 text-stone-950 sm:px-6 sm:py-8 lg:pb-10 lg:px-8">
+          <div className="mx-auto max-w-5xl">
+          {/* Mobile header (desktop shows sidebar label instead) */}
+          <div className="mb-5 flex items-start justify-between gap-4 sm:mb-8 sm:items-center lg:hidden">
             <div>
               <h1 className="text-2xl font-semibold tracking-tight text-stone-900 sm:text-3xl">Zoza Crumb Admin</h1>
               <p className="mt-1 max-w-[220px] text-sm leading-5 text-stone-500 sm:max-w-none">
@@ -545,6 +646,11 @@ export function BreadAdminPage() {
                 Lock
               </Button>
             </div>
+          </div>
+          {/* Desktop header */}
+          <div className="mb-5 hidden sm:mb-8 lg:block">
+            <h1 className="text-2xl font-semibold tracking-tight text-stone-900 sm:text-3xl">Zoza Crumb Admin</h1>
+            <p className="mt-1 text-sm text-stone-500">Manage bread orders and deliveries.</p>
           </div>
 
           <div className="mb-6 grid grid-cols-2 gap-3 lg:mb-8 lg:grid-cols-3 lg:gap-4">
@@ -592,55 +698,50 @@ export function BreadAdminPage() {
             </Card>
           </div>
 
-          <section className="space-y-4">
-            <div className="flex flex-col gap-4">
-              <div>
-                <h2 className="text-lg font-semibold text-stone-950">Order Details</h2>
-                <p className="mt-1 flex items-center gap-1.5 text-sm text-stone-500">
+          <div className="space-y-6">
+
+            {topLevelTab === 'orders' && (
+              <section className="space-y-4">
+                {/* ── Pill chip filters ───────────────────────────── */}
+                <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                  {(
+                    [
+                      { tab: 'this_week' as OrderTab, label: 'This Week', count: thisWeekOrders.length },
+                      { tab: 'coming_up' as OrderTab, label: 'Coming Up', count: comingUpOrders.length },
+                      { tab: 'fulfilled' as OrderTab, label: 'Fulfilled', count: fulfilledOrders.length },
+                    ]
+                  ).map(({ tab, label, count }) => {
+                    const isActive = activeTab === tab;
+                    return (
+                      <button
+                        key={tab}
+                        onClick={() => setActiveTab(tab)}
+                        className={cn(
+                          'inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400',
+                          isActive
+                            ? 'border-stone-900 bg-stone-900 text-white'
+                            : 'border-stone-200 bg-white text-stone-600 hover:border-stone-300 hover:bg-stone-50'
+                        )}
+                      >
+                        {label}
+                        <span
+                          className={cn(
+                            'inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-[11px] font-semibold',
+                            isActive ? 'bg-white/25 text-white' : 'bg-stone-100 text-stone-500'
+                          )}
+                        >
+                          {count}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="flex items-center gap-1.5 text-sm text-stone-500">
                   <CalendarDays className="h-4 w-4" />
                   This week: {weekRangeLabel}
                 </p>
-              </div>
-              <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as OrderTab)}>
-                <TabsList className="grid h-auto w-full grid-cols-4 rounded-md bg-stone-100 p-1">
-                  <TabsTrigger
-                    className="min-w-0 gap-1 rounded-sm px-2 py-2 text-xs sm:gap-2 sm:text-sm"
-                    value="this_week"
-                  >
-                    This Week
-                    <Badge variant="secondary" className="px-2 py-0 text-[11px] bg-white text-stone-600 hover:bg-white">
-                      {thisWeekOrders.length}
-                    </Badge>
-                  </TabsTrigger>
-                  <TabsTrigger
-                    className="min-w-0 gap-1 rounded-sm px-2 py-2 text-xs sm:gap-2 sm:text-sm"
-                    value="coming_up"
-                  >
-                    Coming Up
-                    <Badge variant="secondary" className="px-2 py-0 text-[11px] bg-white text-stone-600 hover:bg-white">
-                      {comingUpOrders.length}
-                    </Badge>
-                  </TabsTrigger>
-                  <TabsTrigger
-                    className="min-w-0 gap-1 rounded-sm px-2 py-2 text-xs sm:gap-2 sm:text-sm"
-                    value="fulfilled"
-                  >
-                    Fulfilled
-                    <Badge variant="secondary" className="px-2 py-0 text-[11px] bg-white text-stone-600 hover:bg-white">
-                      {fulfilledOrders.length}
-                    </Badge>
-                  </TabsTrigger>
-                  <TabsTrigger
-                    className="min-w-0 gap-1 rounded-sm px-2 py-2 text-xs sm:gap-2 sm:text-sm"
-                    value="manage_days"
-                  >
-                    Manage Days
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
-            </div>
-
-            <div className="lg:hidden">
+                
+                <div className="lg:hidden">
               {loading ? (
                 <div className="flex items-center justify-center rounded-md border border-stone-200 bg-white py-12 text-stone-500">
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
@@ -828,136 +929,240 @@ export function BreadAdminPage() {
                 )}
               </CardContent>
             </Card>
+              </section>
+            )}
 
-            {activeTab === 'manage_days' && (
-              <div className="space-y-6">
-                <Card className="border-stone-200 shadow-sm">
-                  <CardHeader>
-                    <CardTitle className="text-lg">Manage Delivery Days</CardTitle>
-                    <p className="text-sm text-stone-500">
-                      Open or close specific dates and set their maximum order capacity.
-                    </p>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="mb-6 space-y-4 rounded-md border border-stone-200 bg-stone-50/50 p-4">
-                      <h4 className="text-sm font-medium text-stone-900">Quick Actions</h4>
-                      <div className="flex flex-wrap gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            const date = format(nextWednesday(today), 'yyyy-MM-dd');
-                            const slot = availability.find(a => a.delivery_date === date);
-                            if (!slot || slot.status !== 'open') {
-                              updateAvailability(date, 'open', slot ? slot.capacity : 4);
-                            }
-                          }}
-                        >
-                          Open Next Wednesday
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            const date = format(nextSaturday(today), 'yyyy-MM-dd');
-                            const slot = availability.find(a => a.delivery_date === date);
-                            if (!slot || slot.status !== 'open') {
-                              updateAvailability(date, 'open', slot ? slot.capacity : 4);
-                            }
-                          }}
-                        >
-                          Open Next Saturday
-                        </Button>
-                      </div>
+            {topLevelTab === 'manage_days' && (
+              <div className="space-y-5">
+                <div className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <h3 className="text-sm font-semibold text-stone-900">Sliced Loaf</h3>
+                      <p className="mt-1 text-sm text-stone-500">
+                        {slicedAvailable ? 'Available for new orders' : 'Paused for new orders'}
+                      </p>
                     </div>
-                    
-                    <div className="overflow-x-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Date</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Capacity</TableHead>
-                            <TableHead>Paid Orders</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {availability.length === 0 ? (
-                            <TableRow>
-                              <TableCell colSpan={5} className="py-8 text-center text-stone-500">
-                                No delivery days configured.
-                              </TableCell>
-                            </TableRow>
-                          ) : (
-                            availability.map((slot) => {
-                              const isPast = new Date(slot.delivery_date) < startOfWeek(today);
-                              
-                              return (
-                                <TableRow key={slot.delivery_date} className={isPast ? 'opacity-50' : ''}>
-                                  <TableCell className="font-medium">
-                                    {format(parseISO(slot.delivery_date), 'MMM d, yyyy')}
-                                    <div className="text-xs text-stone-500">
-                                      {format(parseISO(slot.delivery_date), 'EEEE')}
-                                    </div>
-                                  </TableCell>
-                                  <TableCell>
-                                    <Badge
-                                      variant="secondary"
-                                      className={cn(
-                                        slot.status === 'open' ? 'bg-green-100 text-green-700' : 'bg-stone-100 text-stone-700'
-                                      )}
-                                    >
-                                      {slot.status}
-                                    </Badge>
-                                  </TableCell>
-                                  <TableCell>
-                                    <div className="flex items-center gap-2">
-                                      <Button
-                                        variant="outline"
-                                        size="icon"
-                                        className="h-6 w-6"
-                                        onClick={() => updateAvailability(slot.delivery_date, slot.status, Math.max(1, slot.capacity - 1))}
-                                      >
-                                        -
-                                      </Button>
-                                      <span className="w-4 text-center tabular-nums">{slot.capacity}</span>
-                                      <Button
-                                        variant="outline"
-                                        size="icon"
-                                        className="h-6 w-6"
-                                        onClick={() => updateAvailability(slot.delivery_date, slot.status, slot.capacity + 1)}
-                                      >
-                                        +
-                                      </Button>
-                                    </div>
-                                  </TableCell>
-                                  <TableCell>
-                                    {slot.paid_quantity}
-                                  </TableCell>
-                                  <TableCell className="text-right">
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => updateAvailability(slot.delivery_date, slot.status === 'open' ? 'closed' : 'open', slot.capacity)}
-                                    >
-                                      {slot.status === 'open' ? 'Close slot' : 'Open slot'}
-                                    </Button>
-                                  </TableCell>
-                                </TableRow>
-                              );
-                            })
+                    <Switch
+                      checked={slicedAvailable}
+                      disabled={updatingSliced}
+                      onCheckedChange={updateSlicedAvailability}
+                      aria-label="Toggle sliced loaf availability"
+                    />
+                  </div>
+                </div>
+
+                {/* ── Quick Actions banner ────────────────────────── */}
+                <div className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
+                  <h3 className="mb-3 text-sm font-semibold text-stone-900">Quick Actions</h3>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="bg-white"
+                      onClick={() => {
+                        const date = format(nextWednesday(today), 'yyyy-MM-dd');
+                        const slot = availability.find(a => a.delivery_date === date);
+                        if (!slot || slot.status !== 'open') {
+                          updateAvailability(date, 'open', slot ? slot.capacity : 4);
+                        }
+                      }}
+                    >
+                      Open Next Wednesday
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="bg-white"
+                      onClick={() => {
+                        const date = format(nextSaturday(today), 'yyyy-MM-dd');
+                        const slot = availability.find(a => a.delivery_date === date);
+                        if (!slot || slot.status !== 'open') {
+                          updateAvailability(date, 'open', slot ? slot.capacity : 4);
+                        }
+                      }}
+                    >
+                      Open Next Saturday
+                    </Button>
+                  </div>
+                </div>
+
+                {/* ── Day cards grid ─────────────────────────────── */}
+                {availability.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center rounded-lg border border-stone-200 bg-white px-4 py-16 text-center text-stone-500">
+                    <CalendarDays className="mb-2 h-8 w-8 text-stone-300" />
+                    <p>No delivery days configured yet.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {availability.map((slot) => {
+                      const isPast = new Date(slot.delivery_date) < startOfDay(today);
+                      const isFull = slot.paid_quantity >= slot.capacity && slot.capacity > 0;
+                      const pct = slot.capacity > 0
+                        ? Math.min(100, Math.round((slot.paid_quantity / slot.capacity) * 100))
+                        : 0;
+
+                      return (
+                        <div
+                          key={slot.delivery_date}
+                          className={cn(
+                            'rounded-lg border bg-white p-4 shadow-sm transition-opacity',
+                            isPast && 'opacity-50'
                           )}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  </CardContent>
-                </Card>
+                        >
+                          {/* Date + status toggle */}
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <p className="text-xs text-stone-400">
+                                {format(parseISO(slot.delivery_date), 'EEEE')}
+                              </p>
+                              <p className="text-base font-semibold text-stone-900">
+                                {format(parseISO(slot.delivery_date), 'MMM d, yyyy')}
+                              </p>
+                            </div>
+                            {isPast ? (
+                              <Badge variant="secondary" className="bg-stone-100 text-stone-400 hover:bg-stone-100">
+                                Past
+                              </Badge>
+                            ) : (
+                              <button
+                                onClick={() =>
+                                  updateAvailability(
+                                    slot.delivery_date,
+                                    slot.status === 'open' ? 'closed' : 'open',
+                                    slot.capacity
+                                  )
+                                }
+                                className={cn(
+                                  'inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400',
+                                  slot.status === 'open'
+                                    ? 'border-green-200 bg-green-50 text-green-700 hover:bg-green-100'
+                                    : 'border-stone-200 bg-stone-50 text-stone-600 hover:bg-stone-100'
+                                )}
+                              >
+                                <span
+                                  className={cn(
+                                    'h-1.5 w-1.5 rounded-full',
+                                    slot.status === 'open' ? 'bg-green-500' : 'bg-stone-400'
+                                  )}
+                                />
+                                {slot.status === 'open' ? 'Open' : 'Closed'}
+                              </button>
+                            )}
+                          </div>
+
+                          {/* Booked progress */}
+                          <div className="mt-4">
+                            <div className="mb-1.5 flex items-center justify-between">
+                              <span className="text-xs text-stone-400">Booked</span>
+                              <span className="text-xs font-medium text-stone-600">
+                                {slot.paid_quantity} / {slot.capacity}
+                              </span>
+                            </div>
+                            <div className="h-1.5 w-full overflow-hidden rounded-full bg-stone-100">
+                              <div
+                                className={cn(
+                                  'h-full rounded-full transition-all',
+                                  isFull ? 'bg-red-400' : 'bg-[#AB6D40]'
+                                )}
+                                style={{ width: `${pct}%` }}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Capacity stepper */}
+                          <div className="mt-4 flex items-center gap-2">
+                            <span className="mr-auto text-sm font-medium text-stone-700">Capacity</span>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-9 w-9 shrink-0 bg-white text-base"
+                              disabled={isPast || slot.capacity <= 1}
+                              onClick={() =>
+                                updateAvailability(
+                                  slot.delivery_date,
+                                  slot.status,
+                                  Math.max(1, slot.capacity - 1)
+                                )
+                              }
+                            >
+                              −
+                            </Button>
+                            <span className="w-7 text-center text-sm font-semibold tabular-nums text-stone-900">
+                              {slot.capacity}
+                            </span>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-9 w-9 shrink-0 bg-white text-base"
+                              disabled={isPast}
+                              onClick={() =>
+                                updateAvailability(
+                                  slot.delivery_date,
+                                  slot.status,
+                                  slot.capacity + 1
+                                )
+                              }
+                            >
+                              +
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
-          </section>
+          </div>
         </div>
-      </main>
+        </main>
+
+        {/* ── Mobile bottom nav bar ───────────────────────────────── */}
+        <nav className="fixed bottom-0 inset-x-0 z-20 flex h-16 items-stretch border-t border-stone-200 bg-white lg:hidden">
+          <button
+            onClick={() => setTopLevelTab('orders')}
+            className={cn(
+              'flex flex-1 flex-col items-center justify-center gap-1 py-2 transition-colors',
+              topLevelTab === 'orders' ? 'text-stone-900' : 'text-stone-400'
+            )}
+          >
+            <div className="relative">
+              <Package className="h-5 w-5" />
+              {activeOrders.length > 0 && (
+                <span className="absolute -right-2 -top-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#AB6D40] px-1 text-[10px] font-bold text-white">
+                  {activeOrders.length}
+                </span>
+              )}
+            </div>
+            <span
+              className={cn(
+                'text-[10px] font-medium',
+                topLevelTab === 'orders' ? 'text-stone-900' : 'text-stone-400'
+              )}
+            >
+              Orders
+            </span>
+          </button>
+          <button
+            onClick={() => setTopLevelTab('manage_days')}
+            className={cn(
+              'flex flex-1 flex-col items-center justify-center gap-1 py-2 transition-colors',
+              topLevelTab === 'manage_days' ? 'text-stone-900' : 'text-stone-400'
+            )}
+          >
+            <CalendarDays className="h-5 w-5" />
+            <span
+              className={cn(
+                'text-[10px] font-medium',
+                topLevelTab === 'manage_days' ? 'text-stone-900' : 'text-stone-400'
+              )}
+            >
+              Manage Days
+            </span>
+          </button>
+        </nav>
+
+      </div>
     </PageTransition>
   );
 }
