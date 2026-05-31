@@ -20,6 +20,13 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { PageTransition } from '@/components/PageTransition';
 import { supabase } from '@/lib/supabase';
 
@@ -40,6 +47,15 @@ interface BreadAvailabilityRow {
   capacity: number;
 }
 
+interface DeliveryArea {
+  id: string;
+  name: string;
+  zone_name: string;
+  delivery_fee: number;
+  active: boolean;
+  sort_order: number;
+}
+
 interface QuantityControlProps {
   value: number;
   canDecrease: boolean;
@@ -57,6 +73,11 @@ interface VerifiedBreadOrder {
   delivery_day: string;
   quantity_whole: number;
   quantity_sliced: number;
+  bread_subtotal?: number;
+  delivery_area_id?: string;
+  delivery_area_name?: string;
+  delivery_zone_name?: string;
+  delivery_fee?: number;
   total_amount: number;
   paystack_reference?: string;
 }
@@ -191,11 +212,14 @@ function setMetaTag(attribute: 'name' | 'property', key: string, content: string
 export function BreadPreOrderPage() {
   const [slots, setSlots] = useState<Slot[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(true);
+  const [deliveryAreas, setDeliveryAreas] = useState<DeliveryArea[]>([]);
+  const [loadingDeliveryAreas, setLoadingDeliveryAreas] = useState(true);
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
+  const [selectedDeliveryAreaId, setSelectedDeliveryAreaId] = useState('');
   const [selectedSlot, setSelectedSlot] = useState<string>('');
   const [qtyWhole, setQtyWhole] = useState(1);
   const [qtySliced, setQtySliced] = useState(0);
@@ -204,12 +228,26 @@ export function BreadPreOrderPage() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [paystackRef, setPaystackRef] = useState<string>('');
   const [confirmedDelivery, setConfirmedDelivery] = useState<{ dayName: string; formattedDate: string } | null>(null);
+  const [confirmedOrderDetails, setConfirmedOrderDetails] = useState<{
+    breadSubtotal: number;
+    deliveryFee: number;
+    totalAmount: number;
+    deliveryAreaName: string;
+    deliveryZoneName: string;
+  } | null>(null);
   const realtimeRefreshTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const BREAD_PRICE = 110;
   const SLICED_PRICE = 120;
   const totalQty = qtyWhole + qtySliced;
-  const totalAmount = qtyWhole * BREAD_PRICE + qtySliced * SLICED_PRICE;
+  const breadSubtotal = qtyWhole * BREAD_PRICE + qtySliced * SLICED_PRICE;
+  const selectedDeliveryArea = deliveryAreas.find((area) => area.id === selectedDeliveryAreaId);
+  const deliveryFee = selectedDeliveryArea?.delivery_fee || 0;
+  const totalAmount = breadSubtotal + deliveryFee;
+  const displayDeliveryFee = confirmedOrderDetails?.deliveryFee ?? deliveryFee;
+  const displayTotalAmount = confirmedOrderDetails?.totalAmount ?? totalAmount;
+  const displayDeliveryAreaName = confirmedOrderDetails?.deliveryAreaName || selectedDeliveryArea?.name || '';
+  const displayDeliveryZoneName = confirmedOrderDetails?.deliveryZoneName || selectedDeliveryArea?.zone_name || '';
   const selectedSlotObj = slots.find((slot) => format(slot.date, 'yyyy-MM-dd') === selectedSlot);
   const deliveryDayLabel = confirmedDelivery?.dayName || selectedSlotObj?.dayName || '';
   const deliveryDateLabel = confirmedDelivery?.formattedDate || selectedSlotObj?.formattedDate || '';
@@ -283,6 +321,33 @@ export function BreadPreOrderPage() {
     return available;
   }, []);
 
+  const fetchDeliveryAreas = useCallback(async (showLoading = true) => {
+    if (showLoading) setLoadingDeliveryAreas(true);
+    try {
+      const { data, error } = await supabase
+        .from('bread_delivery_areas')
+        .select('id, name, zone_name, delivery_fee, active, sort_order')
+        .eq('active', true)
+        .order('sort_order', { ascending: true })
+        .order('name', { ascending: true })
+        .returns<DeliveryArea[]>();
+
+      if (error) throw error;
+
+      const areas = data || [];
+      setDeliveryAreas(areas);
+      setSelectedDeliveryAreaId((current) => {
+        if (current && areas.some((area) => area.id === current)) return current;
+        return areas[0]?.id || '';
+      });
+    } catch (err: unknown) {
+      console.error('Error fetching delivery areas:', err);
+      toast.error('Failed to load delivery areas.');
+    } finally {
+      if (showLoading) setLoadingDeliveryAreas(false);
+    }
+  }, []);
+
   const fetchSlots = useCallback(async (showLoading = true) => {
     if (showLoading) setLoadingSlots(true);
     try {
@@ -335,8 +400,9 @@ export function BreadPreOrderPage() {
     await Promise.all([
       fetchSlots(showLoading),
       fetchSlicedAvailability(),
+      fetchDeliveryAreas(showLoading),
     ]);
-  }, [fetchSlicedAvailability, fetchSlots]);
+  }, [fetchDeliveryAreas, fetchSlicedAvailability, fetchSlots]);
 
   useEffect(() => {
     refreshCustomerAvailability(true);
@@ -386,12 +452,20 @@ export function BreadPreOrderPage() {
     setPhone(order.customer_phone || '');
     setAddress(order.customer_address || '');
     setSelectedSlot(order.delivery_date);
+    setSelectedDeliveryAreaId(order.delivery_area_id || '');
     setQtyWhole(order.quantity_whole || 0);
     setQtySliced(order.quantity_sliced || 0);
     setPaystackRef(order.paystack_reference || '');
     setConfirmedDelivery({
       dayName: order.delivery_day || '',
       formattedDate: format(new Date(`${order.delivery_date}T00:00:00`), 'MMM do, yyyy'),
+    });
+    setConfirmedOrderDetails({
+      breadSubtotal: order.bread_subtotal ?? Math.max(0, order.total_amount - (order.delivery_fee || 0)),
+      deliveryFee: order.delivery_fee || 0,
+      totalAmount: order.total_amount || 0,
+      deliveryAreaName: order.delivery_area_name || '',
+      deliveryZoneName: order.delivery_zone_name || '',
     });
     setIsSuccess(true);
   };
@@ -442,6 +516,7 @@ export function BreadPreOrderPage() {
           customer_email: email || undefined,
           delivery_date: selectedSlot,
           delivery_day: selectedSlotObj?.dayName || '',
+          delivery_area_id: selectedDeliveryAreaId,
           quantity_whole: qtyWhole,
           quantity_sliced: qtySliced,
           total_amount: totalAmount,
@@ -462,7 +537,7 @@ export function BreadPreOrderPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !phone || !address) {
+    if (!name || !phone || !address || !selectedDeliveryAreaId) {
       toast.error('Please fill in all required fields');
       return;
     }
@@ -483,9 +558,11 @@ export function BreadPreOrderPage() {
     setEmail('');
     setPhone('');
     setAddress('');
+    setSelectedDeliveryAreaId(deliveryAreas[0]?.id || '');
     setQtyWhole(1);
     setQtySliced(0);
     setConfirmedDelivery(null);
+    setConfirmedOrderDetails(null);
     fetchSlots();
   };
 
@@ -535,9 +612,18 @@ export function BreadPreOrderPage() {
                   <dt className="text-stone-500">Loaves</dt>
                   <dd className="font-semibold text-stone-950">{totalQty}</dd>
                 </div>
+                {displayDeliveryAreaName && (
+                  <div className="flex justify-between gap-4 py-4 text-sm">
+                    <dt className="text-stone-500">Delivery area</dt>
+                    <dd className="text-right font-semibold text-stone-950">
+                      {displayDeliveryAreaName}
+                      {displayDeliveryZoneName ? <span className="block text-xs font-medium text-stone-500">{displayDeliveryZoneName}</span> : null}
+                    </dd>
+                  </div>
+                )}
                 <div className="flex justify-between gap-4 py-4 text-sm">
                   <dt className="text-stone-500">Paid</dt>
-                  <dd className="font-semibold text-[#87512E]">GH₵{totalAmount.toFixed(2)}</dd>
+                  <dd className="font-semibold text-[#87512E]">GH₵{displayTotalAmount.toFixed(2)}</dd>
                 </div>
                 <div className="flex justify-between gap-4 py-4 text-sm">
                   <dt className="text-stone-500">Reference</dt>
@@ -581,11 +667,17 @@ export function BreadPreOrderPage() {
                     {deliveryDayLabel && deliveryDateLabel ? `${deliveryDayLabel}, ${deliveryDateLabel}` : 'Selected'}
                   </span>
                 </div>
+                <div className="flex justify-between gap-4">
+                  <span className="text-stone-500">Delivery fee</span>
+                  <span className="text-right font-semibold text-stone-950">
+                    {displayDeliveryAreaName ? `${displayDeliveryAreaName} · GH₵${displayDeliveryFee.toFixed(2)}` : `GH₵${displayDeliveryFee.toFixed(2)}`}
+                  </span>
+                </div>
               </div>
 
               <div className="mt-5 flex items-end justify-between gap-4">
                 <span className="text-sm text-stone-500">Total paid</span>
-                <span className="text-3xl font-semibold tracking-normal text-stone-950">GH₵{totalAmount.toFixed(2)}</span>
+                <span className="text-3xl font-semibold tracking-normal text-stone-950">GH₵{displayTotalAmount.toFixed(2)}</span>
               </div>
 
               <Button
@@ -714,6 +806,38 @@ export function BreadPreOrderPage() {
                 <h2 className="text-base font-semibold">Delivery details</h2>
                 <div className="mt-4 grid gap-4">
                   <div className="space-y-2">
+                    <Label htmlFor="delivery-area" className="font-medium text-stone-800">
+                      Delivery Area *
+                    </Label>
+                    <Select
+                      value={selectedDeliveryAreaId}
+                      onValueChange={setSelectedDeliveryAreaId}
+                      disabled={loadingDeliveryAreas || deliveryAreas.length === 0}
+                    >
+                      <SelectTrigger
+                        id="delivery-area"
+                        className="h-12 rounded-2xl border-stone-200 bg-white text-base focus:ring-stone-950"
+                      >
+                        <SelectValue placeholder={loadingDeliveryAreas ? 'Loading delivery areas' : 'Select your area'} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {deliveryAreas.map((area) => (
+                          <SelectItem key={area.id} value={area.id}>
+                            {area.name} · GH₵{area.delivery_fee.toFixed(2)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {selectedDeliveryArea ? (
+                      <p className="text-xs text-stone-500">
+                        {selectedDeliveryArea.zone_name}. Delivery is calculated from Adenta.
+                      </p>
+                    ) : (
+                      <p className="text-xs text-stone-500">Choose the closest area so your delivery fee is included upfront.</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
                     <Label htmlFor="name" className="font-medium text-stone-800">
                       Full Name *
                     </Label>
@@ -781,7 +905,7 @@ export function BreadPreOrderPage() {
 
                   <p className="flex gap-2 text-sm leading-6 text-stone-500">
                     <Truck className="mt-0.5 h-4 w-4 shrink-0" />
-                    Delivery is arranged via Uber or Yango. The delivery fee is paid to the driver.
+                    Delivery fee is paid upfront based on your area. We will call before dispatch.
                   </p>
                 </div>
               </section>
@@ -823,6 +947,23 @@ export function BreadPreOrderPage() {
                   {selectedSlotObj ? `${selectedSlotObj.dayName}, ${selectedSlotObj.formattedDate}` : 'Select a day'}
                 </span>
               </div>
+              <div className="flex justify-between gap-4">
+                <span className="text-stone-500">Delivery</span>
+                <span className="text-right font-semibold text-stone-950">
+                  {selectedDeliveryArea ? `${selectedDeliveryArea.name} · GH₵${deliveryFee.toFixed(2)}` : 'Select an area'}
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-5 space-y-2 border-b border-stone-200 pb-5 text-sm">
+              <div className="flex justify-between gap-4">
+                <span className="text-stone-500">Bread subtotal</span>
+                <span className="font-semibold text-stone-950">GH₵{breadSubtotal.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between gap-4">
+                <span className="text-stone-500">Delivery fee</span>
+                <span className="font-semibold text-stone-950">GH₵{deliveryFee.toFixed(2)}</span>
+              </div>
             </div>
 
             <div className="mt-5 flex items-end justify-between gap-4">
@@ -832,7 +973,7 @@ export function BreadPreOrderPage() {
 
             <Button
               type="submit"
-              disabled={isProcessing || loadingSlots || slots.length === 0 || !selectedSlot}
+              disabled={isProcessing || loadingSlots || loadingDeliveryAreas || slots.length === 0 || !selectedSlot || !selectedDeliveryAreaId}
               className="mt-5 h-12 w-full rounded-full bg-[#AB6D40] text-base font-semibold text-white hover:bg-[#965E38]"
             >
               {isProcessing ? (

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { type FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { endOfWeek, format, isWithinInterval, parseISO, startOfWeek, nextWednesday, nextSaturday, startOfDay } from 'date-fns';
 import {
   CalendarDays,
@@ -53,6 +53,7 @@ import {
 
 type FulfillmentStatus = 'pending' | 'baked' | 'out_for_delivery' | 'fulfilled';
 type OrderTab = 'this_week' | 'fulfilled';
+type TopLevelTab = 'orders' | 'manage_days' | 'delivery_fees';
 
 interface BreadOrder {
   id: string;
@@ -65,6 +66,11 @@ interface BreadOrder {
   is_sliced: boolean;
   quantity_whole: number;
   quantity_sliced: number;
+  bread_subtotal?: number;
+  delivery_area_id?: string;
+  delivery_area_name?: string;
+  delivery_zone_name?: string;
+  delivery_fee?: number;
   total_amount: number;
   payment_status: string;
   paystack_reference?: string;
@@ -78,6 +84,16 @@ interface AvailabilitySlot {
   paid_quantity: number;
   reserved_quantity: number;
   remaining_quantity: number;
+}
+
+interface DeliveryArea {
+  id: string;
+  name: string;
+  zone_name: string;
+  delivery_fee: number;
+  active: boolean;
+  sort_order: number;
+  updated_at?: string;
 }
 
 const FULFILLMENT_STATUSES: Array<{
@@ -298,6 +314,18 @@ function OrderDetailDrawer({ order, canUpdateStatus = true, onStatusChange }: Or
                 </button>
               </dd>
             </div>
+            {order.delivery_area_name && (
+              <div className="rounded-md border border-[#34332f] bg-[#151513] p-4">
+                <dt className="flex items-center gap-2 text-xs font-medium uppercase text-[#9d9994]">
+                  <Truck className="h-4 w-4" />
+                  Delivery Area
+                </dt>
+                <dd className="mt-2 text-base font-medium text-[#f7f7f5]">
+                  {order.delivery_area_name}
+                  {order.delivery_zone_name ? <span className="mt-1 block text-sm font-normal text-[#9d9994]">{order.delivery_zone_name}</span> : null}
+                </dd>
+              </div>
+            )}
             <div className="rounded-md border border-[#34332f] bg-[#151513] p-4">
               <dt className="flex items-center gap-2 text-xs font-medium uppercase text-[#9d9994]">
                 <Package className="h-4 w-4" />
@@ -318,6 +346,14 @@ function OrderDetailDrawer({ order, canUpdateStatus = true, onStatusChange }: Or
                 <div className="flex items-center justify-between gap-4">
                   <span>Amount</span>
                   <span className="font-semibold text-[#f7f7f5]">GH₵{order.total_amount?.toFixed(2)}</span>
+                </div>
+                <div className="flex items-center justify-between gap-4">
+                  <span>Bread</span>
+                  <span className="font-semibold text-[#f7f7f5]">GH₵{(order.bread_subtotal ?? Math.max(0, (order.total_amount || 0) - (order.delivery_fee || 0))).toFixed(2)}</span>
+                </div>
+                <div className="flex items-center justify-between gap-4">
+                  <span>Delivery</span>
+                  <span className="font-semibold text-[#f7f7f5]">GH₵{(order.delivery_fee || 0).toFixed(2)}</span>
                 </div>
                 <div className="flex items-center justify-between gap-4">
                   <span>Status</span>
@@ -350,10 +386,18 @@ function OrderDetailDrawer({ order, canUpdateStatus = true, onStatusChange }: Or
 export function BreadAdminPage() {
   const [orders, setOrders] = useState<BreadOrder[]>([]);
   const [availability, setAvailability] = useState<AvailabilitySlot[]>([]);
+  const [deliveryAreas, setDeliveryAreas] = useState<DeliveryArea[]>([]);
+  const [deliveryAreaDrafts, setDeliveryAreaDrafts] = useState<Record<string, DeliveryArea>>({});
+  const [newDeliveryArea, setNewDeliveryArea] = useState({
+    name: '',
+    zone_name: '',
+    delivery_fee: '',
+  });
+  const [savingDeliveryAreaId, setSavingDeliveryAreaId] = useState<string | null>(null);
   const [slicedAvailable, setSlicedAvailable] = useState(false);
   const [updatingSliced, setUpdatingSliced] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [topLevelTab, setTopLevelTab] = useState<'orders' | 'manage_days'>('orders');
+  const [topLevelTab, setTopLevelTab] = useState<TopLevelTab>('orders');
   const [activeTab, setActiveTab] = useState<OrderTab>('this_week');
   const [password, setPassword] = useState(() => sessionStorage.getItem('zoza_admin_password') || '');
   const [passwordInput, setPasswordInput] = useState('');
@@ -430,6 +474,34 @@ export function BreadAdminPage() {
     }
   }, [password]);
 
+  const fetchDeliveryAreas = useCallback(async (adminPassword = password) => {
+    if (!adminPassword) return;
+
+    try {
+      const { data, error } = await supabase.functions.invoke('bread-admin', {
+        body: {
+          action: 'list_delivery_areas',
+          password: adminPassword,
+        },
+      });
+
+      if (error) throw error;
+      if (!data?.ok) throw new Error(data?.error || 'Failed to load delivery areas.');
+
+      const areas = data.delivery_areas || [];
+      setDeliveryAreas(areas);
+      setDeliveryAreaDrafts(
+        areas.reduce((drafts: Record<string, DeliveryArea>, area: DeliveryArea) => {
+          drafts[area.id] = { ...area };
+          return drafts;
+        }, {})
+      );
+    } catch (err: unknown) {
+      console.error('Error fetching delivery areas:', err);
+      toast.error('Failed to load delivery areas.');
+    }
+  }, [password]);
+
   const refreshAdminData = useCallback(async (adminPassword = password, showLoading = false) => {
     if (!adminPassword) return;
 
@@ -437,8 +509,9 @@ export function BreadAdminPage() {
       fetchOrders(adminPassword, showLoading),
       fetchAvailability(adminPassword),
       fetchProductAvailability(adminPassword),
+      fetchDeliveryAreas(adminPassword),
     ]);
-  }, [fetchAvailability, fetchOrders, fetchProductAvailability, password]);
+  }, [fetchAvailability, fetchDeliveryAreas, fetchOrders, fetchProductAvailability, password]);
 
   useEffect(() => {
     if (password) {
@@ -485,7 +558,7 @@ export function BreadAdminPage() {
   }, [password, refreshAdminData]);
 
 
-  const handleUnlock = async (e: React.FormEvent) => {
+  const handleUnlock = async (e: FormEvent) => {
     e.preventDefault();
     const trimmedPassword = passwordInput.trim();
 
@@ -504,6 +577,8 @@ export function BreadAdminPage() {
     setPassword('');
     setOrders([]);
     setAvailability([]);
+    setDeliveryAreas([]);
+    setDeliveryAreaDrafts({});
     setSlicedAvailable(false);
   };
 
@@ -587,6 +662,101 @@ export function BreadAdminPage() {
     }
   };
 
+  const updateDeliveryAreaDraft = (id: string, updates: Partial<DeliveryArea>) => {
+    setDeliveryAreaDrafts((current) => ({
+      ...current,
+      [id]: {
+        ...current[id],
+        ...updates,
+      },
+    }));
+  };
+
+  const saveDeliveryArea = async (area: DeliveryArea) => {
+    setSavingDeliveryAreaId(area.id);
+    try {
+      const { data, error } = await supabase.functions.invoke('bread-admin', {
+        body: {
+          action: 'upsert_delivery_area',
+          password,
+          delivery_area_id: area.id,
+          name: area.name,
+          zone_name: area.zone_name,
+          delivery_fee: Number(area.delivery_fee),
+          active: area.active,
+          sort_order: Number(area.sort_order || 0),
+        },
+      });
+
+      if (error) throw error;
+      if (!data?.ok) throw new Error(data?.error || 'Failed to save delivery area.');
+
+      setDeliveryAreas((current) =>
+        current.map((currentArea) => (currentArea.id === area.id ? data.delivery_area : currentArea))
+      );
+      setDeliveryAreaDrafts((current) => ({
+        ...current,
+        [area.id]: data.delivery_area,
+      }));
+      toast.success(`${data.delivery_area.name} delivery fee saved`);
+    } catch (err: unknown) {
+      console.error('Error saving delivery area:', err);
+      toast.error('Failed to save delivery area.');
+    } finally {
+      setSavingDeliveryAreaId(null);
+    }
+  };
+
+  const addDeliveryArea = async (event: FormEvent) => {
+    event.preventDefault();
+    const name = newDeliveryArea.name.trim();
+    const zoneName = newDeliveryArea.zone_name.trim();
+    const deliveryFee = Number(newDeliveryArea.delivery_fee);
+
+    if (!name || !zoneName || !Number.isInteger(deliveryFee) || deliveryFee < 0) {
+      toast.error('Enter a valid area, zone, and fee.');
+      return;
+    }
+
+    setSavingDeliveryAreaId('new');
+    try {
+      const nextSortOrder = Math.max(0, ...deliveryAreas.map((area) => area.sort_order || 0)) + 10;
+      const { data, error } = await supabase.functions.invoke('bread-admin', {
+        body: {
+          action: 'upsert_delivery_area',
+          password,
+          name,
+          zone_name: zoneName,
+          delivery_fee: deliveryFee,
+          active: true,
+          sort_order: nextSortOrder,
+        },
+      });
+
+      if (error) throw error;
+      if (!data?.ok) throw new Error(data?.error || 'Failed to add delivery area.');
+
+      setDeliveryAreas((current) =>
+        [...current, data.delivery_area].sort((a, b) => (a.sort_order - b.sort_order) || a.name.localeCompare(b.name))
+      );
+      setDeliveryAreaDrafts((current) => ({
+        ...current,
+        [data.delivery_area.id]: data.delivery_area,
+      }));
+      setNewDeliveryArea({ name: '', zone_name: '', delivery_fee: '' });
+      toast.success(`${data.delivery_area.name} added`);
+    } catch (err: unknown) {
+      console.error('Error adding delivery area:', err);
+      toast.error('Failed to add delivery area.');
+    } finally {
+      setSavingDeliveryAreaId(null);
+    }
+  };
+
+  const pauseDeliveryArea = async (area: DeliveryArea) => {
+    await saveDeliveryArea({ ...area, active: false });
+  };
+
   const today = new Date();
   const adminWeekOptions = { weekStartsOn: 0 as const };
   const currentWeek = {
@@ -609,7 +779,7 @@ export function BreadAdminPage() {
     fulfilled: fulfilledOrders,
   };
 
-  const filteredOrders = topLevelTab === 'manage_days' ? [] : tabOrders[activeTab];
+  const filteredOrders = topLevelTab === 'orders' ? tabOrders[activeTab] : [];
   const groupedFilteredOrders = groupOrdersByDeliveryDate(filteredOrders);
 
   const totalRevenue = paidOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0);
@@ -702,6 +872,18 @@ export function BreadAdminPage() {
             >
               <CalendarDays className="h-4 w-4 shrink-0" />
               Manage Days
+            </button>
+            <button
+              onClick={() => setTopLevelTab('delivery_fees')}
+              className={cn(
+                'w-full flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors',
+                topLevelTab === 'delivery_fees'
+                  ? 'bg-stone-100 text-stone-900'
+                  : 'text-stone-500 hover:bg-stone-50 hover:text-stone-800'
+              )}
+            >
+              <Truck className="h-4 w-4 shrink-0" />
+              Delivery Fees
             </button>
           </nav>
           <div className="px-3 py-4 border-t border-stone-100">
@@ -983,6 +1165,11 @@ export function BreadAdminPage() {
                             <p className="truncate text-sm text-stone-700" title={order.customer_address}>
                               {order.customer_address}
                             </p>
+                            {order.delivery_area_name && (
+                              <p className="mt-1 truncate text-xs font-medium text-stone-500">
+                                {order.delivery_area_name} · GH₵{(order.delivery_fee || 0).toFixed(2)}
+                              </p>
+                            )}
                           </TableCell>
                           <TableCell className="align-top">
                             <div className="flex flex-col gap-1 text-sm text-stone-700">
@@ -1029,6 +1216,154 @@ export function BreadAdminPage() {
                 )}
               </CardContent>
             </Card>
+              </section>
+            )}
+
+            {topLevelTab === 'delivery_fees' && (
+              <section className="space-y-5">
+                <Card className="border-stone-200 shadow-sm">
+                  <CardContent className="p-4 sm:p-5">
+                    <form onSubmit={addDeliveryArea} className="grid gap-3 lg:grid-cols-[1fr_1fr_140px_auto] lg:items-end">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="new-delivery-area">Area</Label>
+                        <Input
+                          id="new-delivery-area"
+                          value={newDeliveryArea.name}
+                          onChange={(event) => setNewDeliveryArea((current) => ({ ...current, name: event.target.value }))}
+                          placeholder="Eg. East Legon"
+                          className="h-10 bg-white"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="new-delivery-zone">Zone</Label>
+                        <Input
+                          id="new-delivery-zone"
+                          value={newDeliveryArea.zone_name}
+                          onChange={(event) => setNewDeliveryArea((current) => ({ ...current, zone_name: event.target.value }))}
+                          placeholder="Eg. East Accra"
+                          className="h-10 bg-white"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="new-delivery-fee">Fee</Label>
+                        <Input
+                          id="new-delivery-fee"
+                          type="number"
+                          min={0}
+                          step={1}
+                          value={newDeliveryArea.delivery_fee}
+                          onChange={(event) => setNewDeliveryArea((current) => ({ ...current, delivery_fee: event.target.value }))}
+                          placeholder="GH₵"
+                          className="h-10 bg-white"
+                        />
+                      </div>
+                      <Button
+                        type="submit"
+                        disabled={savingDeliveryAreaId === 'new'}
+                        className="h-10 bg-[#AB6D40] text-white hover:bg-[#965E38]"
+                      >
+                        {savingDeliveryAreaId === 'new' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                        Add Area
+                      </Button>
+                    </form>
+                  </CardContent>
+                </Card>
+
+                <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
+                  {deliveryAreas.map((area) => {
+                    const draft = deliveryAreaDrafts[area.id] || area;
+                    const isSaving = savingDeliveryAreaId === area.id;
+                    const hasChanges =
+                      draft.name !== area.name ||
+                      draft.zone_name !== area.zone_name ||
+                      Number(draft.delivery_fee) !== Number(area.delivery_fee) ||
+                      Boolean(draft.active) !== Boolean(area.active) ||
+                      Number(draft.sort_order) !== Number(area.sort_order);
+
+                    return (
+                      <Card key={area.id} className={cn('border-stone-200 shadow-sm', !draft.active && 'opacity-70')}>
+                        <CardContent className="p-4">
+                          <div className="grid gap-3 sm:grid-cols-[1fr_96px]">
+                            <div className="grid gap-3 sm:grid-cols-2">
+                              <div className="space-y-1.5">
+                                <Label htmlFor={`area-name-${area.id}`}>Area</Label>
+                                <Input
+                                  id={`area-name-${area.id}`}
+                                  value={draft.name}
+                                  onChange={(event) => updateDeliveryAreaDraft(area.id, { name: event.target.value })}
+                                  className="h-10 bg-white"
+                                />
+                              </div>
+                              <div className="space-y-1.5">
+                                <Label htmlFor={`area-zone-${area.id}`}>Zone</Label>
+                                <Input
+                                  id={`area-zone-${area.id}`}
+                                  value={draft.zone_name}
+                                  onChange={(event) => updateDeliveryAreaDraft(area.id, { zone_name: event.target.value })}
+                                  className="h-10 bg-white"
+                                />
+                              </div>
+                            </div>
+                            <div className="space-y-1.5">
+                              <Label htmlFor={`area-fee-${area.id}`}>Fee</Label>
+                              <Input
+                                id={`area-fee-${area.id}`}
+                                type="number"
+                                min={0}
+                                step={1}
+                                value={draft.delivery_fee}
+                                onChange={(event) => updateDeliveryAreaDraft(area.id, { delivery_fee: Number(event.target.value) })}
+                                className="h-10 bg-white"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-stone-200 pt-3">
+                            <button
+                              type="button"
+                              onClick={() => saveDeliveryArea({ ...draft, active: !draft.active })}
+                              disabled={isSaving}
+                              className={cn(
+                                'inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60',
+                                draft.active
+                                  ? 'border-green-200 bg-green-50 text-green-700 hover:bg-green-100'
+                                  : 'border-stone-200 bg-stone-50 text-stone-600 hover:bg-stone-100'
+                              )}
+                            >
+                              <span className={cn('h-1.5 w-1.5 rounded-full', draft.active ? 'bg-green-500' : 'bg-stone-400')} />
+                              {draft.active ? 'Active' : 'Paused'}
+                            </button>
+
+                            <div className="flex items-center gap-2">
+                              {draft.active && (
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  disabled={isSaving}
+                                  onClick={() => pauseDeliveryArea(draft)}
+                                  className="bg-white"
+                                >
+                                  Pause
+                                </Button>
+                              )}
+                              <Button
+                                type="button"
+                                size="sm"
+                                disabled={isSaving || !hasChanges}
+                                onClick={() => saveDeliveryArea(draft)}
+                                className="bg-stone-900 text-white hover:bg-stone-800"
+                              >
+                                {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                Save
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
               </section>
             )}
 
@@ -1314,6 +1649,23 @@ export function BreadAdminPage() {
               )}
             >
               Manage Days
+            </span>
+          </button>
+          <button
+            onClick={() => setTopLevelTab('delivery_fees')}
+            className={cn(
+              'flex flex-1 flex-col items-center justify-center gap-1 py-2 transition-colors',
+              topLevelTab === 'delivery_fees' ? 'text-stone-900' : 'text-stone-400'
+            )}
+          >
+            <Truck className="h-5 w-5" />
+            <span
+              className={cn(
+                'text-[10px] font-medium',
+                topLevelTab === 'delivery_fees' ? 'text-stone-900' : 'text-stone-400'
+              )}
+            >
+              Delivery
             </span>
           </button>
         </nav>
