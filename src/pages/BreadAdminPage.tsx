@@ -6,15 +6,14 @@ import {
   ChevronRight,
   CircleCheck,
   Clock,
+  Copy,
   Loader2,
   Lock,
   MapPin,
   Package,
   Phone,
   ReceiptText,
-  TrendingUp,
   Truck,
-  Users,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { toast } from 'sonner';
@@ -42,7 +41,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 
 import {
   Drawer,
@@ -227,6 +225,14 @@ interface OrderDetailDrawerProps {
 function OrderDetailDrawer({ order, canUpdateStatus = true, onStatusChange }: OrderDetailDrawerProps) {
   const status = getFulfillmentStatus(order);
   const orderItems = formatOrderItems(order);
+  const copyDetail = async (label: string, value: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      toast.success(`${label} copied`);
+    } catch {
+      toast.error(`Could not copy ${label.toLowerCase()}`);
+    }
+  };
 
   return (
     <Drawer>
@@ -236,56 +242,80 @@ function OrderDetailDrawer({ order, canUpdateStatus = true, onStatusChange }: Or
           <ChevronRight className="h-4 w-4" />
         </Button>
       </DrawerTrigger>
-      <DrawerContent className="max-h-[88vh] border-stone-200 bg-stone-50">
+      <DrawerContent className="max-h-[88vh] border-[#34332f] bg-[#101010] text-[#f7f7f5]">
         <DrawerHeader className="px-5 pb-3 text-left">
-          <DrawerTitle className="pr-8 text-xl text-stone-950">{order.customer_name}</DrawerTitle>
-          <DrawerDescription>
+          <DrawerTitle className="pr-8 text-xl text-[#f7f7f5]">{order.customer_name}</DrawerTitle>
+          <DrawerDescription className="text-[#9d9994]">
             {format(parseISO(order.delivery_date), 'EEEE, MMM d, yyyy')} delivery
           </DrawerDescription>
         </DrawerHeader>
         <div className="overflow-y-auto px-5 pb-6">
           {canUpdateStatus && (
-            <div className="mb-4 rounded-md border border-stone-200 bg-white p-4">
-              <Label className="mb-2 block text-xs uppercase text-stone-500">Fulfillment</Label>
-              <FulfillmentSelect status={status} onChange={onStatusChange} className="w-full bg-white" />
+            <div className="mb-4 rounded-md border border-[#34332f] bg-[#151513] p-4">
+              <Label className="mb-2 block text-xs uppercase text-[#9d9994]">Fulfillment</Label>
+              <FulfillmentSelect
+                status={status}
+                onChange={onStatusChange}
+                className="w-full border-[#34332f] bg-[#101010] text-[#f7f7f5]"
+              />
             </div>
           )}
 
           <dl className="space-y-3">
-            <div className="rounded-md border border-stone-200 bg-white p-4">
-              <dt className="flex items-center gap-2 text-xs font-medium uppercase text-stone-500">
+            <div className="rounded-md border border-[#34332f] bg-[#151513] p-4">
+              <dt className="flex items-center gap-2 text-xs font-medium uppercase text-[#9d9994]">
                 <Phone className="h-4 w-4" />
                 Phone
               </dt>
-              <dd className="mt-2 text-base font-medium text-stone-950">{order.customer_phone}</dd>
+              <dd className="mt-2 flex items-center gap-3 text-base font-medium text-[#f7f7f5]">
+                <span className="min-w-0 flex-1 break-words">{order.customer_phone}</span>
+                <button
+                  type="button"
+                  onClick={() => copyDetail('Phone', order.customer_phone)}
+                  className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-[#34332f] bg-[#101010] text-[#f7f7f5] transition hover:border-[#555049] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8a5636]"
+                  aria-label="Copy phone number"
+                >
+                  <Copy className="h-4 w-4" />
+                </button>
+              </dd>
             </div>
-            <div className="rounded-md border border-stone-200 bg-white p-4">
-              <dt className="flex items-center gap-2 text-xs font-medium uppercase text-stone-500">
+            <div className="rounded-md border border-[#34332f] bg-[#151513] p-4">
+              <dt className="flex items-center gap-2 text-xs font-medium uppercase text-[#9d9994]">
                 <MapPin className="h-4 w-4" />
                 Address
               </dt>
-              <dd className="mt-2 text-base leading-6 text-stone-950">{order.customer_address}</dd>
+              <dd className="mt-2 flex items-start gap-3 text-base leading-6 text-[#f7f7f5]">
+                <span className="min-w-0 flex-1 break-words">{order.customer_address}</span>
+                <button
+                  type="button"
+                  onClick={() => copyDetail('Address', order.customer_address)}
+                  className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-[#34332f] bg-[#101010] text-[#f7f7f5] transition hover:border-[#555049] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8a5636]"
+                  aria-label="Copy address"
+                >
+                  <Copy className="h-4 w-4" />
+                </button>
+              </dd>
             </div>
-            <div className="rounded-md border border-stone-200 bg-white p-4">
-              <dt className="flex items-center gap-2 text-xs font-medium uppercase text-stone-500">
+            <div className="rounded-md border border-[#34332f] bg-[#151513] p-4">
+              <dt className="flex items-center gap-2 text-xs font-medium uppercase text-[#9d9994]">
                 <Package className="h-4 w-4" />
                 Order
               </dt>
-              <dd className="mt-2 space-y-1 text-base font-medium text-stone-950">
+              <dd className="mt-2 space-y-1 text-base font-medium text-[#f7f7f5]">
                 {orderItems.map((item) => (
                   <div key={item}>{item}</div>
                 ))}
               </dd>
             </div>
-            <div className="rounded-md border border-stone-200 bg-white p-4">
-              <dt className="flex items-center gap-2 text-xs font-medium uppercase text-stone-500">
+            <div className="rounded-md border border-[#34332f] bg-[#151513] p-4">
+              <dt className="flex items-center gap-2 text-xs font-medium uppercase text-[#9d9994]">
                 <ReceiptText className="h-4 w-4" />
                 Payment
               </dt>
-              <dd className="mt-2 space-y-2 text-sm text-stone-700">
+              <dd className="mt-2 space-y-2 text-sm text-[#c7c3bd]">
                 <div className="flex items-center justify-between gap-4">
                   <span>Amount</span>
-                  <span className="font-semibold text-stone-950">GH₵{order.total_amount?.toFixed(2)}</span>
+                  <span className="font-semibold text-[#f7f7f5]">GH₵{order.total_amount?.toFixed(2)}</span>
                 </div>
                 <div className="flex items-center justify-between gap-4">
                   <span>Status</span>
@@ -301,8 +331,8 @@ function OrderDetailDrawer({ order, canUpdateStatus = true, onStatusChange }: Or
                   </Badge>
                 </div>
                 <div>
-                  <span className="block text-stone-500">Reference</span>
-                  <span className="mt-1 block break-all font-mono text-xs text-stone-700">
+                  <span className="block text-[#9d9994]">Reference</span>
+                  <span className="mt-1 block break-all font-mono text-xs text-[#c7c3bd]">
                     {order.paystack_reference || '-'}
                   </span>
                 </div>
@@ -514,6 +544,7 @@ export function BreadAdminPage() {
   };
 
   const paidOrders = orders.filter((order) => order.payment_status === 'success');
+  const paymentIssueOrders = orders.filter((order) => order.payment_status === 'payment_conflict');
   const activeOrders = paidOrders.filter((order) => getFulfillmentStatus(order) !== 'fulfilled');
   const thisWeekOrders = activeOrders
     .filter((order) => isWithinInterval(parseISO(order.delivery_date), currentWeek))
@@ -541,6 +572,19 @@ export function BreadAdminPage() {
   const totalCustomers = new Set(
     paidOrders.map((order) => order.customer_phone?.trim() || order.customer_name.trim())
   ).size;
+  const nextBookableDate =
+    availability
+      .filter((slot) => slot.status === 'open' && parseISO(slot.delivery_date).getTime() >= startOfDay(today).getTime())
+      .sort((a, b) => parseISO(a.delivery_date).getTime() - parseISO(b.delivery_date).getTime())[0]?.delivery_date ||
+    comingUpOrders[0]?.delivery_date;
+  const bookingWeekAnchor = nextBookableDate ? parseISO(nextBookableDate) : today;
+  const bookingWeek = {
+    start: startOfWeek(bookingWeekAnchor, { weekStartsOn: 1 }),
+    end: endOfWeek(bookingWeekAnchor, { weekStartsOn: 1 }),
+  };
+  const bookingWeekRevenue = paidOrders
+    .filter((order) => isWithinInterval(parseISO(order.delivery_date), bookingWeek))
+    .reduce((sum, order) => sum + (order.total_amount || 0), 0);
   const weekRangeLabel = `${format(currentWeek.start, 'MMM d')} - ${format(currentWeek.end, 'MMM d')}`;
 
   if (!isUnlocked) {
@@ -553,7 +597,7 @@ export function BreadAdminPage() {
                 <Lock className="h-5 w-5" />
               </div>
               <div>
-                <CardTitle className="text-2xl font-semibold tracking-tight">Zoza Admin</CardTitle>
+                <CardTitle className="text-2xl font-semibold tracking-tight">Zoza Crumb</CardTitle>
                 <p className="mt-1 text-sm text-stone-500">Enter the admin password to view bread orders.</p>
               </div>
             </CardHeader>
@@ -584,12 +628,12 @@ export function BreadAdminPage() {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-stone-50 text-stone-950">
+      <div className="zoza-bread-dark min-h-screen bg-stone-50 text-stone-950">
 
         {/* ── Desktop left sidebar ────────────────────────────────── */}
         <aside className="hidden lg:flex fixed inset-y-0 left-0 z-20 w-[180px] flex-col border-r border-stone-200 bg-white">
           <div className="px-5 pt-7 pb-5 border-b border-stone-100">
-            <span className="text-[11px] font-semibold uppercase tracking-widest text-stone-400">Zoza Admin</span>
+            <span className="text-[11px] font-semibold uppercase tracking-widest text-stone-400">Zoza Crumb</span>
           </div>
           <nav className="flex-1 px-2 py-4 space-y-0.5">
             <button
@@ -631,15 +675,12 @@ export function BreadAdminPage() {
         </aside>
 
         {/* ── Main content (offset on desktop) ───────────────────── */}
-        <main className="lg:ml-[180px] px-4 py-5 pb-24 text-stone-950 sm:px-6 sm:py-8 lg:pb-10 lg:px-8">
+        <main className="lg:ml-[180px] px-4 py-5 pb-28 text-stone-950 sm:px-6 sm:py-8 sm:pb-32 lg:pb-10 lg:px-8">
           <div className="mx-auto max-w-5xl">
           {/* Mobile header (desktop shows sidebar label instead) */}
           <div className="mb-5 flex items-start justify-between gap-4 sm:mb-8 sm:items-center lg:hidden">
             <div>
-              <h1 className="text-2xl font-semibold tracking-tight text-stone-900 sm:text-3xl">Zoza Crumb Admin</h1>
-              <p className="mt-1 max-w-[220px] text-sm leading-5 text-stone-500 sm:max-w-none">
-                Manage bread orders and deliveries.
-              </p>
+              <h1 className="text-2xl font-semibold tracking-tight text-stone-900 sm:text-3xl">Zoza Crumb</h1>
             </div>
             <div className="shrink-0">
               <Button variant="outline" size="sm" onClick={handleLock} className="bg-white sm:h-10 sm:px-4">
@@ -649,54 +690,77 @@ export function BreadAdminPage() {
           </div>
           {/* Desktop header */}
           <div className="mb-5 hidden sm:mb-8 lg:block">
-            <h1 className="text-2xl font-semibold tracking-tight text-stone-900 sm:text-3xl">Zoza Crumb Admin</h1>
-            <p className="mt-1 text-sm text-stone-500">Manage bread orders and deliveries.</p>
+            <h1 className="text-2xl font-semibold tracking-tight text-stone-900 sm:text-3xl">Zoza Crumb</h1>
           </div>
 
-          <div className="mb-6 grid grid-cols-2 gap-3 lg:mb-8 lg:grid-cols-3 lg:gap-4">
-            <Card className="col-span-2 border-stone-200 shadow-sm lg:col-span-1">
-              <CardContent className="p-4 sm:p-6">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-xs font-medium uppercase text-stone-500 sm:text-sm sm:normal-case">Revenue</p>
-                    <div className="mt-2 text-[28px] font-bold leading-none text-stone-900 sm:text-2xl">
-                      GH₵{totalRevenue.toFixed(2)}
+          <div className="mb-6 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:mb-8 lg:grid-cols-4 lg:gap-3">
+            <Card className="border-stone-200 shadow-sm sm:col-span-2">
+              <CardContent className="p-4 sm:p-5">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium uppercase text-stone-500 sm:text-sm sm:normal-case">This Week</p>
+                    <div className="mt-2 text-xl font-bold leading-none text-stone-900 sm:text-2xl">
+                      GH₵{bookingWeekRevenue.toFixed(2)}
                     </div>
-                    <p className="mt-2 text-xs text-stone-500">All paid orders</p>
                   </div>
-                  <TrendingUp className="mt-1 h-4 w-4 text-stone-400" />
+                  <div className="min-w-0 border-l border-stone-200 pl-3 text-right sm:pl-4">
+                    <p className="text-xs font-medium uppercase text-stone-500 sm:text-sm sm:normal-case">Total Revenue</p>
+                    <p className="mt-2 text-xl font-bold leading-none text-stone-900 sm:text-2xl">GH₵{totalRevenue.toFixed(2)}</p>
+                  </div>
                 </div>
               </CardContent>
             </Card>
             <Card className="border-stone-200 shadow-sm">
-              <CardContent className="p-4 sm:p-6">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-xs font-medium uppercase text-stone-500 sm:text-sm sm:normal-case">Loaves</p>
-                    <div className="mt-2 text-3xl font-bold leading-none text-stone-900 sm:text-2xl">{totalLoaves}</div>
-                    <p className="mt-2 text-xs leading-4 text-stone-500">
-                      {totalWhole} whole, {totalSliced} sliced
-                    </p>
-                  </div>
-                  <Package className="mt-1 h-4 w-4 text-stone-400" />
+              <CardContent className="p-4 sm:p-5">
+                <div className="flex items-center justify-between gap-4">
+                  <p className="text-xs font-medium uppercase text-stone-500 sm:text-sm sm:normal-case">Total Loaves Ordered</p>
+                  <p className="text-xl font-bold leading-none text-stone-900 sm:text-2xl">{totalLoaves}</p>
                 </div>
               </CardContent>
             </Card>
             <Card className="border-stone-200 shadow-sm">
-              <CardContent className="p-4 sm:p-6">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-xs font-medium uppercase text-stone-500 sm:text-sm sm:normal-case">Customers</p>
-                    <div className="mt-2 text-3xl font-bold leading-none text-stone-900 sm:text-2xl">
-                      {totalCustomers}
-                    </div>
-                    <p className="mt-2 text-xs leading-4 text-stone-500">Unique paid</p>
-                  </div>
-                  <Users className="mt-1 h-4 w-4 text-stone-400" />
+              <CardContent className="p-4 sm:p-5">
+                <div className="flex items-center justify-between gap-4">
+                  <p className="text-xs font-medium uppercase text-stone-500 sm:text-sm sm:normal-case">Unique Customers</p>
+                  <p className="text-xl font-bold leading-none text-stone-900 sm:text-2xl">{totalCustomers}</p>
                 </div>
               </CardContent>
             </Card>
           </div>
+
+          {paymentIssueOrders.length > 0 && (
+            <Card className="mb-6 border-red-900/40 bg-red-950/20 shadow-sm">
+              <CardContent className="p-4 sm:p-5">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <h2 className="text-sm font-semibold text-red-100">Payment needs attention</h2>
+                    <p className="mt-1 text-sm leading-5 text-red-200/70">
+                      A payment came in after its reserved slot expired and capacity was already filled.
+                    </p>
+                  </div>
+                  <Badge variant="secondary" className="w-fit bg-red-100 text-red-800 hover:bg-red-100">
+                    {paymentIssueOrders.length} {paymentIssueOrders.length === 1 ? 'order' : 'orders'}
+                  </Badge>
+                </div>
+                <div className="mt-4 grid gap-2">
+                  {paymentIssueOrders.map((order) => (
+                    <div
+                      key={order.id}
+                      className="grid gap-1 rounded-md border border-red-900/40 bg-black/20 p-3 text-sm sm:grid-cols-[1fr_auto] sm:items-center"
+                    >
+                      <div>
+                        <p className="font-medium text-red-50">{order.customer_name}</p>
+                        <p className="mt-1 text-red-100/60">
+                          {order.customer_phone} · {format(parseISO(order.delivery_date), 'MMM d, yyyy')}
+                        </p>
+                      </div>
+                      <p className="font-mono text-xs text-red-100/60">{order.paystack_reference || '-'}</p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <div className="space-y-6">
 
@@ -934,56 +998,60 @@ export function BreadAdminPage() {
 
             {topLevelTab === 'manage_days' && (
               <div className="space-y-5">
-                <div className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
+                <div className="rounded-lg border border-stone-200 bg-white px-4 py-3 shadow-sm">
                   <div className="flex items-center justify-between gap-4">
                     <div>
                       <h3 className="text-sm font-semibold text-stone-900">Sliced Loaf</h3>
-                      <p className="mt-1 text-sm text-stone-500">
-                        {slicedAvailable ? 'Available for new orders' : 'Paused for new orders'}
-                      </p>
                     </div>
-                    <Switch
-                      checked={slicedAvailable}
+                    <button
+                      type="button"
                       disabled={updatingSliced}
-                      onCheckedChange={updateSlicedAvailability}
+                      onClick={() => updateSlicedAvailability(!slicedAvailable)}
+                      className={cn(
+                        'inline-flex h-8 w-[68px] shrink-0 items-center rounded-full border p-1 text-[11px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400 disabled:cursor-not-allowed disabled:opacity-60',
+                        slicedAvailable
+                          ? 'justify-end border-[#AB6D40] bg-[#AB6D40] text-white'
+                          : 'justify-start border-stone-500 bg-stone-800 text-stone-100'
+                      )}
+                      aria-pressed={slicedAvailable}
                       aria-label="Toggle sliced loaf availability"
-                    />
+                    >
+                      <span className="grid h-6 min-w-[30px] place-items-center rounded-full bg-white px-2 text-stone-950 shadow-sm">
+                        {slicedAvailable ? 'On' : 'Off'}
+                      </span>
+                    </button>
                   </div>
                 </div>
 
-                {/* ── Quick Actions banner ────────────────────────── */}
-                <div className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
-                  <h3 className="mb-3 text-sm font-semibold text-stone-900">Quick Actions</h3>
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="bg-white"
-                      onClick={() => {
-                        const date = format(nextWednesday(today), 'yyyy-MM-dd');
-                        const slot = availability.find(a => a.delivery_date === date);
-                        if (!slot || slot.status !== 'open') {
-                          updateAvailability(date, 'open', slot ? slot.capacity : 4);
-                        }
-                      }}
-                    >
-                      Open Next Wednesday
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="bg-white"
-                      onClick={() => {
-                        const date = format(nextSaturday(today), 'yyyy-MM-dd');
-                        const slot = availability.find(a => a.delivery_date === date);
-                        if (!slot || slot.status !== 'open') {
-                          updateAvailability(date, 'open', slot ? slot.capacity : 4);
-                        }
-                      }}
-                    >
-                      Open Next Saturday
-                    </Button>
-                  </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="min-w-0 flex-1 bg-white px-2 text-xs sm:text-sm"
+                    onClick={() => {
+                      const date = format(nextWednesday(today), 'yyyy-MM-dd');
+                      const slot = availability.find(a => a.delivery_date === date);
+                      if (!slot || slot.status !== 'open') {
+                        updateAvailability(date, 'open', slot ? slot.capacity : 4);
+                      }
+                    }}
+                  >
+                    Open Next Wednesday
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="min-w-0 flex-1 bg-white px-2 text-xs sm:text-sm"
+                    onClick={() => {
+                      const date = format(nextSaturday(today), 'yyyy-MM-dd');
+                      const slot = availability.find(a => a.delivery_date === date);
+                      if (!slot || slot.status !== 'open') {
+                        updateAvailability(date, 'open', slot ? slot.capacity : 4);
+                      }
+                    }}
+                  >
+                    Open Next Saturday
+                  </Button>
                 </div>
 
                 {/* ── Day cards grid ─────────────────────────────── */}
@@ -993,7 +1061,7 @@ export function BreadAdminPage() {
                     <p>No delivery days configured yet.</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-3">
                     {availability.map((slot) => {
                       const isPast = new Date(slot.delivery_date) < startOfDay(today);
                       const isFull = slot.paid_quantity >= slot.capacity && slot.capacity > 0;
@@ -1001,13 +1069,40 @@ export function BreadAdminPage() {
                         ? Math.min(100, Math.round((slot.paid_quantity / slot.capacity) * 100))
                         : 0;
 
+                      if (isPast) {
+                        return (
+                          <div
+                            key={slot.delivery_date}
+                            className="rounded-lg border border-stone-200 bg-white p-4 text-stone-500 shadow-sm opacity-60"
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <p className="text-xs text-stone-400">
+                                  {format(parseISO(slot.delivery_date), 'EEEE')}
+                                </p>
+                                <p className="mt-1 text-base font-semibold text-stone-900">
+                                  {format(parseISO(slot.delivery_date), 'MMM d, yyyy')}
+                                </p>
+                              </div>
+                              <Badge variant="secondary" className="shrink-0 bg-stone-100 text-stone-400 hover:bg-stone-100">
+                                Past
+                              </Badge>
+                            </div>
+
+                            <div className="mt-3 flex items-center justify-between gap-4 border-t border-stone-200 pt-3 text-sm">
+                              <span className="text-stone-400">Booked</span>
+                              <span className="font-medium tabular-nums text-stone-600">
+                                {slot.paid_quantity} / {slot.capacity}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      }
+
                       return (
                         <div
                           key={slot.delivery_date}
-                          className={cn(
-                            'rounded-lg border bg-white p-4 shadow-sm transition-opacity',
-                            isPast && 'opacity-50'
-                          )}
+                          className="rounded-lg border bg-white p-4 shadow-sm"
                         >
                           {/* Date + status toggle */}
                           <div className="flex items-start justify-between gap-2">
@@ -1019,35 +1114,29 @@ export function BreadAdminPage() {
                                 {format(parseISO(slot.delivery_date), 'MMM d, yyyy')}
                               </p>
                             </div>
-                            {isPast ? (
-                              <Badge variant="secondary" className="bg-stone-100 text-stone-400 hover:bg-stone-100">
-                                Past
-                              </Badge>
-                            ) : (
-                              <button
-                                onClick={() =>
-                                  updateAvailability(
-                                    slot.delivery_date,
-                                    slot.status === 'open' ? 'closed' : 'open',
-                                    slot.capacity
-                                  )
-                                }
+                            <button
+                              onClick={() =>
+                                updateAvailability(
+                                  slot.delivery_date,
+                                  slot.status === 'open' ? 'closed' : 'open',
+                                  slot.capacity
+                                )
+                              }
+                              className={cn(
+                                'inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400',
+                                slot.status === 'open'
+                                  ? 'border-green-200 bg-green-50 text-green-700 hover:bg-green-100'
+                                  : 'border-stone-200 bg-stone-50 text-stone-600 hover:bg-stone-100'
+                              )}
+                            >
+                              <span
                                 className={cn(
-                                  'inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400',
-                                  slot.status === 'open'
-                                    ? 'border-green-200 bg-green-50 text-green-700 hover:bg-green-100'
-                                    : 'border-stone-200 bg-stone-50 text-stone-600 hover:bg-stone-100'
+                                  'h-1.5 w-1.5 rounded-full',
+                                  slot.status === 'open' ? 'bg-green-500' : 'bg-stone-400'
                                 )}
-                              >
-                                <span
-                                  className={cn(
-                                    'h-1.5 w-1.5 rounded-full',
-                                    slot.status === 'open' ? 'bg-green-500' : 'bg-stone-400'
-                                  )}
-                                />
-                                {slot.status === 'open' ? 'Open' : 'Closed'}
-                              </button>
-                            )}
+                              />
+                              {slot.status === 'open' ? 'Open' : 'Closed'}
+                            </button>
                           </div>
 
                           {/* Booked progress */}
@@ -1076,7 +1165,7 @@ export function BreadAdminPage() {
                               variant="outline"
                               size="icon"
                               className="h-9 w-9 shrink-0 bg-white text-base"
-                              disabled={isPast || slot.capacity <= 1}
+                              disabled={slot.capacity <= 1}
                               onClick={() =>
                                 updateAvailability(
                                   slot.delivery_date,
@@ -1094,7 +1183,6 @@ export function BreadAdminPage() {
                               variant="outline"
                               size="icon"
                               className="h-9 w-9 shrink-0 bg-white text-base"
-                              disabled={isPast}
                               onClick={() =>
                                 updateAvailability(
                                   slot.delivery_date,

@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { usePaystackPayment } from 'react-paystack';
 import { format, startOfDay } from 'date-fns';
 import {
   BadgeCheck,
@@ -39,16 +38,25 @@ interface BreadAvailabilityRow {
   capacity: number;
 }
 
-interface PaystackReference {
-  reference: string;
-}
-
 interface QuantityControlProps {
   value: number;
   canDecrease: boolean;
   canIncrease: boolean;
   onDecrease: () => void;
   onIncrease: () => void;
+}
+
+interface VerifiedBreadOrder {
+  customer_name: string;
+  customer_phone: string;
+  customer_address: string;
+  customer_email?: string;
+  delivery_date: string;
+  delivery_day: string;
+  quantity_whole: number;
+  quantity_sliced: number;
+  total_amount: number;
+  paystack_reference?: string;
 }
 
 function QuantityControl({ value, canDecrease, canIncrease, onDecrease, onIncrease }: QuantityControlProps) {
@@ -193,72 +201,19 @@ export function BreadPreOrderPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [paystackRef, setPaystackRef] = useState<string>('');
+  const [confirmedDelivery, setConfirmedDelivery] = useState<{ dayName: string; formattedDate: string } | null>(null);
 
   const BREAD_PRICE = 110;
   const SLICED_PRICE = 120;
   const totalQty = qtyWhole + qtySliced;
   const totalAmount = qtyWhole * BREAD_PRICE + qtySliced * SLICED_PRICE;
   const selectedSlotObj = slots.find((slot) => format(slot.date, 'yyyy-MM-dd') === selectedSlot);
+  const deliveryDayLabel = confirmedDelivery?.dayName || selectedSlotObj?.dayName || '';
+  const deliveryDateLabel = confirmedDelivery?.formattedDate || selectedSlotObj?.formattedDate || '';
   
   const maxQty = selectedSlotObj 
     ? selectedSlotObj.remaining 
     : (slots.length > 0 ? Math.max(...slots.map((s) => s.remaining)) : 4);
-
-  const orderMetadata = {
-    customer_name: name,
-    customer_phone: phone,
-    customer_email: email || '',
-    customer_address: address,
-    delivery_date: selectedSlot,
-    delivery_day: selectedSlotObj?.dayName || '',
-    quantity_whole: qtyWhole,
-    quantity_sliced: qtySliced,
-    total_quantity: totalQty,
-    total_amount: totalAmount,
-    order_source: 'zoza-order',
-    custom_fields: [
-      {
-        display_name: 'Customer Name',
-        variable_name: 'customer_name',
-        value: name,
-      },
-      {
-        display_name: 'Phone',
-        variable_name: 'customer_phone',
-        value: phone,
-      },
-      {
-        display_name: 'Delivery Address',
-        variable_name: 'customer_address',
-        value: address,
-      },
-      {
-        display_name: 'Delivery Date',
-        variable_name: 'delivery_date',
-        value: selectedSlot,
-      },
-      {
-        display_name: 'Delivery Day',
-        variable_name: 'delivery_day',
-        value: selectedSlotObj?.dayName || '',
-      },
-      {
-        display_name: 'Whole Loaves',
-        variable_name: 'quantity_whole',
-        value: qtyWhole,
-      },
-      {
-        display_name: 'Sliced Loaves',
-        variable_name: 'quantity_sliced',
-        value: qtySliced,
-      },
-      {
-        display_name: 'Total Loaves',
-        variable_name: 'total_quantity',
-        value: totalQty,
-      },
-    ],
-  };
 
   useEffect(() => {
     const previousTitle = document.title;
@@ -307,11 +262,11 @@ export function BreadPreOrderPage() {
   }, [totalQty, slots, selectedSlot]);
 
   useEffect(() => {
-    if (!slicedAvailable && qtySliced > 0) {
+    if (!isSuccess && !slicedAvailable && qtySliced > 0) {
       setQtySliced(0);
       setQtyWhole((current) => Math.max(1, current));
     }
-  }, [qtySliced, slicedAvailable]);
+  }, [isSuccess, qtySliced, slicedAvailable]);
 
   const fetchSlicedAvailability = async () => {
     const { data, error } = await supabase
@@ -376,24 +331,62 @@ export function BreadPreOrderPage() {
     fetchSlicedAvailability();
   }, []);
 
-  const config = {
-    reference: new Date().getTime().toString(),
-    email: email || 'order@zozacrumb.com',
-    amount: totalAmount * 100,
-    publicKey: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || 'pk_test_placeholder',
-    currency: 'GHS',
-    firstname: name,
-    phone,
-    metadata: orderMetadata,
+  const showVerifiedOrder = (order: VerifiedBreadOrder) => {
+    setName(order.customer_name || '');
+    setEmail(order.customer_email || '');
+    setPhone(order.customer_phone || '');
+    setAddress(order.customer_address || '');
+    setSelectedSlot(order.delivery_date);
+    setQtyWhole(order.quantity_whole || 0);
+    setQtySliced(order.quantity_sliced || 0);
+    setPaystackRef(order.paystack_reference || '');
+    setConfirmedDelivery({
+      dayName: order.delivery_day || '',
+      formattedDate: format(new Date(`${order.delivery_date}T00:00:00`), 'MMM do, yyyy'),
+    });
+    setIsSuccess(true);
   };
 
-  const initializePayment = usePaystackPayment(config);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const reference = params.get('reference') || params.get('trxref');
+    if (!reference) return;
 
-  const onSuccess = async (reference: PaystackReference) => {
+    let cancelled = false;
+
+    const verifyReturnedPayment = async () => {
+      setIsProcessing(true);
+      try {
+        const { data, error } = await supabase.functions.invoke('verify-paystack-order', {
+          body: { reference },
+        });
+
+        if (error) throw error;
+        if (!data?.ok || !data.order) throw new Error(data?.error || 'Failed to verify order.');
+
+        if (!cancelled) {
+          showVerifiedOrder(data.order);
+          window.history.replaceState(null, '', `${window.location.origin}/zoza-order`);
+        }
+      } catch (err: unknown) {
+        console.error('Error verifying returned payment:', err);
+        toast.error('Payment was received, but we could not show confirmation. Please contact support.');
+      } finally {
+        if (!cancelled) setIsProcessing(false);
+      }
+    };
+
+    verifyReturnedPayment();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const startPayment = async () => {
     try {
-      const { error } = await supabase.functions.invoke('verify-paystack-order', {
+      const { data, error } = await supabase.functions.invoke('initialize-paystack-order', {
         body: {
-          reference: reference.reference,
           customer_name: name,
           customer_address: address,
           customer_phone: phone,
@@ -403,26 +396,19 @@ export function BreadPreOrderPage() {
           quantity_whole: qtyWhole,
           quantity_sliced: qtySliced,
           total_amount: totalAmount,
+          callback_url: `${window.location.origin}/zoza-order`,
         },
       });
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
+      if (!data?.ok || !data.authorization_url) throw new Error(data?.error || 'Unable to start payment.');
 
-      setPaystackRef(reference.reference);
-      setIsSuccess(true);
+      window.location.href = data.authorization_url;
     } catch (err: unknown) {
-      console.error('Error saving order:', err);
-      toast.error('Payment succeeded, but failed to save order. Please contact support.');
-    } finally {
+      console.error('Error starting payment:', err);
+      toast.error(err instanceof Error ? err.message : 'Unable to start payment.');
       setIsProcessing(false);
     }
-  };
-
-  const onClose = () => {
-    setIsProcessing(false);
-    toast.info('Payment cancelled');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -439,7 +425,7 @@ export function BreadPreOrderPage() {
     }
 
     setIsProcessing(true);
-    initializePayment({ onSuccess, onClose });
+    startPayment();
   };
 
   const resetOrder = () => {
@@ -450,13 +436,14 @@ export function BreadPreOrderPage() {
     setAddress('');
     setQtyWhole(1);
     setQtySliced(0);
+    setConfirmedDelivery(null);
     fetchSlots();
   };
 
   if (isSuccess) {
     return (
       <PageTransition>
-        <main className="zoza-dark min-h-screen bg-stone-100 px-2 py-4 text-stone-950 sm:px-6 sm:py-6 lg:px-8">
+        <main className="zoza-bread-dark min-h-screen bg-stone-100 px-2 py-4 text-stone-950 sm:px-6 sm:py-6 lg:px-8">
           <motion.section
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
@@ -480,7 +467,7 @@ export function BreadPreOrderPage() {
                     Thanks, {name}.
                   </h2>
                   <p className="mt-4 max-w-2xl leading-7 text-stone-500">
-                    Your {totalQty === 1 ? 'loaf is' : 'loaves are'} booked for {selectedSlotObj?.formattedDate}. We will
+                    Your {totalQty === 1 ? 'loaf is' : 'loaves are'} booked for {deliveryDateLabel}. We will
                     call {phone} before dispatch.
                   </p>
                 </div>
@@ -493,7 +480,7 @@ export function BreadPreOrderPage() {
                     <img src="/assets/bread/date.png" alt="" className="h-10 w-10 object-contain bg-transparent" />
                     <span>Delivery day</span>
                   </dt>
-                  <dd className="text-right font-semibold text-stone-950">{selectedSlotObj?.dayName}</dd>
+                  <dd className="text-right font-semibold text-stone-950">{deliveryDayLabel}</dd>
                 </div>
                 <div className="flex justify-between gap-4 py-4 text-sm">
                   <dt className="text-stone-500">Loaves</dt>
@@ -542,7 +529,7 @@ export function BreadPreOrderPage() {
                 <div className="flex justify-between gap-4">
                   <span className="text-stone-500">Delivery day</span>
                   <span className="text-right font-semibold text-stone-950">
-                    {selectedSlotObj ? `${selectedSlotObj.dayName}, ${selectedSlotObj.formattedDate}` : 'Selected'}
+                    {deliveryDayLabel && deliveryDateLabel ? `${deliveryDayLabel}, ${deliveryDateLabel}` : 'Selected'}
                   </span>
                 </div>
               </div>
@@ -568,7 +555,7 @@ export function BreadPreOrderPage() {
 
   return (
     <PageTransition>
-      <main className="zoza-dark min-h-screen bg-stone-100 px-2 py-4 text-stone-950 sm:px-6 sm:py-6 lg:px-8">
+      <main className="zoza-bread-dark min-h-screen bg-stone-100 px-2 py-4 text-stone-950 sm:px-6 sm:py-6 lg:px-8">
         <form onSubmit={handleSubmit} className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[1fr_360px]">
           <section className="rounded-[8px] bg-white p-3 shadow-sm sm:p-6 lg:p-7">
             <div className="mb-4 flex items-start justify-between gap-4 border-b border-stone-200 pb-4 sm:mb-6 sm:pb-5">
