@@ -171,6 +171,14 @@ function groupOrdersByDeliveryDate(orders: BreadOrder[]) {
   }, []);
 }
 
+function getDeliveryFee(order: BreadOrder) {
+  return order.delivery_fee || 0;
+}
+
+function getBreadSubtotal(order: BreadOrder) {
+  return order.bread_subtotal ?? Math.max(0, (order.total_amount || 0) - getDeliveryFee(order));
+}
+
 interface FulfillmentSelectProps {
   status: FulfillmentStatus;
   onChange: (status: FulfillmentStatus) => void;
@@ -344,16 +352,16 @@ function OrderDetailDrawer({ order, canUpdateStatus = true, onStatusChange }: Or
               </dt>
               <dd className="mt-2 space-y-2 text-sm text-[#c7c3bd]">
                 <div className="flex items-center justify-between gap-4">
-                  <span>Amount</span>
+                  <span>Total paid</span>
                   <span className="font-semibold text-[#f7f7f5]">GH₵{order.total_amount?.toFixed(2)}</span>
                 </div>
                 <div className="flex items-center justify-between gap-4">
                   <span>Bread</span>
-                  <span className="font-semibold text-[#f7f7f5]">GH₵{(order.bread_subtotal ?? Math.max(0, (order.total_amount || 0) - (order.delivery_fee || 0))).toFixed(2)}</span>
+                  <span className="font-semibold text-[#f7f7f5]">GH₵{getBreadSubtotal(order).toFixed(2)}</span>
                 </div>
                 <div className="flex items-center justify-between gap-4">
                   <span>Delivery</span>
-                  <span className="font-semibold text-[#f7f7f5]">GH₵{(order.delivery_fee || 0).toFixed(2)}</span>
+                  <span className="font-semibold text-[#f7f7f5]">GH₵{getDeliveryFee(order).toFixed(2)}</span>
                 </div>
                 <div className="flex items-center justify-between gap-4">
                   <span>Status</span>
@@ -782,16 +790,17 @@ export function BreadAdminPage() {
   const filteredOrders = topLevelTab === 'orders' ? tabOrders[activeTab] : [];
   const groupedFilteredOrders = groupOrdersByDeliveryDate(filteredOrders);
 
-  const totalRevenue = paidOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0);
+  const totalBreadRevenue = paidOrders.reduce((sum, order) => sum + getBreadSubtotal(order), 0);
+  const totalDeliveryRevenue = paidOrders.reduce((sum, order) => sum + getDeliveryFee(order), 0);
   const totalWhole = paidOrders.reduce((sum, o) => sum + (o.quantity_whole || 0), 0);
   const totalSliced = paidOrders.reduce((sum, o) => sum + (o.quantity_sliced || 0), 0);
   const totalLoaves = totalWhole + totalSliced;
   const totalCustomers = new Set(
     paidOrders.map((order) => order.customer_phone?.trim() || order.customer_name.trim())
   ).size;
-  const bookingWeekRevenue = paidOrders
-    .filter((order) => isWithinInterval(parseISO(order.delivery_date), currentWeek))
-    .reduce((sum, order) => sum + (order.total_amount || 0), 0);
+  const paidOrdersThisWeek = paidOrders.filter((order) => isWithinInterval(parseISO(order.delivery_date), currentWeek));
+  const bookingWeekBreadRevenue = paidOrdersThisWeek.reduce((sum, order) => sum + getBreadSubtotal(order), 0);
+  const bookingWeekDeliveryRevenue = paidOrdersThisWeek.reduce((sum, order) => sum + getDeliveryFee(order), 0);
   const weekRangeLabel = `${format(currentWeek.start, 'MMM d')} - ${format(currentWeek.end, 'MMM d')}`;
 
   if (!isUnlocked) {
@@ -894,7 +903,7 @@ export function BreadAdminPage() {
         </aside>
 
         {/* ── Main content (offset on desktop) ───────────────────── */}
-        <main className="lg:ml-[180px] px-4 py-5 pb-28 text-stone-950 sm:px-6 sm:py-8 sm:pb-32 lg:pb-10 lg:px-8">
+        <main className="px-4 py-5 pb-28 text-stone-950 lg:ml-[180px] lg:px-8 lg:py-8 lg:pb-10">
           <div className="mx-auto max-w-5xl">
           {/* Mobile header (desktop shows sidebar label instead) */}
           <div className="mb-5 flex items-start justify-between gap-4 sm:mb-8 sm:items-center lg:hidden">
@@ -914,33 +923,53 @@ export function BreadAdminPage() {
 
           <div className="mb-6 grid grid-cols-1 gap-2 lg:mb-8 lg:grid-cols-4 lg:gap-3">
             <Card className="border-stone-200 shadow-sm lg:col-span-2">
-              <CardContent className="p-4 sm:p-5">
+              <CardContent className="p-4 lg:p-5">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium uppercase text-stone-500 sm:text-sm">Total Bread</p>
+                    <p className="mt-2 text-xl font-bold leading-none text-stone-900 sm:text-2xl">
+                      GH₵{totalBreadRevenue.toFixed(2)}
+                    </p>
+                  </div>
+                  <div className="min-w-0 border-l border-stone-200 pl-3 text-right lg:pl-4">
+                    <p className="text-xs font-medium uppercase text-stone-500 sm:text-sm">Total Delivery</p>
+                    <p className="mt-2 text-xl font-bold leading-none text-stone-900 sm:text-2xl">
+                      GH₵{totalDeliveryRevenue.toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border-stone-200 shadow-sm lg:col-span-2">
+              <CardContent className="p-4 lg:p-5">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="min-w-0">
                     <p className="text-xs font-medium uppercase text-stone-500 sm:text-sm">This Week</p>
                     <div className="mt-2 text-xl font-bold leading-none text-stone-900 sm:text-2xl">
-                      GH₵{bookingWeekRevenue.toFixed(2)}
+                      GH₵{bookingWeekBreadRevenue.toFixed(2)}
                     </div>
                   </div>
-                  <div className="min-w-0 border-l border-stone-200 pl-3 text-right sm:pl-4">
-                    <p className="text-xs font-medium uppercase text-stone-500 sm:text-sm">Total Revenue</p>
-                    <p className="mt-2 text-xl font-bold leading-none text-stone-900 sm:text-2xl">GH₵{totalRevenue.toFixed(2)}</p>
+                  <div className="min-w-0 border-l border-stone-200 pl-3 text-right lg:pl-4">
+                    <p className="text-xs font-medium uppercase text-stone-500 sm:text-sm">Delivery</p>
+                    <div className="mt-2 text-xl font-bold leading-none text-stone-900 sm:text-2xl">
+                      GH₵{bookingWeekDeliveryRevenue.toFixed(2)}
+                    </div>
                   </div>
                 </div>
               </CardContent>
             </Card>
             <Card className="border-stone-200 shadow-sm">
-              <CardContent className="p-4 sm:p-5">
+              <CardContent className="p-4 lg:p-5">
                 <div className="flex items-center justify-between gap-4">
-                  <p className="text-xs font-medium uppercase text-stone-500 sm:text-sm">Total Loaves Ordered</p>
+                  <p className="text-xs font-medium uppercase text-stone-500 sm:text-sm">Total Loaves</p>
                   <p className="text-xl font-bold leading-none text-stone-900 sm:text-2xl">{totalLoaves}</p>
                 </div>
               </CardContent>
             </Card>
             <Card className="border-stone-200 shadow-sm">
-              <CardContent className="p-4 sm:p-5">
+              <CardContent className="p-4 lg:p-5">
                 <div className="flex items-center justify-between gap-4">
-                  <p className="text-xs font-medium uppercase text-stone-500 sm:text-sm">Unique Customers</p>
+                  <p className="text-xs font-medium uppercase text-stone-500 sm:text-sm">Customers</p>
                   <p className="text-xl font-bold leading-none text-stone-900 sm:text-2xl">{totalCustomers}</p>
                 </div>
               </CardContent>
@@ -949,7 +978,7 @@ export function BreadAdminPage() {
 
           {paymentIssueOrders.length > 0 && (
             <Card className="mb-6 border-red-900/40 bg-red-950/20 shadow-sm">
-              <CardContent className="p-4 sm:p-5">
+              <CardContent className="p-4 lg:p-5">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
                     <h2 className="text-sm font-semibold text-red-100">Payment needs attention</h2>
@@ -1057,23 +1086,41 @@ export function BreadAdminPage() {
                           {group.orders.map((order) => {
                             const status = getFulfillmentStatus(order);
                             const orderItems = formatOrderItems(order);
+                            const breadSubtotal = getBreadSubtotal(order);
+                            const deliveryFee = getDeliveryFee(order);
 
                             if (activeTab === 'fulfilled') {
                               return (
                                 <div
                                   key={order.id}
-                                  className="grid grid-cols-[1fr_auto] items-center gap-3 rounded-md border border-stone-200 bg-white px-4 py-3 shadow-sm"
+                                  className="rounded-md border border-stone-200 bg-white px-4 py-3 shadow-sm"
                                 >
-                                  <div className="min-w-0">
-                                    <h4 className="truncate text-base font-semibold text-stone-950">
-                                      {order.customer_name}
-                                    </h4>
-                                    <p className="mt-0.5 truncate text-sm text-stone-500">{orderItems.join(', ')}</p>
+                                  <div className="grid grid-cols-[1fr_auto] items-start gap-3">
+                                    <div className="min-w-0">
+                                      <h4 className="truncate text-base font-semibold text-stone-950">
+                                        {order.customer_name}
+                                      </h4>
+                                      <p className="mt-0.5 truncate text-sm text-stone-500">{orderItems.join(', ')}</p>
+                                    </div>
+                                    <OrderDetailDrawer
+                                      order={order}
+                                      onStatusChange={(newStatus) => updateFulfillmentStatus(order.id, newStatus)}
+                                    />
                                   </div>
-                                  <OrderDetailDrawer
-                                    order={order}
-                                    onStatusChange={(newStatus) => updateFulfillmentStatus(order.id, newStatus)}
-                                  />
+                                  <div className="mt-3 grid grid-cols-3 gap-2 rounded-md bg-stone-50 px-3 py-2 text-xs">
+                                    <div>
+                                      <span className="block text-stone-400">Bread</span>
+                                      <span className="font-semibold text-stone-900">GH₵{breadSubtotal.toFixed(2)}</span>
+                                    </div>
+                                    <div>
+                                      <span className="block text-stone-400">Delivery</span>
+                                      <span className="font-semibold text-stone-900">GH₵{deliveryFee.toFixed(2)}</span>
+                                    </div>
+                                    <div className="text-right">
+                                      <span className="block text-stone-400">Total</span>
+                                      <span className="font-semibold text-stone-900">GH₵{order.total_amount?.toFixed(2)}</span>
+                                    </div>
+                                  </div>
                                 </div>
                               );
                             }
@@ -1090,8 +1137,12 @@ export function BreadAdminPage() {
                                     </h4>
                                     <p className="mt-2 text-sm font-medium text-stone-950">{orderItems.join(', ')}</p>
                                   </div>
-                                  <div className="text-right text-sm font-semibold text-stone-950">
-                                    GH₵{order.total_amount?.toFixed(2)}
+                                  <div className="text-right text-xs text-stone-500">
+                                    <div>Bread GH₵{breadSubtotal.toFixed(2)}</div>
+                                    <div>Delivery GH₵{deliveryFee.toFixed(2)}</div>
+                                    <div className="mt-1 text-sm font-semibold text-stone-950">
+                                      GH₵{order.total_amount?.toFixed(2)}
+                                    </div>
                                   </div>
                                 </div>
 
@@ -1142,7 +1193,9 @@ export function BreadAdminPage() {
                           <TableHead className="font-semibold text-stone-600">Customer</TableHead>
                           <TableHead className="font-semibold text-stone-600">Address</TableHead>
                           <TableHead className="font-semibold text-stone-600">Order</TableHead>
-                          <TableHead className="font-semibold text-stone-600">Amount</TableHead>
+                          <TableHead className="font-semibold text-stone-600">Bread</TableHead>
+                          <TableHead className="font-semibold text-stone-600">Delivery</TableHead>
+                          <TableHead className="font-semibold text-stone-600">Total Paid</TableHead>
                           <TableHead className="font-semibold text-stone-600">Reference</TableHead>
                           <TableHead className="font-semibold text-stone-600 text-right">Payment</TableHead>
                           <TableHead className="font-semibold text-stone-600 text-right">Fulfillment</TableHead>
@@ -1178,6 +1231,12 @@ export function BreadAdminPage() {
                             </div>
                           </TableCell>
                           <TableCell className="align-top font-medium text-stone-900">
+                            GH₵{getBreadSubtotal(order).toFixed(2)}
+                          </TableCell>
+                          <TableCell className="align-top font-medium text-stone-900">
+                            GH₵{getDeliveryFee(order).toFixed(2)}
+                          </TableCell>
+                          <TableCell className="align-top font-semibold text-stone-900">
                             GH₵{order.total_amount?.toFixed(2)}
                           </TableCell>
                           <TableCell className="align-top font-mono text-xs text-stone-500">
@@ -1222,7 +1281,7 @@ export function BreadAdminPage() {
             {topLevelTab === 'delivery_fees' && (
               <section className="space-y-5">
                 <Card className="border-stone-200 shadow-sm">
-                  <CardContent className="p-4 sm:p-5">
+                  <CardContent className="p-4 lg:p-5">
                     <form onSubmit={addDeliveryArea} className="grid gap-3 lg:grid-cols-[1fr_1fr_140px_auto] lg:items-end">
                       <div className="space-y-1.5">
                         <Label htmlFor="new-delivery-area">Area</Label>
