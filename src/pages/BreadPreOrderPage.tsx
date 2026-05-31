@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { format, startOfDay } from 'date-fns';
 import {
@@ -34,6 +34,8 @@ interface Slot {
 interface BreadAvailabilityRow {
   delivery_date: string;
   paid_quantity: number;
+  reserved_quantity: number;
+  remaining_quantity: number;
   status: 'open' | 'closed';
   capacity: number;
 }
@@ -202,6 +204,7 @@ export function BreadPreOrderPage() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [paystackRef, setPaystackRef] = useState<string>('');
   const [confirmedDelivery, setConfirmedDelivery] = useState<{ dayName: string; formattedDate: string } | null>(null);
+  const realtimeRefreshTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const BREAD_PRICE = 110;
   const SLICED_PRICE = 120;
@@ -268,7 +271,7 @@ export function BreadPreOrderPage() {
     }
   }, [isSuccess, qtySliced, slicedAvailable]);
 
-  const fetchSlicedAvailability = async () => {
+  const fetchSlicedAvailability = useCallback(async () => {
     const { data, error } = await supabase
       .from('bread_product_availability')
       .select('available')
@@ -278,16 +281,16 @@ export function BreadPreOrderPage() {
     const available = !error && Boolean(data?.available);
     setSlicedAvailable(available);
     return available;
-  };
+  }, []);
 
-  const fetchSlots = async () => {
-    setLoadingSlots(true);
+  const fetchSlots = useCallback(async (showLoading = true) => {
+    if (showLoading) setLoadingSlots(true);
     try {
       const today = startOfDay(new Date());
 
       const { data: availabilityRows, error } = await supabase
-        .from('bread_order_availability')
-        .select('delivery_date, paid_quantity, status, capacity')
+        .from('bread_order_availability_summary')
+        .select('delivery_date, paid_quantity, reserved_quantity, remaining_quantity, status, capacity')
         .gte('delivery_date', format(today, 'yyyy-MM-dd'))
         .eq('status', 'open')
         .returns<BreadAvailabilityRow[]>();
@@ -296,7 +299,7 @@ export function BreadPreOrderPage() {
 
       const availableSlots = (availabilityRows || [])
         .map((row) => {
-          const remaining = Math.max(0, row.capacity - (row.paid_quantity || 0));
+          const remaining = Math.max(0, row.remaining_quantity ?? row.capacity - (row.paid_quantity || 0) - (row.reserved_quantity || 0));
           if (remaining < 1) return null;
 
           // Note: dates from supabase might need parsing if we want to ensure correct local timezone
@@ -315,21 +318,67 @@ export function BreadPreOrderPage() {
         .sort((a, b) => a.date.getTime() - b.date.getTime());
 
       setSlots(availableSlots);
-      if (availableSlots.length > 0) {
-        setSelectedSlot(format(availableSlots[0].date, 'yyyy-MM-dd'));
-      }
+      setSelectedSlot((current) => {
+        const currentStillAvailable = availableSlots.some((slot) => format(slot.date, 'yyyy-MM-dd') === current);
+        if (current && currentStillAvailable) return current;
+        return availableSlots[0] ? format(availableSlots[0].date, 'yyyy-MM-dd') : '';
+      });
     } catch (err: unknown) {
       console.error('Error fetching slots:', err);
       toast.error('Failed to load availability slots.');
     } finally {
-      setLoadingSlots(false);
+      if (showLoading) setLoadingSlots(false);
     }
-  };
+  }, []);
+
+  const refreshCustomerAvailability = useCallback(async (showLoading = false) => {
+    await Promise.all([
+      fetchSlots(showLoading),
+      fetchSlicedAvailability(),
+    ]);
+  }, [fetchSlicedAvailability, fetchSlots]);
 
   useEffect(() => {
-    fetchSlots();
-    fetchSlicedAvailability();
-  }, []);
+    refreshCustomerAvailability(true);
+  }, [refreshCustomerAvailability]);
+
+  useEffect(() => {
+    if (isSuccess) return;
+
+    const channel = supabase
+      .channel('bread-customer-events')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'bread_admin_events' },
+        () => {
+          if (realtimeRefreshTimeout.current) {
+            clearTimeout(realtimeRefreshTimeout.current);
+          }
+
+          realtimeRefreshTimeout.current = setTimeout(() => {
+            refreshCustomerAvailability(false);
+            realtimeRefreshTimeout.current = null;
+          }, 350);
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'CHANNEL_ERROR') {
+          console.error('Bread customer realtime subscription failed.');
+        }
+      });
+    const interval = window.setInterval(() => {
+      refreshCustomerAvailability(false);
+    }, 60000);
+
+    return () => {
+      if (realtimeRefreshTimeout.current) {
+        clearTimeout(realtimeRefreshTimeout.current);
+        realtimeRefreshTimeout.current = null;
+      }
+      window.clearInterval(interval);
+      supabase.removeChannel(channel);
+    };
+  }, [isSuccess, refreshCustomerAvailability]);
 
   const showVerifiedOrder = (order: VerifiedBreadOrder) => {
     setName(order.customer_name || '');

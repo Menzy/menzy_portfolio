@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
-import { endOfWeek, format, isAfter, isWithinInterval, parseISO, startOfWeek, nextWednesday, nextSaturday, startOfDay } from 'date-fns';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { endOfWeek, format, isWithinInterval, parseISO, startOfWeek, nextWednesday, nextSaturday, startOfDay } from 'date-fns';
 import {
   CalendarDays,
   ChefHat,
@@ -52,7 +52,7 @@ import {
 } from '@/components/ui/drawer';
 
 type FulfillmentStatus = 'pending' | 'baked' | 'out_for_delivery' | 'fulfilled';
-type OrderTab = 'this_week' | 'coming_up' | 'fulfilled';
+type OrderTab = 'this_week' | 'fulfilled';
 
 interface BreadOrder {
   id: string;
@@ -76,6 +76,8 @@ interface AvailabilitySlot {
   status: 'open' | 'closed';
   capacity: number;
   paid_quantity: number;
+  reserved_quantity: number;
+  remaining_quantity: number;
 }
 
 const FULFILLMENT_STATUSES: Array<{
@@ -355,11 +357,12 @@ export function BreadAdminPage() {
   const [activeTab, setActiveTab] = useState<OrderTab>('this_week');
   const [password, setPassword] = useState(() => sessionStorage.getItem('zoza_admin_password') || '');
   const [passwordInput, setPasswordInput] = useState('');
+  const realtimeRefreshTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isUnlocked = password.length > 0;
 
-  const fetchOrders = useCallback(async (adminPassword = password) => {
+  const fetchOrders = useCallback(async (adminPassword = password, showLoading = true) => {
     if (!adminPassword) return;
-    setLoading(true);
+    if (showLoading) setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('bread-admin', {
         body: {
@@ -381,7 +384,7 @@ export function BreadAdminPage() {
       setPassword('');
       toast.error('Failed to load orders.');
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   }, [password]);
 
@@ -427,13 +430,60 @@ export function BreadAdminPage() {
     }
   }, [password]);
 
+  const refreshAdminData = useCallback(async (adminPassword = password, showLoading = false) => {
+    if (!adminPassword) return;
+
+    await Promise.all([
+      fetchOrders(adminPassword, showLoading),
+      fetchAvailability(adminPassword),
+      fetchProductAvailability(adminPassword),
+    ]);
+  }, [fetchAvailability, fetchOrders, fetchProductAvailability, password]);
+
   useEffect(() => {
     if (password) {
-      fetchOrders(password);
-      fetchAvailability(password);
-      fetchProductAvailability(password);
+      refreshAdminData(password, true);
     }
-  }, [fetchOrders, fetchAvailability, fetchProductAvailability, password]);
+  }, [password, refreshAdminData]);
+
+  useEffect(() => {
+    if (!password) return;
+
+    const channel = supabase
+      .channel('bread-admin-events')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'bread_admin_events' },
+        () => {
+          if (realtimeRefreshTimeout.current) {
+            clearTimeout(realtimeRefreshTimeout.current);
+          }
+
+          realtimeRefreshTimeout.current = setTimeout(() => {
+            refreshAdminData(password, false);
+            realtimeRefreshTimeout.current = null;
+          }, 350);
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'CHANNEL_ERROR') {
+          console.error('Bread admin realtime subscription failed.');
+        }
+      });
+    const interval = window.setInterval(() => {
+      refreshAdminData(password, false);
+    }, 60000);
+
+    return () => {
+      if (realtimeRefreshTimeout.current) {
+        clearTimeout(realtimeRefreshTimeout.current);
+        realtimeRefreshTimeout.current = null;
+      }
+      window.clearInterval(interval);
+      supabase.removeChannel(channel);
+    };
+  }, [password, refreshAdminData]);
+
 
   const handleUnlock = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -501,7 +551,7 @@ export function BreadAdminPage() {
         if (existing) {
           return current.map((a) => (a.delivery_date === date ? { ...a, status, capacity } : a));
         }
-        return [...current, { delivery_date: date, status, capacity, paid_quantity: 0 }].sort(
+        return [...current, { delivery_date: date, status, capacity, paid_quantity: 0, reserved_quantity: 0, remaining_quantity: capacity }].sort(
           (a, b) => new Date(b.delivery_date).getTime() - new Date(a.delivery_date).getTime()
         );
       });
@@ -538,9 +588,10 @@ export function BreadAdminPage() {
   };
 
   const today = new Date();
+  const adminWeekOptions = { weekStartsOn: 0 as const };
   const currentWeek = {
-    start: startOfWeek(today, { weekStartsOn: 1 }),
-    end: endOfWeek(today, { weekStartsOn: 1 }),
+    start: startOfWeek(today, adminWeekOptions),
+    end: endOfWeek(today, adminWeekOptions),
   };
 
   const paidOrders = orders.filter((order) => order.payment_status === 'success');
@@ -549,16 +600,12 @@ export function BreadAdminPage() {
   const thisWeekOrders = activeOrders
     .filter((order) => isWithinInterval(parseISO(order.delivery_date), currentWeek))
     .sort(sortOrdersByDeliveryDate);
-  const comingUpOrders = activeOrders
-    .filter((order) => isAfter(parseISO(order.delivery_date), currentWeek.end))
-    .sort(sortOrdersByDeliveryDate);
   const fulfilledOrders = paidOrders
     .filter((order) => getFulfillmentStatus(order) === 'fulfilled')
     .sort((a, b) => sortOrdersByDeliveryDate(b, a));
 
   const tabOrders: Record<OrderTab, BreadOrder[]> = {
     this_week: thisWeekOrders,
-    coming_up: comingUpOrders,
     fulfilled: fulfilledOrders,
   };
 
@@ -572,18 +619,8 @@ export function BreadAdminPage() {
   const totalCustomers = new Set(
     paidOrders.map((order) => order.customer_phone?.trim() || order.customer_name.trim())
   ).size;
-  const nextBookableDate =
-    availability
-      .filter((slot) => slot.status === 'open' && parseISO(slot.delivery_date).getTime() >= startOfDay(today).getTime())
-      .sort((a, b) => parseISO(a.delivery_date).getTime() - parseISO(b.delivery_date).getTime())[0]?.delivery_date ||
-    comingUpOrders[0]?.delivery_date;
-  const bookingWeekAnchor = nextBookableDate ? parseISO(nextBookableDate) : today;
-  const bookingWeek = {
-    start: startOfWeek(bookingWeekAnchor, { weekStartsOn: 1 }),
-    end: endOfWeek(bookingWeekAnchor, { weekStartsOn: 1 }),
-  };
   const bookingWeekRevenue = paidOrders
-    .filter((order) => isWithinInterval(parseISO(order.delivery_date), bookingWeek))
+    .filter((order) => isWithinInterval(parseISO(order.delivery_date), currentWeek))
     .reduce((sum, order) => sum + (order.total_amount || 0), 0);
   const weekRangeLabel = `${format(currentWeek.start, 'MMM d')} - ${format(currentWeek.end, 'MMM d')}`;
 
@@ -693,18 +730,18 @@ export function BreadAdminPage() {
             <h1 className="text-2xl font-semibold tracking-tight text-stone-900 sm:text-3xl">Zoza Crumb</h1>
           </div>
 
-          <div className="mb-6 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:mb-8 lg:grid-cols-4 lg:gap-3">
-            <Card className="border-stone-200 shadow-sm sm:col-span-2">
+          <div className="mb-6 grid grid-cols-1 gap-2 lg:mb-8 lg:grid-cols-4 lg:gap-3">
+            <Card className="border-stone-200 shadow-sm lg:col-span-2">
               <CardContent className="p-4 sm:p-5">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="min-w-0">
-                    <p className="text-xs font-medium uppercase text-stone-500 sm:text-sm sm:normal-case">This Week</p>
+                    <p className="text-xs font-medium uppercase text-stone-500 sm:text-sm">This Week</p>
                     <div className="mt-2 text-xl font-bold leading-none text-stone-900 sm:text-2xl">
                       GH₵{bookingWeekRevenue.toFixed(2)}
                     </div>
                   </div>
                   <div className="min-w-0 border-l border-stone-200 pl-3 text-right sm:pl-4">
-                    <p className="text-xs font-medium uppercase text-stone-500 sm:text-sm sm:normal-case">Total Revenue</p>
+                    <p className="text-xs font-medium uppercase text-stone-500 sm:text-sm">Total Revenue</p>
                     <p className="mt-2 text-xl font-bold leading-none text-stone-900 sm:text-2xl">GH₵{totalRevenue.toFixed(2)}</p>
                   </div>
                 </div>
@@ -713,7 +750,7 @@ export function BreadAdminPage() {
             <Card className="border-stone-200 shadow-sm">
               <CardContent className="p-4 sm:p-5">
                 <div className="flex items-center justify-between gap-4">
-                  <p className="text-xs font-medium uppercase text-stone-500 sm:text-sm sm:normal-case">Total Loaves Ordered</p>
+                  <p className="text-xs font-medium uppercase text-stone-500 sm:text-sm">Total Loaves Ordered</p>
                   <p className="text-xl font-bold leading-none text-stone-900 sm:text-2xl">{totalLoaves}</p>
                 </div>
               </CardContent>
@@ -721,7 +758,7 @@ export function BreadAdminPage() {
             <Card className="border-stone-200 shadow-sm">
               <CardContent className="p-4 sm:p-5">
                 <div className="flex items-center justify-between gap-4">
-                  <p className="text-xs font-medium uppercase text-stone-500 sm:text-sm sm:normal-case">Unique Customers</p>
+                  <p className="text-xs font-medium uppercase text-stone-500 sm:text-sm">Unique Customers</p>
                   <p className="text-xl font-bold leading-none text-stone-900 sm:text-2xl">{totalCustomers}</p>
                 </div>
               </CardContent>
@@ -771,7 +808,6 @@ export function BreadAdminPage() {
                   {(
                     [
                       { tab: 'this_week' as OrderTab, label: 'This Week', count: thisWeekOrders.length },
-                      { tab: 'coming_up' as OrderTab, label: 'Coming Up', count: comingUpOrders.length },
                       { tab: 'fulfilled' as OrderTab, label: 'Fulfilled', count: fulfilledOrders.length },
                     ]
                   ).map(({ tab, label, count }) => {
@@ -1064,9 +1100,14 @@ export function BreadAdminPage() {
                   <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-3">
                     {availability.map((slot) => {
                       const isPast = new Date(slot.delivery_date) < startOfDay(today);
-                      const isFull = slot.paid_quantity >= slot.capacity && slot.capacity > 0;
-                      const pct = slot.capacity > 0
+                      const reservedQuantity = slot.reserved_quantity || 0;
+                      const heldQuantity = slot.paid_quantity + reservedQuantity;
+                      const isFull = heldQuantity >= slot.capacity && slot.capacity > 0;
+                      const paidPct = slot.capacity > 0
                         ? Math.min(100, Math.round((slot.paid_quantity / slot.capacity) * 100))
+                        : 0;
+                      const reservedPct = slot.capacity > 0
+                        ? Math.min(100 - paidPct, Math.round((reservedQuantity / slot.capacity) * 100))
                         : 0;
 
                       if (isPast) {
@@ -1089,11 +1130,19 @@ export function BreadAdminPage() {
                               </Badge>
                             </div>
 
-                            <div className="mt-3 flex items-center justify-between gap-4 border-t border-stone-200 pt-3 text-sm">
-                              <span className="text-stone-400">Booked</span>
-                              <span className="font-medium tabular-nums text-stone-600">
-                                {slot.paid_quantity} / {slot.capacity}
-                              </span>
+                            <div className="mt-3 grid grid-cols-3 gap-2 border-t border-stone-200 pt-3 text-sm">
+                              <div>
+                                <span className="block text-xs text-stone-400">Paid</span>
+                                <span className="font-medium tabular-nums text-stone-600">{slot.paid_quantity}</span>
+                              </div>
+                              <div>
+                                <span className="block text-xs text-stone-400">Reserved</span>
+                                <span className="font-medium tabular-nums text-stone-600">{reservedQuantity}</span>
+                              </div>
+                              <div className="text-right">
+                                <span className="block text-xs text-stone-400">Capacity</span>
+                                <span className="font-medium tabular-nums text-stone-600">{slot.capacity}</span>
+                              </div>
                             </div>
                           </div>
                         );
@@ -1139,22 +1188,41 @@ export function BreadAdminPage() {
                             </button>
                           </div>
 
-                          {/* Booked progress */}
+                          {/* Capacity progress */}
                           <div className="mt-4">
                             <div className="mb-1.5 flex items-center justify-between">
-                              <span className="text-xs text-stone-400">Booked</span>
+                              <span className="text-xs text-stone-400">Held</span>
                               <span className="text-xs font-medium text-stone-600">
-                                {slot.paid_quantity} / {slot.capacity}
+                                {heldQuantity} / {slot.capacity}
                               </span>
                             </div>
-                            <div className="h-1.5 w-full overflow-hidden rounded-full bg-stone-100">
+                            <div className="flex h-1.5 w-full overflow-hidden rounded-full bg-stone-100">
                               <div
                                 className={cn(
                                   'h-full rounded-full transition-all',
                                   isFull ? 'bg-red-400' : 'bg-[#AB6D40]'
                                 )}
-                                style={{ width: `${pct}%` }}
+                                style={{ width: `${paidPct}%` }}
                               />
+                              <div
+                                className="h-full bg-amber-500 transition-all"
+                                style={{ width: `${reservedPct}%` }}
+                              />
+                            </div>
+                          </div>
+
+                          <div className="mt-4 grid grid-cols-3 gap-2 rounded-md border border-stone-200 bg-stone-50 px-3 py-2 text-sm">
+                            <div>
+                              <span className="block text-[11px] uppercase text-stone-400">Paid</span>
+                              <span className="font-semibold tabular-nums text-stone-900">{slot.paid_quantity}</span>
+                            </div>
+                            <div>
+                              <span className="block text-[11px] uppercase text-stone-400">Reserved</span>
+                              <span className="font-semibold tabular-nums text-stone-900">{reservedQuantity}</span>
+                            </div>
+                            <div className="text-right">
+                              <span className="block text-[11px] uppercase text-stone-400">Open</span>
+                              <span className="font-semibold tabular-nums text-stone-900">{Math.max(slot.capacity - heldQuantity, 0)}</span>
                             </div>
                           </div>
 
