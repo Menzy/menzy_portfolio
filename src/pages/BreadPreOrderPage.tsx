@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { format, startOfDay } from 'date-fns';
+import { addDays, format, startOfDay } from 'date-fns';
 import {
   BadgeCheck,
   Check,
@@ -73,6 +73,7 @@ interface VerifiedBreadOrder {
   delivery_day: string;
   quantity_whole: number;
   quantity_sliced: number;
+  quantity_starter?: number;
   bread_subtotal?: number;
   delivery_area_id?: string;
   delivery_area_name?: string;
@@ -114,8 +115,9 @@ interface LoafRowProps {
   image: string;
   price: number;
   quantity: number;
-  totalQty: number;
-  maxQty: number;
+  groupQty: number;
+  maxQty?: number;
+  maxLabel?: string;
   disabled?: boolean;
   onDecrease: () => void;
   onIncrease: () => void;
@@ -127,8 +129,9 @@ function LoafRow({
   image,
   price,
   quantity,
-  totalQty,
+  groupQty,
   maxQty,
+  maxLabel = 'total',
   disabled = false,
   onDecrease,
   onIncrease,
@@ -165,14 +168,18 @@ function LoafRow({
         </div>
 
         <div className="mt-auto flex min-w-0 flex-wrap items-center justify-between gap-3">
-          <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-stone-400">
-            Max {maxQty} total
-          </p>
+          {maxQty === undefined ? (
+            <span aria-hidden="true" />
+          ) : (
+            <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-stone-400">
+              Max {maxQty} {maxLabel}
+            </p>
+          )}
           <div className="min-w-0 shrink-0">
             <QuantityControl
               value={quantity}
-              canDecrease={!disabled && quantity > 0 && !(totalQty === 1 && quantity === 1)}
-              canIncrease={!disabled && totalQty < maxQty}
+              canDecrease={!disabled && quantity > 0}
+              canIncrease={!disabled && (maxQty === undefined || groupQty < maxQty)}
               onDecrease={onDecrease}
               onIncrease={onIncrease}
             />
@@ -221,9 +228,11 @@ export function BreadPreOrderPage() {
   const [address, setAddress] = useState('');
   const [selectedDeliveryAreaId, setSelectedDeliveryAreaId] = useState('');
   const [selectedSlot, setSelectedSlot] = useState<string>('');
-  const [qtyWhole, setQtyWhole] = useState(1);
+  const [qtyWhole, setQtyWhole] = useState(0);
   const [qtySliced, setQtySliced] = useState(0);
+  const [qtyStarter, setQtyStarter] = useState(0);
   const [slicedAvailable, setSlicedAvailable] = useState(false);
+  const [starterAvailable, setStarterAvailable] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [paystackRef, setPaystackRef] = useState<string>('');
@@ -236,11 +245,16 @@ export function BreadPreOrderPage() {
     deliveryZoneName: string;
   } | null>(null);
   const realtimeRefreshTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const didAutoSelectBread = useRef(false);
 
   const BREAD_PRICE = 110;
   const SLICED_PRICE = 120;
-  const totalQty = qtyWhole + qtySliced;
-  const breadSubtotal = qtyWhole * BREAD_PRICE + qtySliced * SLICED_PRICE;
+  const STARTER_PRICE = 100;
+  const breadQty = qtyWhole + qtySliced;
+  const totalQty = breadQty + qtyStarter;
+  const isStarterOnly = qtyStarter > 0 && breadQty === 0;
+  const starterOnlyDeliveryDate = addDays(startOfDay(new Date()), 1);
+  const breadSubtotal = qtyWhole * BREAD_PRICE + qtySliced * SLICED_PRICE + qtyStarter * STARTER_PRICE;
   const selectedDeliveryArea = deliveryAreas.find((area) => area.id === selectedDeliveryAreaId);
   const deliveryFee = selectedDeliveryArea?.delivery_fee || 0;
   const totalAmount = breadSubtotal + deliveryFee;
@@ -249,12 +263,12 @@ export function BreadPreOrderPage() {
   const displayDeliveryAreaName = confirmedOrderDetails?.deliveryAreaName || selectedDeliveryArea?.name || '';
   const displayDeliveryZoneName = confirmedOrderDetails?.deliveryZoneName || selectedDeliveryArea?.zone_name || '';
   const selectedSlotObj = slots.find((slot) => format(slot.date, 'yyyy-MM-dd') === selectedSlot);
-  const deliveryDayLabel = confirmedDelivery?.dayName || selectedSlotObj?.dayName || '';
-  const deliveryDateLabel = confirmedDelivery?.formattedDate || selectedSlotObj?.formattedDate || '';
+  const deliveryDayLabel = confirmedDelivery?.dayName || (isStarterOnly ? format(starterOnlyDeliveryDate, 'EEEE') : selectedSlotObj?.dayName || '');
+  const deliveryDateLabel = confirmedDelivery?.formattedDate || (isStarterOnly ? format(starterOnlyDeliveryDate, 'MMM do, yyyy') : selectedSlotObj?.formattedDate || '');
   
-  const maxQty = selectedSlotObj 
-    ? selectedSlotObj.remaining 
-    : (slots.length > 0 ? Math.max(...slots.map((s) => s.remaining)) : 4);
+  const breadMaxQty = selectedSlotObj?.remaining;
+  const orderDeliveryDate = isStarterOnly ? format(starterOnlyDeliveryDate, 'yyyy-MM-dd') : selectedSlot;
+  const orderDeliveryDay = isStarterOnly ? format(starterOnlyDeliveryDate, 'EEEE') : selectedSlotObj?.dayName || '';
 
   useEffect(() => {
     const previousTitle = document.title;
@@ -296,29 +310,58 @@ export function BreadPreOrderPage() {
   useEffect(() => {
     if (selectedSlot) {
       const slotObj = slots.find((slot) => format(slot.date, 'yyyy-MM-dd') === selectedSlot);
-      if (slotObj && slotObj.remaining < totalQty) {
+      if (slotObj && slotObj.remaining < breadQty) {
         setSelectedSlot('');
       }
     }
-  }, [totalQty, slots, selectedSlot]);
+  }, [breadQty, slots, selectedSlot]);
+
+  useEffect(() => {
+    if (isSuccess || loadingSlots) return;
+
+    if (slots.length === 0) {
+      setQtyWhole(0);
+      setQtySliced(0);
+      didAutoSelectBread.current = false;
+      return;
+    }
+
+    if (!didAutoSelectBread.current && breadQty === 0 && qtyStarter === 0) {
+      setQtyWhole(1);
+      didAutoSelectBread.current = true;
+    }
+  }, [breadQty, isSuccess, loadingSlots, qtyStarter, slots.length]);
 
   useEffect(() => {
     if (!isSuccess && !slicedAvailable && qtySliced > 0) {
       setQtySliced(0);
-      setQtyWhole((current) => Math.max(1, current));
     }
   }, [isSuccess, qtySliced, slicedAvailable]);
 
-  const fetchSlicedAvailability = useCallback(async () => {
+  useEffect(() => {
+    if (!isSuccess && !starterAvailable && qtyStarter > 0) {
+      setQtyStarter(0);
+    }
+  }, [isSuccess, qtyStarter, starterAvailable]);
+
+  const fetchProductAvailability = useCallback(async () => {
     const { data, error } = await supabase
       .from('bread_product_availability')
-      .select('available')
-      .eq('product_key', 'sliced')
-      .maybeSingle();
+      .select('product_key, available')
+      .in('product_key', ['sliced', 'starter']);
 
-    const available = !error && Boolean(data?.available);
-    setSlicedAvailable(available);
-    return available;
+    const rows = !error && Array.isArray(data) ? data : [];
+    const sliced = rows.find((item) => item.product_key === 'sliced');
+    const starter = rows.find((item) => item.product_key === 'starter');
+    const slicedIsAvailable = Boolean(sliced?.available);
+    const starterIsAvailable = starter ? Boolean(starter.available) : true;
+
+    setSlicedAvailable(slicedIsAvailable);
+    setStarterAvailable(starterIsAvailable);
+    return {
+      sliced: slicedIsAvailable,
+      starter: starterIsAvailable,
+    };
   }, []);
 
   const fetchDeliveryAreas = useCallback(async (showLoading = true) => {
@@ -399,10 +442,10 @@ export function BreadPreOrderPage() {
   const refreshCustomerAvailability = useCallback(async (showLoading = false) => {
     await Promise.all([
       fetchSlots(showLoading),
-      fetchSlicedAvailability(),
+      fetchProductAvailability(),
       fetchDeliveryAreas(showLoading),
     ]);
-  }, [fetchDeliveryAreas, fetchSlicedAvailability, fetchSlots]);
+  }, [fetchDeliveryAreas, fetchProductAvailability, fetchSlots]);
 
   useEffect(() => {
     refreshCustomerAvailability(true);
@@ -455,6 +498,7 @@ export function BreadPreOrderPage() {
     setSelectedDeliveryAreaId(order.delivery_area_id || '');
     setQtyWhole(order.quantity_whole || 0);
     setQtySliced(order.quantity_sliced || 0);
+    setQtyStarter(order.quantity_starter || 0);
     setPaystackRef(order.paystack_reference || '');
     setConfirmedDelivery({
       dayName: order.delivery_day || '',
@@ -514,11 +558,12 @@ export function BreadPreOrderPage() {
           customer_address: address,
           customer_phone: phone,
           customer_email: email || undefined,
-          delivery_date: selectedSlot,
-          delivery_day: selectedSlotObj?.dayName || '',
+          delivery_date: orderDeliveryDate,
+          delivery_day: orderDeliveryDay,
           delivery_area_id: selectedDeliveryAreaId,
           quantity_whole: qtyWhole,
           quantity_sliced: qtySliced,
+          quantity_starter: qtyStarter,
           total_amount: totalAmount,
           callback_url: `${window.location.origin}/zoza-order`,
         },
@@ -542,9 +587,27 @@ export function BreadPreOrderPage() {
       return;
     }
 
-    if (qtySliced > 0 && !(await fetchSlicedAvailability())) {
+    if (totalQty < 1) {
+      toast.error('Please choose at least one item.');
+      return;
+    }
+
+    if (breadQty > 0 && !selectedSlot) {
+      toast.error('Please choose a bread delivery day.');
+      return;
+    }
+
+    const productAvailability = await fetchProductAvailability();
+
+    if (qtySliced > 0 && !productAvailability.sliced) {
       toast.error('Sliced loaves are unavailable right now.');
       setQtySliced(0);
+      return;
+    }
+
+    if (qtyStarter > 0 && !productAvailability.starter) {
+      toast.error('Sourdough starter is unavailable right now.');
+      setQtyStarter(0);
       return;
     }
 
@@ -561,6 +624,8 @@ export function BreadPreOrderPage() {
     setSelectedDeliveryAreaId(deliveryAreas[0]?.id || '');
     setQtyWhole(1);
     setQtySliced(0);
+    setQtyStarter(0);
+    didAutoSelectBread.current = true;
     setConfirmedDelivery(null);
     setConfirmedOrderDetails(null);
     fetchSlots();
@@ -593,7 +658,7 @@ export function BreadPreOrderPage() {
                     Thanks, {name}.
                   </h2>
                   <p className="mt-4 max-w-2xl leading-7 text-stone-500">
-                    Your {totalQty === 1 ? 'loaf is' : 'loaves are'} booked for {deliveryDateLabel}. We will
+                    Your {totalQty === 1 ? 'item is' : 'items are'} booked for {deliveryDateLabel}. We will
                     call {phone} before dispatch.
                   </p>
                 </div>
@@ -609,7 +674,7 @@ export function BreadPreOrderPage() {
                   <dd className="text-right font-semibold text-stone-950">{deliveryDayLabel}</dd>
                 </div>
                 <div className="flex justify-between gap-4 py-4 text-sm">
-                  <dt className="text-stone-500">Loaves</dt>
+                  <dt className="text-stone-500">Items</dt>
                   <dd className="font-semibold text-stone-950">{totalQty}</dd>
                 </div>
                 {displayDeliveryAreaName && (
@@ -661,6 +726,17 @@ export function BreadPreOrderPage() {
                     <span className="font-semibold text-stone-950">GH₵{(qtySliced * SLICED_PRICE).toFixed(2)}</span>
                   </div>
                 )}
+                {qtyStarter > 0 && (
+                  <div className="flex justify-between gap-4">
+                    <span className="flex items-center gap-2 text-stone-500">
+                      <span>Sourdough Starter</span>
+                      <span className="rounded-full bg-stone-100 px-2 py-0.5 text-[11px] font-semibold text-stone-700">
+                        x{qtyStarter}
+                      </span>
+                    </span>
+                    <span className="font-semibold text-stone-950">GH₵{(qtyStarter * STARTER_PRICE).toFixed(2)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between gap-4">
                   <span className="text-stone-500">Delivery day</span>
                   <span className="text-right font-semibold text-stone-950">
@@ -709,8 +785,8 @@ export function BreadPreOrderPage() {
 
             <div className="space-y-6 sm:space-y-8">
               <section>
-                <h2 className="text-base font-semibold">Choose your loaf</h2>
-                <div className="mt-1 text-sm text-stone-500">Fresh sourdough, baked Wednesdays and Saturdays.</div>
+                <h2 className="text-base font-semibold">Choose your bread</h2>
+                <div className="mt-1 text-sm text-stone-500">Fresh sourdough, baked Wednesdays and Fridays.</div>
                 <div className="mt-3">
                   <LoafRow
                     title="Whole Loaf"
@@ -718,8 +794,10 @@ export function BreadPreOrderPage() {
                     image="/assets/bread/bread.png"
                     price={BREAD_PRICE}
                     quantity={qtyWhole}
-                    totalQty={totalQty}
-                    maxQty={maxQty}
+                    groupQty={breadQty}
+                    maxQty={breadMaxQty}
+                    maxLabel="bread"
+                    disabled={!selectedSlotObj}
                     onDecrease={() => setQtyWhole(Math.max(0, qtyWhole - 1))}
                     onIncrease={() => setQtyWhole(qtyWhole + 1)}
                   />
@@ -729,11 +807,23 @@ export function BreadPreOrderPage() {
                     image="/assets/bread/sliced.png"
                     price={SLICED_PRICE}
                     quantity={qtySliced}
-                    totalQty={totalQty}
-                    maxQty={maxQty}
-                    disabled={!slicedAvailable}
+                    groupQty={breadQty}
+                    maxQty={breadMaxQty}
+                    maxLabel="bread"
+                    disabled={!slicedAvailable || !selectedSlotObj}
                     onDecrease={() => setQtySliced(Math.max(0, qtySliced - 1))}
                     onIncrease={() => setQtySliced(qtySliced + 1)}
+                  />
+                  <LoafRow
+                    title="Sourdough Starter"
+                    description={starterAvailable ? 'A live starter for your own sourdough baking.' : 'Starter is unavailable right now.'}
+                    image="/assets/bread/starter.png"
+                    price={STARTER_PRICE}
+                    quantity={qtyStarter}
+                    groupQty={qtyStarter}
+                    disabled={!starterAvailable}
+                    onDecrease={() => setQtyStarter(Math.max(0, qtyStarter - 1))}
+                    onIncrease={() => setQtyStarter(qtyStarter + 1)}
                   />
                 </div>
               </section>
@@ -744,7 +834,14 @@ export function BreadPreOrderPage() {
                   <h2 className="text-base font-semibold">Delivery day</h2>
                 </div>
 
-                {loadingSlots ? (
+                {isStarterOnly ? (
+                  <div className="mt-4 rounded-[8px] border border-stone-200 bg-white px-4 py-4 text-sm">
+                    <p className="font-semibold text-stone-950">
+                      {format(starterOnlyDeliveryDate, 'EEEE, MMM do, yyyy')}
+                    </p>
+                    <p className="mt-1 text-stone-500">Starter-only orders are delivered the next day.</p>
+                  </div>
+                ) : loadingSlots ? (
                   <div className="mt-4 flex items-center rounded-2xl border border-dashed border-stone-300 px-4 py-5 text-sm text-stone-500">
                     <Loader2 className="mr-3 h-4 w-4 animate-spin" />
                     Checking availability
@@ -757,7 +854,7 @@ export function BreadPreOrderPage() {
                   <div className="mt-4 grid gap-3">
                     {slots.map((slot) => {
                       const slotKey = format(slot.date, 'yyyy-MM-dd');
-                      const disabled = slot.remaining < totalQty;
+                      const disabled = slot.remaining < breadQty;
                       const selected = selectedSlot === slotKey;
 
                       return (
@@ -785,7 +882,7 @@ export function BreadPreOrderPage() {
                                 className={`text-xs font-medium uppercase tracking-[0.14em] ${selected ? 'text-white/65' : 'text-stone-400'
                                   }`}
                               >
-                                {slot.remaining} left
+                                {slot.remaining} bread left
                               </p>
                               <span
                                 className={`grid h-5 w-5 place-items-center rounded-full border ${selected ? 'border-white bg-white text-stone-950' : 'border-stone-300 text-transparent'
@@ -941,10 +1038,23 @@ export function BreadPreOrderPage() {
                   <span className="font-semibold text-stone-950">GH₵{(qtySliced * SLICED_PRICE).toFixed(2)}</span>
                 </div>
               )}
+              {qtyStarter > 0 && (
+                <div className="flex justify-between gap-4">
+                  <span className="flex items-center gap-2 text-stone-500">
+                    <span>Sourdough Starter</span>
+                    <span className="rounded-full bg-stone-100 px-2 py-0.5 text-[11px] font-semibold text-stone-700">
+                      x{qtyStarter}
+                    </span>
+                  </span>
+                  <span className="font-semibold text-stone-950">GH₵{(qtyStarter * STARTER_PRICE).toFixed(2)}</span>
+                </div>
+              )}
               <div className="flex justify-between gap-4">
                 <span className="text-stone-500">Delivery day</span>
                 <span className="text-right font-semibold text-stone-950">
-                  {selectedSlotObj ? `${selectedSlotObj.dayName}, ${selectedSlotObj.formattedDate}` : 'Select a day'}
+                  {isStarterOnly
+                    ? `${format(starterOnlyDeliveryDate, 'EEEE')}, ${format(starterOnlyDeliveryDate, 'MMM do, yyyy')}`
+                    : selectedSlotObj ? `${selectedSlotObj.dayName}, ${selectedSlotObj.formattedDate}` : 'Select a day'}
                 </span>
               </div>
               <div className="flex justify-between gap-4">
@@ -973,7 +1083,13 @@ export function BreadPreOrderPage() {
 
             <Button
               type="submit"
-              disabled={isProcessing || loadingSlots || loadingDeliveryAreas || slots.length === 0 || !selectedSlot || !selectedDeliveryAreaId}
+              disabled={
+                isProcessing ||
+                loadingDeliveryAreas ||
+                totalQty < 1 ||
+                (breadQty > 0 && (loadingSlots || slots.length === 0 || !selectedSlot)) ||
+                !selectedDeliveryAreaId
+              }
               className="mt-5 h-12 w-full rounded-full bg-[#AB6D40] text-base font-semibold text-white hover:bg-[#965E38]"
             >
               {isProcessing ? (

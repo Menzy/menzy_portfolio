@@ -1,5 +1,5 @@
 import { type FormEvent, useCallback, useEffect, useRef, useState } from 'react';
-import { endOfWeek, format, isWithinInterval, parseISO, startOfWeek, nextWednesday, nextSaturday, startOfDay } from 'date-fns';
+import { endOfWeek, format, isWithinInterval, parseISO, startOfWeek, nextWednesday, nextFriday, startOfDay } from 'date-fns';
 import {
   CalendarDays,
   ChefHat,
@@ -66,6 +66,7 @@ interface BreadOrder {
   is_sliced: boolean;
   quantity_whole: number;
   quantity_sliced: number;
+  quantity_starter?: number;
   bread_subtotal?: number;
   delivery_area_id?: string;
   delivery_area_name?: string;
@@ -151,6 +152,7 @@ function formatOrderItems(order: BreadOrder) {
   return [
     order.quantity_whole > 0 ? `${order.quantity_whole}x Whole` : null,
     order.quantity_sliced > 0 ? `${order.quantity_sliced}x Sliced` : null,
+    (order.quantity_starter || 0) > 0 ? `${order.quantity_starter}x Sourdough Starter` : null,
   ].filter((item): item is string => Boolean(item));
 }
 
@@ -403,7 +405,9 @@ export function BreadAdminPage() {
   });
   const [savingDeliveryAreaId, setSavingDeliveryAreaId] = useState<string | null>(null);
   const [slicedAvailable, setSlicedAvailable] = useState(false);
+  const [starterAvailable, setStarterAvailable] = useState(true);
   const [updatingSliced, setUpdatingSliced] = useState(false);
+  const [updatingStarter, setUpdatingStarter] = useState(false);
   const [loading, setLoading] = useState(false);
   const [topLevelTab, setTopLevelTab] = useState<TopLevelTab>('orders');
   const [activeTab, setActiveTab] = useState<OrderTab>('this_week');
@@ -475,7 +479,9 @@ export function BreadAdminPage() {
       if (!data?.ok) throw new Error(data?.error || 'Failed to load loaf options.');
 
       const sliced = data.product_availability?.find((item: { product_key: string }) => item.product_key === 'sliced');
+      const starter = data.product_availability?.find((item: { product_key: string }) => item.product_key === 'starter');
       setSlicedAvailable(Boolean(sliced?.available));
+      setStarterAvailable(starter ? Boolean(starter.available) : true);
     } catch (err: unknown) {
       console.error('Error fetching loaf options:', err);
       toast.error('Failed to load loaf options.');
@@ -588,6 +594,7 @@ export function BreadAdminPage() {
     setDeliveryAreas([]);
     setDeliveryAreaDrafts({});
     setSlicedAvailable(false);
+    setStarterAvailable(true);
   };
 
   const updateFulfillmentStatus = async (id: string, newStatus: FulfillmentStatus) => {
@@ -634,9 +641,17 @@ export function BreadAdminPage() {
         if (existing) {
           return current.map((a) => (a.delivery_date === date ? { ...a, status, capacity } : a));
         }
-        return [...current, { delivery_date: date, status, capacity, paid_quantity: 0, reserved_quantity: 0, remaining_quantity: capacity }].sort(
-          (a, b) => new Date(b.delivery_date).getTime() - new Date(a.delivery_date).getTime()
-        );
+        return [
+          ...current,
+          {
+            delivery_date: date,
+            status,
+            capacity,
+            paid_quantity: 0,
+            reserved_quantity: 0,
+            remaining_quantity: capacity,
+          },
+        ].sort((a, b) => new Date(b.delivery_date).getTime() - new Date(a.delivery_date).getTime());
       });
       toast.success(`Availability for ${date} updated to ${status}`);
     } catch (err: unknown) {
@@ -667,6 +682,31 @@ export function BreadAdminPage() {
       toast.error('Failed to update sliced loaf.');
     } finally {
       setUpdatingSliced(false);
+    }
+  };
+
+  const updateStarterAvailability = async (available: boolean) => {
+    setUpdatingStarter(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('bread-admin', {
+        body: {
+          action: 'update_product_availability',
+          password,
+          product_key: 'starter',
+          available,
+        },
+      });
+
+      if (error) throw error;
+      if (!data?.ok) throw new Error(data?.error || 'Failed to update sourdough starter.');
+
+      setStarterAvailable(available);
+      toast.success(`Sourdough starter ${available ? 'enabled' : 'paused'}`);
+    } catch (err: unknown) {
+      console.error('Error updating sourdough starter:', err);
+      toast.error('Failed to update sourdough starter.');
+    } finally {
+      setUpdatingStarter(false);
     }
   };
 
@@ -794,7 +834,8 @@ export function BreadAdminPage() {
   const totalDeliveryRevenue = paidOrders.reduce((sum, order) => sum + getDeliveryFee(order), 0);
   const totalWhole = paidOrders.reduce((sum, o) => sum + (o.quantity_whole || 0), 0);
   const totalSliced = paidOrders.reduce((sum, o) => sum + (o.quantity_sliced || 0), 0);
-  const totalLoaves = totalWhole + totalSliced;
+  const totalStarter = paidOrders.reduce((sum, o) => sum + (o.quantity_starter || 0), 0);
+  const totalLoaves = totalWhole + totalSliced + totalStarter;
   const totalCustomers = new Set(
     paidOrders.map((order) => order.customer_phone?.trim() || order.customer_name.trim())
   ).size;
@@ -961,7 +1002,7 @@ export function BreadAdminPage() {
             <Card className="border-stone-200 shadow-sm">
               <CardContent className="p-4 lg:p-5">
                 <div className="flex items-center justify-between gap-4">
-                  <p className="text-xs font-medium uppercase text-stone-500 sm:text-sm">Total Loaves</p>
+                  <p className="text-xs font-medium uppercase text-stone-500 sm:text-sm">Total Items</p>
                   <p className="text-xl font-bold leading-none text-stone-900 sm:text-2xl">{totalLoaves}</p>
                 </div>
               </CardContent>
@@ -1228,6 +1269,7 @@ export function BreadAdminPage() {
                             <div className="flex flex-col gap-1 text-sm text-stone-700">
                               {order.quantity_whole > 0 && <span>{order.quantity_whole}x Whole</span>}
                               {order.quantity_sliced > 0 && <span>{order.quantity_sliced}x Sliced</span>}
+                              {(order.quantity_starter || 0) > 0 && <span>{order.quantity_starter}x Sourdough Starter</span>}
                             </div>
                           </TableCell>
                           <TableCell className="align-top font-medium text-stone-900">
@@ -1453,6 +1495,31 @@ export function BreadAdminPage() {
                   </div>
                 </div>
 
+                <div className="rounded-lg border border-stone-200 bg-white px-4 py-3 shadow-sm">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <h3 className="text-sm font-semibold text-stone-900">Sourdough Starter</h3>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={updatingStarter}
+                      onClick={() => updateStarterAvailability(!starterAvailable)}
+                      className={cn(
+                        'inline-flex h-8 w-[68px] shrink-0 items-center rounded-full border p-1 text-[11px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400 disabled:cursor-not-allowed disabled:opacity-60',
+                        starterAvailable
+                          ? 'justify-end border-[#AB6D40] bg-[#AB6D40] text-white'
+                          : 'justify-start border-stone-500 bg-stone-800 text-stone-100'
+                      )}
+                      aria-pressed={starterAvailable}
+                      aria-label="Toggle sourdough starter availability"
+                    >
+                      <span className="grid h-6 min-w-[30px] place-items-center rounded-full bg-white px-2 text-stone-950 shadow-sm">
+                        {starterAvailable ? 'On' : 'Off'}
+                      </span>
+                    </button>
+                  </div>
+                </div>
+
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
@@ -1473,14 +1540,14 @@ export function BreadAdminPage() {
                     size="sm"
                     className="min-w-0 flex-1 bg-white px-2 text-xs sm:text-sm"
                     onClick={() => {
-                      const date = format(nextSaturday(today), 'yyyy-MM-dd');
+                      const date = format(nextFriday(today), 'yyyy-MM-dd');
                       const slot = availability.find(a => a.delivery_date === date);
                       if (!slot || slot.status !== 'open') {
                         updateAvailability(date, 'open', slot ? slot.capacity : 4);
                       }
                     }}
                   >
-                    Open Next Saturday
+                    Open Next Friday
                   </Button>
                 </div>
 
@@ -1526,7 +1593,7 @@ export function BreadAdminPage() {
 
                             <div className="mt-3 grid grid-cols-3 gap-2 border-t border-stone-200 pt-3 text-sm">
                               <div>
-                                <span className="block text-xs text-stone-400">Paid</span>
+                                <span className="block text-xs text-stone-400">Bread</span>
                                 <span className="font-medium tabular-nums text-stone-600">{slot.paid_quantity}</span>
                               </div>
                               <div>
@@ -1582,79 +1649,61 @@ export function BreadAdminPage() {
                             </button>
                           </div>
 
-                          {/* Capacity progress */}
                           <div className="mt-4">
-                            <div className="mb-1.5 flex items-center justify-between">
-                              <span className="text-xs text-stone-400">Held</span>
-                              <span className="text-xs font-medium text-stone-600">
-                                {heldQuantity} / {slot.capacity}
-                              </span>
+                            <div className="rounded-md border border-stone-200 bg-stone-50 p-3">
+                              <div className="mb-1.5 flex items-center justify-between">
+                                <span className="text-xs font-semibold uppercase text-stone-500">Bread</span>
+                                <span className="text-xs font-medium text-stone-600">
+                                  {heldQuantity} / {slot.capacity}
+                                </span>
+                              </div>
+                              <div className="flex h-1.5 w-full overflow-hidden rounded-full bg-stone-200">
+                                <div
+                                  className={cn('h-full rounded-full transition-all', isFull ? 'bg-red-400' : 'bg-[#AB6D40]')}
+                                  style={{ width: `${paidPct}%` }}
+                                />
+                                <div className="h-full bg-amber-500 transition-all" style={{ width: `${reservedPct}%` }} />
+                              </div>
+                              <div className="mt-3 grid grid-cols-3 gap-2 text-sm">
+                                <div>
+                                  <span className="block text-[11px] uppercase text-stone-400">Paid</span>
+                                  <span className="font-semibold tabular-nums text-stone-900">{slot.paid_quantity}</span>
+                                </div>
+                                <div>
+                                  <span className="block text-[11px] uppercase text-stone-400">Reserved</span>
+                                  <span className="font-semibold tabular-nums text-stone-900">{reservedQuantity}</span>
+                                </div>
+                                <div className="text-right">
+                                  <span className="block text-[11px] uppercase text-stone-400">Open</span>
+                                  <span className="font-semibold tabular-nums text-stone-900">{Math.max(slot.capacity - heldQuantity, 0)}</span>
+                                </div>
+                              </div>
+                              <div className="mt-3 flex items-center gap-2 border-t border-stone-200 pt-3">
+                                <span className="mr-auto text-sm font-medium text-stone-700">Bread cap</span>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-9 w-9 shrink-0 bg-white text-base"
+                                  disabled={slot.capacity <= 1}
+                                  onClick={() =>
+                                    updateAvailability(slot.delivery_date, slot.status, Math.max(1, slot.capacity - 1))
+                                  }
+                                >
+                                  -
+                                </Button>
+                                <span className="w-7 text-center text-sm font-semibold tabular-nums text-stone-900">{slot.capacity}</span>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-9 w-9 shrink-0 bg-white text-base"
+                                  onClick={() =>
+                                    updateAvailability(slot.delivery_date, slot.status, slot.capacity + 1)
+                                  }
+                                >
+                                  +
+                                </Button>
+                              </div>
                             </div>
-                            <div className="flex h-1.5 w-full overflow-hidden rounded-full bg-stone-100">
-                              <div
-                                className={cn(
-                                  'h-full rounded-full transition-all',
-                                  isFull ? 'bg-red-400' : 'bg-[#AB6D40]'
-                                )}
-                                style={{ width: `${paidPct}%` }}
-                              />
-                              <div
-                                className="h-full bg-amber-500 transition-all"
-                                style={{ width: `${reservedPct}%` }}
-                              />
-                            </div>
-                          </div>
-
-                          <div className="mt-4 grid grid-cols-3 gap-2 rounded-md border border-stone-200 bg-stone-50 px-3 py-2 text-sm">
-                            <div>
-                              <span className="block text-[11px] uppercase text-stone-400">Paid</span>
-                              <span className="font-semibold tabular-nums text-stone-900">{slot.paid_quantity}</span>
-                            </div>
-                            <div>
-                              <span className="block text-[11px] uppercase text-stone-400">Reserved</span>
-                              <span className="font-semibold tabular-nums text-stone-900">{reservedQuantity}</span>
-                            </div>
-                            <div className="text-right">
-                              <span className="block text-[11px] uppercase text-stone-400">Open</span>
-                              <span className="font-semibold tabular-nums text-stone-900">{Math.max(slot.capacity - heldQuantity, 0)}</span>
-                            </div>
-                          </div>
-
-                          {/* Capacity stepper */}
-                          <div className="mt-4 flex items-center gap-2">
-                            <span className="mr-auto text-sm font-medium text-stone-700">Capacity</span>
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              className="h-9 w-9 shrink-0 bg-white text-base"
-                              disabled={slot.capacity <= 1}
-                              onClick={() =>
-                                updateAvailability(
-                                  slot.delivery_date,
-                                  slot.status,
-                                  Math.max(1, slot.capacity - 1)
-                                )
-                              }
-                            >
-                              −
-                            </Button>
-                            <span className="w-7 text-center text-sm font-semibold tabular-nums text-stone-900">
-                              {slot.capacity}
-                            </span>
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              className="h-9 w-9 shrink-0 bg-white text-base"
-                              onClick={() =>
-                                updateAvailability(
-                                  slot.delivery_date,
-                                  slot.status,
-                                  slot.capacity + 1
-                                )
-                              }
-                            >
-                              +
-                            </Button>
                           </div>
                         </div>
                       );
