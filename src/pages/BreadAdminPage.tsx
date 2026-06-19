@@ -181,6 +181,10 @@ function getBreadSubtotal(order: BreadOrder) {
   return order.bread_subtotal ?? Math.max(0, (order.total_amount || 0) - getDeliveryFee(order));
 }
 
+function getErrorMessage(err: unknown, fallback: string) {
+  return err instanceof Error ? err.message : fallback;
+}
+
 interface FulfillmentSelectProps {
   status: FulfillmentStatus;
   onChange: (status: FulfillmentStatus) => void;
@@ -429,16 +433,12 @@ export function BreadAdminPage() {
 
       if (error) throw error;
 
-      if (!data?.ok) {
-        throw new Error(data?.error || 'Failed to load orders.');
-      }
+      if (!data?.ok) throw new Error(data?.error || 'Failed to load orders.');
 
       setOrders(data.orders || []);
     } catch (err: unknown) {
       console.error('Error fetching orders:', err);
-      sessionStorage.removeItem('zoza_admin_password');
-      setPassword('');
-      toast.error('Failed to load orders.');
+      toast.error(getErrorMessage(err, 'Failed to load orders.'));
     } finally {
       if (showLoading) setLoading(false);
     }
@@ -586,7 +586,7 @@ export function BreadAdminPage() {
     setPasswordInput('');
   };
 
-  const handleLock = () => {
+  const handleLogout = () => {
     sessionStorage.removeItem('zoza_admin_password');
     setPassword('');
     setOrders([]);
@@ -937,23 +937,23 @@ export function BreadAdminPage() {
             </button>
           </nav>
           <div className="px-3 py-4 border-t border-stone-100">
-            <Button variant="outline" size="sm" onClick={handleLock} className="w-full bg-white">
-              Lock
+            <Button variant="outline" size="sm" onClick={handleLogout} className="w-full bg-white">
+              Logout
             </Button>
           </div>
         </aside>
 
         {/* ── Main content (offset on desktop) ───────────────────── */}
         <main className="px-4 py-5 pb-28 text-stone-950 lg:ml-[180px] lg:px-8 lg:py-8 lg:pb-10">
-          <div className="mx-auto max-w-5xl">
+          <div className="mx-auto w-full max-w-7xl">
           {/* Mobile header (desktop shows sidebar label instead) */}
           <div className="mb-5 flex items-start justify-between gap-4 sm:mb-8 sm:items-center lg:hidden">
             <div>
               <h1 className="text-2xl font-semibold tracking-tight text-stone-900 sm:text-3xl">Zoza Crumb</h1>
             </div>
             <div className="shrink-0">
-              <Button variant="outline" size="sm" onClick={handleLock} className="bg-white sm:h-10 sm:px-4">
-                Lock
+              <Button variant="outline" size="sm" onClick={handleLogout} className="bg-white sm:h-10 sm:px-4">
+                Logout
               </Button>
             </div>
           </div>
@@ -1226,8 +1226,8 @@ export function BreadAdminPage() {
                     <p>No orders found for this tab.</p>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <Table>
+                  <div className="w-full overflow-x-auto">
+                    <Table className="min-w-[1120px]">
                       <TableHeader className="bg-stone-50">
                         <TableRow>
                           <TableHead className="font-semibold text-stone-600">Delivery Date</TableHead>
