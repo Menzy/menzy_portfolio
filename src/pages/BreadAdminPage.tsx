@@ -412,6 +412,12 @@ export function BreadAdminPage() {
   const [starterAvailable, setStarterAvailable] = useState(true);
   const [updatingSliced, setUpdatingSliced] = useState(false);
   const [updatingStarter, setUpdatingStarter] = useState(false);
+  const [wholePrice, setWholePrice] = useState(110);
+  const [slicedPrice, setSlicedPrice] = useState(120);
+  const [starterPrice, setStarterPrice] = useState(100);
+  const [updatingWholePrice, setUpdatingWholePrice] = useState(false);
+  const [updatingSlicedPrice, setUpdatingSlicedPrice] = useState(false);
+  const [updatingStarterPrice, setUpdatingStarterPrice] = useState(false);
   const [loading, setLoading] = useState(false);
   const [topLevelTab, setTopLevelTab] = useState<TopLevelTab>('orders');
   const [activeTab, setActiveTab] = useState<OrderTab>('this_week');
@@ -478,10 +484,14 @@ export function BreadAdminPage() {
       if (error) throw error;
       if (!data?.ok) throw new Error(data?.error || 'Failed to load loaf options.');
 
-      const sliced = data.product_availability?.find((item: { product_key: string }) => item.product_key === 'sliced');
-      const starter = data.product_availability?.find((item: { product_key: string }) => item.product_key === 'starter');
+      const whole = data.product_availability?.find((item: { product_key: string, price: number }) => item.product_key === 'whole');
+      const sliced = data.product_availability?.find((item: { product_key: string, price: number, available: boolean }) => item.product_key === 'sliced');
+      const starter = data.product_availability?.find((item: { product_key: string, price: number, available: boolean }) => item.product_key === 'starter');
       setSlicedAvailable(Boolean(sliced?.available));
       setStarterAvailable(starter ? Boolean(starter.available) : true);
+      if (whole?.price != null) setWholePrice(Number(whole.price));
+      if (sliced?.price != null) setSlicedPrice(Number(sliced.price));
+      if (starter?.price != null) setStarterPrice(Number(starter.price));
     } catch (err: unknown) {
       console.error('Error fetching loaf options:', err);
       toast.error('Failed to load loaf options.');
@@ -707,6 +717,37 @@ export function BreadAdminPage() {
       toast.error('Failed to update sourdough starter.');
     } finally {
       setUpdatingStarter(false);
+    }
+  };
+
+  const updateProductPrice = async (productKey: 'whole' | 'sliced' | 'starter', newPrice: number) => {
+    if (productKey === 'whole') setUpdatingWholePrice(true);
+    if (productKey === 'sliced') setUpdatingSlicedPrice(true);
+    if (productKey === 'starter') setUpdatingStarterPrice(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('bread-admin', {
+        body: {
+          action: 'update_product_availability',
+          password,
+          product_key: productKey,
+          price: newPrice,
+        },
+      });
+
+      if (error) throw error;
+      if (!data?.ok) throw new Error(data?.error || `Failed to update ${productKey} price.`);
+
+      if (productKey === 'whole') setWholePrice(newPrice);
+      if (productKey === 'sliced') setSlicedPrice(newPrice);
+      if (productKey === 'starter') setStarterPrice(newPrice);
+      toast.success(`${productKey} price updated to GH₵${newPrice}`);
+    } catch (err: unknown) {
+      console.error(`Error updating ${productKey} price:`, err);
+      toast.error(`Failed to update ${productKey} price.`);
+    } finally {
+      if (productKey === 'whole') setUpdatingWholePrice(false);
+      if (productKey === 'sliced') setUpdatingSlicedPrice(false);
+      if (productKey === 'starter') setUpdatingStarterPrice(false);
     }
   };
 
@@ -1473,50 +1514,119 @@ export function BreadAdminPage() {
                 <div className="rounded-lg border border-stone-200 bg-white px-4 py-3 shadow-sm">
                   <div className="flex items-center justify-between gap-4">
                     <div>
-                      <h3 className="text-sm font-semibold text-stone-900">Sliced Loaf</h3>
+                      <h3 className="text-sm font-semibold text-stone-900">Whole Loaf</h3>
                     </div>
-                    <button
-                      type="button"
-                      disabled={updatingSliced}
-                      onClick={() => updateSlicedAvailability(!slicedAvailable)}
-                      className={cn(
-                        'inline-flex h-8 w-[68px] shrink-0 items-center rounded-full border p-1 text-[11px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400 disabled:cursor-not-allowed disabled:opacity-60',
-                        slicedAvailable
-                          ? 'justify-end border-[#AB6D40] bg-[#AB6D40] text-white'
-                          : 'justify-start border-stone-500 bg-stone-800 text-stone-100'
-                      )}
-                      aria-pressed={slicedAvailable}
-                      aria-label="Toggle sliced loaf availability"
-                    >
-                      <span className="grid h-6 min-w-[30px] place-items-center rounded-full bg-white px-2 text-stone-950 shadow-sm">
-                        {slicedAvailable ? 'On' : 'Off'}
-                      </span>
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <div className="relative">
+                        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-medium text-stone-500">GH₵</span>
+                        <Input 
+                          type="number" 
+                          value={wholePrice} 
+                          onChange={(e) => setWholePrice(Number(e.target.value))} 
+                          className="w-24 pl-8 h-8 text-sm"
+                        />
+                      </div>
+                      <Button 
+                        size="sm" 
+                        disabled={updatingWholePrice} 
+                        onClick={() => updateProductPrice('whole', wholePrice)}
+                        className="h-8"
+                      >
+                        Save
+                      </Button>
+                    </div>
                   </div>
                 </div>
 
                 <div className="rounded-lg border border-stone-200 bg-white px-4 py-3 shadow-sm">
-                  <div className="flex items-center justify-between gap-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                      <h3 className="text-sm font-semibold text-stone-900">Sliced Loaf</h3>
+                    </div>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                      <div className="flex items-center gap-2">
+                        <div className="relative">
+                          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-medium text-stone-500">GH₵</span>
+                          <Input 
+                            type="number" 
+                            value={slicedPrice} 
+                            onChange={(e) => setSlicedPrice(Number(e.target.value))} 
+                            className="w-24 pl-8 h-8 text-sm"
+                          />
+                        </div>
+                        <Button 
+                          size="sm" 
+                          disabled={updatingSlicedPrice} 
+                          onClick={() => updateProductPrice('sliced', slicedPrice)}
+                          className="h-8"
+                        >
+                          Save
+                        </Button>
+                      </div>
+                      <button
+                        type="button"
+                        disabled={updatingSliced}
+                        onClick={() => updateSlicedAvailability(!slicedAvailable)}
+                        className={cn(
+                          'inline-flex h-8 w-[68px] shrink-0 items-center rounded-full border p-1 text-[11px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400 disabled:cursor-not-allowed disabled:opacity-60',
+                          slicedAvailable
+                            ? 'justify-end border-[#AB6D40] bg-[#AB6D40] text-white'
+                            : 'justify-start border-stone-500 bg-stone-800 text-stone-100'
+                        )}
+                        aria-pressed={slicedAvailable}
+                        aria-label="Toggle sliced loaf availability"
+                      >
+                        <span className="grid h-6 min-w-[30px] place-items-center rounded-full bg-white px-2 text-stone-950 shadow-sm">
+                          {slicedAvailable ? 'On' : 'Off'}
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-lg border border-stone-200 bg-white px-4 py-3 shadow-sm">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
                       <h3 className="text-sm font-semibold text-stone-900">Sourdough Starter</h3>
                     </div>
-                    <button
-                      type="button"
-                      disabled={updatingStarter}
-                      onClick={() => updateStarterAvailability(!starterAvailable)}
-                      className={cn(
-                        'inline-flex h-8 w-[68px] shrink-0 items-center rounded-full border p-1 text-[11px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400 disabled:cursor-not-allowed disabled:opacity-60',
-                        starterAvailable
-                          ? 'justify-end border-[#AB6D40] bg-[#AB6D40] text-white'
-                          : 'justify-start border-stone-500 bg-stone-800 text-stone-100'
-                      )}
-                      aria-pressed={starterAvailable}
-                      aria-label="Toggle sourdough starter availability"
-                    >
-                      <span className="grid h-6 min-w-[30px] place-items-center rounded-full bg-white px-2 text-stone-950 shadow-sm">
-                        {starterAvailable ? 'On' : 'Off'}
-                      </span>
-                    </button>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                      <div className="flex items-center gap-2">
+                        <div className="relative">
+                          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-medium text-stone-500">GH₵</span>
+                          <Input 
+                            type="number" 
+                            value={starterPrice} 
+                            onChange={(e) => setStarterPrice(Number(e.target.value))} 
+                            className="w-24 pl-8 h-8 text-sm"
+                          />
+                        </div>
+                        <Button 
+                          size="sm" 
+                          disabled={updatingStarterPrice} 
+                          onClick={() => updateProductPrice('starter', starterPrice)}
+                          className="h-8"
+                        >
+                          Save
+                        </Button>
+                      </div>
+                      <button
+                        type="button"
+                        disabled={updatingStarter}
+                        onClick={() => updateStarterAvailability(!starterAvailable)}
+                        className={cn(
+                          'inline-flex h-8 w-[68px] shrink-0 items-center rounded-full border p-1 text-[11px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400 disabled:cursor-not-allowed disabled:opacity-60',
+                          starterAvailable
+                            ? 'justify-end border-[#AB6D40] bg-[#AB6D40] text-white'
+                            : 'justify-start border-stone-500 bg-stone-800 text-stone-100'
+                        )}
+                        aria-pressed={starterAvailable}
+                        aria-label="Toggle sourdough starter availability"
+                      >
+                        <span className="grid h-6 min-w-[30px] place-items-center rounded-full bg-white px-2 text-stone-950 shadow-sm">
+                          {starterAvailable ? 'On' : 'Off'}
+                        </span>
+                      </button>
+                    </div>
                   </div>
                 </div>
 

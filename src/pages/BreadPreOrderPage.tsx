@@ -246,10 +246,10 @@ export function BreadPreOrderPage() {
   } | null>(null);
   const realtimeRefreshTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const didAutoSelectBread = useRef(false);
+  const [BREAD_PRICE, setWholePrice] = useState(110);
+  const [SLICED_PRICE, setSlicedPrice] = useState(120);
+  const [STARTER_PRICE, setStarterPrice] = useState(100);
 
-  const BREAD_PRICE = 110;
-  const SLICED_PRICE = 120;
-  const STARTER_PRICE = 100;
   const breadQty = qtyWhole + qtySliced;
   const totalQty = breadQty + qtyStarter;
   const isStarterOnly = qtyStarter > 0 && breadQty === 0;
@@ -347,10 +347,11 @@ export function BreadPreOrderPage() {
   const fetchProductAvailability = useCallback(async () => {
     const { data, error } = await supabase
       .from('bread_product_availability')
-      .select('product_key, available')
-      .in('product_key', ['sliced', 'starter']);
+      .select('product_key, available, price')
+      .in('product_key', ['whole', 'sliced', 'starter']);
 
     const rows = !error && Array.isArray(data) ? data : [];
+    const whole = rows.find((item) => item.product_key === 'whole');
     const sliced = rows.find((item) => item.product_key === 'sliced');
     const starter = rows.find((item) => item.product_key === 'starter');
     const slicedIsAvailable = Boolean(sliced?.available);
@@ -358,6 +359,11 @@ export function BreadPreOrderPage() {
 
     setSlicedAvailable(slicedIsAvailable);
     setStarterAvailable(starterIsAvailable);
+    
+    if (whole?.price != null) setWholePrice(Number(whole.price));
+    if (sliced?.price != null) setSlicedPrice(Number(sliced.price));
+    if (starter?.price != null) setStarterPrice(Number(starter.price));
+
     return {
       sliced: slicedIsAvailable,
       starter: starterIsAvailable,
